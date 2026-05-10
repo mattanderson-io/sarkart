@@ -1,0 +1,23 @@
+{
+  "name": "sarkart-plotly",
+  "version": "0.1.0",
+  "description": "SARkart Plotly - experimental Plotly.js-based charts fork of SARkart",
+  "main": "index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "nodemon src/index.js -e js,hbs",
+    "test": "echo \"Error: no test specified\" && exit 0"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "GPL-3.0",
+  "dependencies": {
+    "express": "^4.17.1",
+    "hbs": "^4.1.2",
+    "ini": "^1.3.8",
+    "nodemon": "^2.0.4",
+    "handlebars": ">=4.7.7",
+    "ansi-regex": ">=5.0.1"
+  },
+  "devDependencies": {}
+}

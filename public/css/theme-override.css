@@ -1,0 +1,551 @@
+/* SARkart Theme Override - orange on dark kart-racing palette */
+
+:root {
+  --sk-orange: #FF9900;
+  --sk-dark: #232F3E;
+  --sk-darker: #131A22;
+  --sk-light-orange: #FFAC31;
+  --sk-pale-orange: #FFF3E0;
+  --sk-teal: #1B9AAA;
+  --sk-ink: #232F3E;
+}
+
+/* Body background - dark ink with orange gradient accent */
+body {
+  background: linear-gradient(135deg, #232F3E 0%, #131A22 60%, #1a1a2e 100%) !important;}
+
+body::before {
+  background: linear-gradient(135deg, #232F3E 0%, #131A22 60%, #1a1a2e 100%) !important;
+}
+
+/* Sidebar */
+#sidebar {
+  background-color: rgba(19, 26, 34, 0.95) !important;
+}
+
+#sidebar .sidebar-header {
+  background-color: rgba(255, 153, 0, 0.15) !important;
+  border-bottom: 1px solid rgba(255, 153, 0, 0.3);
+}
+
+#sidebar .sidebar-header h3,
+#sidebar .sidebar-header h3 span {
+  color: #FF9900 !important;
+  font-family: 'Metrophobic', sans-serif !important;
+}
+
+#sidebar ul li a:hover,
+#sidebar ul li a:focus,
+#sidebar ul li.active > a {
+  background-color: rgba(255, 153, 0, 0.15) !important;
+}
+
+#sidebar ul ul a {
+  background-color: rgba(255, 153, 0, 0.05) !important;
+}
+
+/* Cards */
+.card-header,
+.card-header-inv {
+  background-color: rgba(255, 153, 0, 0.2) !important;
+  color: #FF9900 !important;
+}
+
+.section-header {
+  color: #FF9900 !important;
+}
+
+/* Feature section */
+.feature-header {
+  color: #FF9900 !important;
+  text-shadow: 1px 1px 0 #232F3E !important;
+}
+
+.text-features .holder {
+  background-color: rgba(255, 153, 0, 0.08) !important;
+  box-shadow: 2px 0 3px rgba(255, 153, 0, 0.3) !important;
+}
+
+.text-features .holder h4 {
+  color: #FF9900 !important;
+}
+
+.text-features .holder-icon {
+  background-image: linear-gradient(to right, #FF9900 0%, #FFAC31 51%, #FF9900 100%) !important;
+}
+
+/* Buttons */
+.btn-app, .btn-app:focus {
+  color: #FF9900 !important;
+  background-color: rgba(255, 153, 0, 0.1) !important;
+  border: 1px solid rgba(255, 153, 0, 0.3) !important;
+}
+
+.btn-app:hover {
+  color: #fff !important;
+  background-color: rgba(255, 153, 0, 0.4) !important;
+}
+
+/* Progress bar */
+.progress-bar {
+  background-color: #FF9900 !important;
+}
+
+/* Upload area */
+.sar-file-uploader {
+  background: linear-gradient(0deg, #232F3E, #1a2633) !important;
+  border-color: #FF9900 !important;
+  border-radius: 20px !important;
+}
+
+.sar-file-uploader:before,
+.sar-file-uploader:after {
+  background: linear-gradient(45deg, #FF9900, #232F3E, #FFAC31, #FF9900, #232F3E, #FFAC31, #FF9900, #232F3E) !important;
+  background-size: 400% !important;
+  border-radius: 20px !important;
+}
+
+.uploader label {
+  border-color: #FF9900 !important;
+}
+
+.uploader label:hover,
+.uploader label.dragover {
+  border-color: #FFAC31 !important;
+  background: rgba(255, 153, 0, 0.1) !important;
+}
+
+/* Navbar */
+.navbar {
+  background-color: rgba(19, 26, 34, 0.9) !important;
+  border-bottom: 2px solid #FF9900 !important;
+}
+
+/* Links and text accents */
+.fancy-text {
+  color: #FF9900 !important;
+}
+
+a.article:hover, a.download {
+  color: #FF9900 !important;
+}
+
+a.article, a.download:hover {
+  background-color: #FF9900 !important;
+}
+
+/* Small boxes (dashboard peak indicators) */
+.small-box {
+  background: linear-gradient(135deg, #232F3E, #1a2633) !important;
+  border: 1px solid rgba(255, 153, 0, 0.3) !important;
+  box-shadow: 0 2px 10px rgba(255, 153, 0, 0.1) !important;
+}
+
+/* Chart containers */
+.container-title {
+  background-color: rgba(35, 47, 62, 0.95) !important;
+  border-bottom: 2px solid #FF9900 !important;
+}
+
+/* Scrollbar */
+.scrolling::-webkit-scrollbar-thumb {
+  background-image: -webkit-gradient(linear, left bottom, left top, color-stop(.44, #FF9900), color-stop(.62, #FFAC31), color-stop(.86, #FF9900)) !important;
+}
+
+/* Code blocks */
+.code-block {
+  background-color: #1a2633 !important;
+  color: #FF9900 !important;
+  border: 1px solid rgba(255, 153, 0, 0.2) !important;
+}
+
+/* Headings */
+h1, h2 {
+  color: #FF9900 !important;
+}
+
+/* Paragraph text - lighter for dark bg */
+p {
+  color: #ccd6dd !important;
+}
+
+/* Toggle buttons */
+.btn-toggle {
+  background-color: #232F3E !important;
+  border: 1px solid #FF9900 !important;
+}
+
+.btn-toggle:hover,
+.btn-group > label.active {
+  background-color: #FF9900 !important;
+  color: #232F3E !important;
+}
+
+/* Quote/testimonial circles */
+.text {
+  background-color: rgba(255, 153, 0, 0.1) !important;
+}
+
+/* Medium icons */
+.medium-icon {
+  background-color: #232F3E !important;
+  color: #FF9900 !important;
+}
+
+/* Custom menu collapse button */
+.custom-menu #sidebarCollapse:after {
+  background-color: rgba(255, 153, 0, 0.3) !important;
+}
+
+/* Dashboard label text */
+.dash-btn {
+  color: #FF9900 !important;
+}
+
+/* Carousel banner - the welcome/info section */
+.carousel .banner {
+  background: linear-gradient(90deg, #232F3E 0%, #2d3a4a 20%, #3d4f63 100%) !important;
+  border-color: #FF9900 !important;
+  border-radius: 12px !important;
+  height: auto !important;
+  min-height: 200px !important;
+}
+
+.carousel .banner::before,
+.carousel .banner::after {
+  background: linear-gradient(135deg, rgba(255,153,0,0.1), transparent) !important;
+}
+
+/* Carousel wrapper */
+.carousel-wrapper {
+  background-color: rgba(35, 47, 62, 0.8) !important;
+}
+
+/* Testimonial section if it shares carousel styles */
+.carousel .testimonial {
+  background: linear-gradient(90deg, #232F3E 0%, #2d3a4a 50%, #3d4f63 100%) !important;
+  border-color: #FF9900 !important;
+}
+
+/* The msg container inside banner */
+.carousel .banner .msg {
+  color: #e8e8e8 !important;
+}
+
+/* Gradient border elements */
+.gradient-border1 {
+  border-color: #FF9900 !important;
+}
+
+/* Expand/collapse indicators - replace FontAwesome carets with CSS chevrons */
+a[aria-expanded=false]::before,
+a[aria-expanded=true]::before {
+  font-family: inherit !important;
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  right: 16px !important;
+  top: 50% !important;
+  width: 8px !important;
+  height: 8px !important;
+  border-right: 2px solid #FF9900 !important;
+  border-bottom: 2px solid #FF9900 !important;
+  transform: translateY(-50%) rotate(45deg) !important;
+  transition: transform 0.2s ease !important;
+}
+
+a[aria-expanded=true]::before {
+  transform: translateY(-30%) rotate(-135deg) !important;
+}
+
+/* Fix logo overlapping sidebar header text */
+#sidebar .sidebar-header {
+  padding: 16px !important;
+  text-align: center !important;
+}
+
+#sidebar .sidebar-header h3 {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 10px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  font-family: 'Metrophobic', sans-serif !important;
+  font-size: 22px !important;
+  color: #FF9900 !important;
+}
+
+#sidebar .sidebar-header h3 span {
+  margin: 0 !important;
+  margin-left: 0 !important;
+  color: #FF9900 !important;
+}
+
+#sidebar .sidebar-header h3 img.sar-logo,
+img.sar-logo {
+  width: 43px !important;
+  height: 43px !important;
+  padding: 0 !important;
+  padding-right: 0 !important;
+  margin: 0 !important;
+  position: static !important;
+  top: auto !important;
+  flex-shrink: 0 !important;
+}
+
+/* When sidebar is collapsed, hide text and just show logo */
+#sidebar.active .sidebar-header h3 {
+  font-size: 0 !important;
+  gap: 0 !important;
+}
+
+#sidebar.active .sidebar-header h3 img.sar-logo {
+  width: 50px !important;
+  height: 50px !important;
+}
+
+/* Hide the duplicate mini logo - h3 handles both states now */
+#sidebar .sidebar-header strong {
+  display: none !important;
+}
+
+/* Peak metric boxes - custom colors */
+/* Peak CPU - blue */
+.small-box.bg-aqua {
+  background-color: #00ADEF !important;
+  border-color: #00ADEF !important;
+}
+.small-box.bg-aqua .small-box-footer {
+  background-color: #0096D1 !important;
+}
+
+/* Peak Load - green */
+.small-box.bg-green {
+  background-color: #119944 !important;
+  border-color: #119944 !important;
+}
+.small-box.bg-green .small-box-footer {
+  background-color: #0E7D38 !important;
+}
+
+/* Peak Memory - orange */
+.small-box.bg-yellow {
+  background-color: #F1912E !important;
+  border-color: #F1912E !important;
+}
+.small-box.bg-yellow .small-box-footer {
+  background-color: #D37B24 !important;
+}
+
+/* Make text and icons visible on the colored boxes */
+.small-box h3,
+.small-box p,
+.small-box .shadow-white,
+.small-box .shadow-black,
+.small-box h3 i,
+.small-box .small-box-footer span,
+.small-box .small-box-footer i {
+  color: #fff !important;
+  -webkit-text-fill-color: #fff !important;
+  background-color: transparent !important;
+  text-shadow: none !important;
+  -webkit-background-clip: unset !important;
+  background-clip: unset !important;
+}
+
+/* Peak box icons - match their box colors */
+.small-box.bg-aqua h3 i {
+  color: #00ADEF !important;
+  -webkit-text-fill-color: #00ADEF !important;
+}
+.small-box.bg-green h3 i {
+  color: #119944 !important;
+  -webkit-text-fill-color: #119944 !important;
+}
+.small-box.bg-yellow h3 i {
+  color: #F1912E !important;
+  -webkit-text-fill-color: #F1912E !important;
+}
+
+/* Remove boxes from top action buttons (Reset, Sample File, How To, etc.) */
+.btn-app, .btn-app:focus {
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+
+.btn-app:hover {
+  background-color: rgba(255, 153, 0, 0.1) !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+/* Fix carousel banner to fixed height matching upload area */
+.carousel .banner {
+  height: 250px !important;
+  min-height: 250px !important;
+  max-height: 250px !important;
+  overflow: hidden !important;
+}
+
+.carousel .banner .msg {
+  font-size: 0.85em !important;
+  line-height: 1.4 !important;
+}
+
+.carousel .banner .gradient-border1 {
+  height: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+}
+
+/* Fix carousel text bouncing - center content vertically and horizontally */
+.carousel .banner .item,
+.carousel .banner .carousel-item {
+  height: 250px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.carousel .banner .row {
+  width: 100% !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 !important;
+}
+
+.carousel .banner .msg {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 20px !important;
+}
+
+.carousel .banner .gradient-border1 {
+  width: 100% !important;
+  height: 250px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.carousel .banner .homeContainer {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  justify-content: center !important;
+  text-align: center !important;
+}
+
+.carousel .banner .homeContainer ul {
+  text-align: left !important;
+  display: inline-block !important;
+}
+
+/* Prevent layout shift during carousel transitions */
+.carousel-inner {
+  min-height: 250px !important;
+}
+
+.carousel-item {
+  min-height: 250px !important;
+}
+
+/* Replace old spinner with progress bar */
+#spinner {
+  position: relative !important;
+  top: auto !important;
+  left: auto !important;
+  transform: none !important;
+  width: 100% !important;
+  max-width: 500px !important;
+  height: auto !important;
+  background: rgba(35, 47, 62, 0.95) !important;
+  border-radius: 12px !important;
+  padding: 20px 30px !important;
+  border: 1px solid rgba(255, 153, 0, 0.3) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.3) !important;
+  margin: 10px auto !important;
+  z-index: 1 !important;
+}
+
+#spinner .loader {
+  display: none !important;
+}
+
+#spinner > #spinnerVal {
+  position: static !important;
+  top: auto !important;
+  left: auto !important;
+  font-size: 0.8em !important;
+  color: #aaa !important;
+  text-shadow: none !important;
+  background: none !important;
+}
+
+#progressContainer {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+/* Disable animate.css delays and animations on chart containers for instant display */
+.contABlock, .contBBlock, .contCBlock, .contDBlock, .contMBlock,
+#containerA, #containerB, #containerC, #containerD {
+  animation: none !important;
+  animation-delay: 0s !important;
+  transition: none !important;
+}
+
+.animate__delay-1s {
+  animation-delay: 0s !important;
+  -webkit-animation-delay: 0s !important;
+}
+
+.animate__animated {
+  animation-duration: 0.1s !important;
+  -webkit-animation-duration: 0.1s !important;
+}
+
+
+/* Suppress upstream body::before hero background (referenced image deleted) */
+body::before {
+  background: none !important;
+}
+
+
+/* ===== Readability fix for section headings and chart titles =====
+   Upstream styles these with Limelight (thin display font), 3px letter-spacing,
+   and heavy multi-layer text-shadow on a low-contrast dark teal background.
+   That combination renders as blurry/smudgy on the dark theme.
+   Override with a clean sans-serif, tight spacing, and a solid orange
+   pill background so they pop and are actually legible. */
+.boxed > span {
+  font-family: Metrophobic, 'Source Sans Pro', 'Helvetica Neue', Arial, sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 1px !important;
+  font-size: 1.35em !important;
+  color: #ffffff !important;
+  background-color: rgba(255, 153, 0, 0.9) !important; /* orange pill */
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4) !important; /* single subtle drop shadow */
+  padding: 0.35em 1.4em !important;
+  border-radius: 2rem !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+}
+
+/* The #pageTitle span sits inside a .boxed wrapper and shows the chart
+   page title like "Processes for LIVE-900-09". Same treatment, but give
+   it a slightly different tint so it's distinguishable from the landing
+   section headings (FEATURES / DESCRIPTION / HOW TO / FAQ). */
+.boxed > span#pageTitle {
+  background-color: rgba(35, 47, 62, 0.92) !important; /* dark ink */
+  color: #FF9900 !important;
+  border: 1px solid rgba(255, 153, 0, 0.5);
+}
