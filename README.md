@@ -33,7 +33,7 @@ A fast, local tool for viewing Unix SAR (System Activity Report) data as interac
 
 ```bash
 # Clone and install
-git clone https://github.com/zstar125/SARkart.git
+git clone https://github.com/mattanderson-io/sarkart.git
 cd SARkart
 npm install
 
