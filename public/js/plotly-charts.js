@@ -29,8 +29,14 @@
   var TEXT_COLOR = '#232F3E';
 
   var MULTI_PALETTE = [
-    '#FF9900', '#1B9AAA', '#232F3E', '#55BF3B',
-    '#DF5353', '#527bad', '#8d4654', '#cc6699'
+    '#FF9900', // orange
+    '#1B9AAA', // teal
+    '#55BF3B', // green
+    '#DF5353', // red
+    '#527bad', // bluish purple
+    '#8d4654', // dark brown
+    '#cc6699', // light burgundy
+    '#e67e22'  // darker orange
   ];
 
   var CHART_HEIGHT         = 400;   // px, forced on chart containers
@@ -122,12 +128,41 @@
     };
   }
 
+  // Break a long axis title into multiple lines using <br>, which Plotly
+  // renders as an actual line break in SVG <text>. Plotly does NOT wrap
+  // long titles on its own — they just extend past the chart edge. We
+  // split on whitespace and greedily pack words up to ~maxCharsPerLine.
+  function wrapAxisTitle(title, maxCharsPerLine) {
+    if (!title) return '';
+    var limit = maxCharsPerLine || 40;
+    if (title.length <= limit) return title;
+    var words = String(title).split(/\s+/);
+    var lines = [];
+    var cur = '';
+    for (var i = 0; i < words.length; i++) {
+      var w = words[i];
+      if (!cur) { cur = w; continue; }
+      if ((cur.length + 1 + w.length) <= limit) {
+        cur += ' ' + w;
+      } else {
+        lines.push(cur);
+        cur = w;
+      }
+    }
+    if (cur) lines.push(cur);
+    return lines.join('<br>');
+  }
+
   // Value y-axis. We deliberately DO NOT set `dtick` — Plotly's automatic
   // tick selection is correct for the value ranges SAR metrics cover.
   // We only apply explicit range bounds when BOTH yMin and yMax are numbers.
   function valueAxis(title, yMin, yMax) {
     var ax = {
-      title: { text: title, font: { color: TEXT_COLOR, size: 11 } },
+      title: {
+        text: wrapAxisTitle(title, 40),
+        font: { color: TEXT_COLOR, size: 11 },
+        standoff: 8
+      },
       gridcolor: GRID_COLOR,
       gridwidth: 0.5,
       linecolor: '#cccccc',
@@ -144,40 +179,69 @@
     return ax;
   }
 
-  // Layout shell. The title is a plain Plotly title (supports HTML <b>).
-  // Hostname subtitle goes into the top-right as a paper-referenced annotation.
+  // Layout shell. The chart title is rendered as a centered annotation-pill
+  // (not as Plotly's built-in `layout.title`) because the built-in title does
+  // not support a background color. Using a paper-referenced annotation lets
+  // us paint it on a solid pill that matches the chart's color, with white
+  // text for contrast.
+  //
+  // Hostname subtitle goes into the top-right as a second annotation.
   function baseLayout(title, subtitleColor) {
+    var pillColor = subtitleColor || ORANGE;
+
     var layout = {
       paper_bgcolor: PAPER_BG,
       plot_bgcolor: PLOT_BG,
       height: CHART_HEIGHT,
-      margin: { l: 70, r: 20, t: 40, b: 50 },
+      // Extra top margin so the pill title doesn't overlap the plot area.
+      margin: { l: 70, r: 20, t: 54, b: 70 },
       dragmode: 'zoom',
       font: { color: TEXT_COLOR, size: 11 },
       showlegend: false,
-      transition: { duration: 0 }   // disable animated transitions
+      transition: { duration: 0 },  // disable animated transitions
+      // Opaque hover tooltip. Default unified-hover background is a
+      // semi-transparent white which looks washed out on the white plot area
+      // of single-line charts. Force solid white + ink border + dark text so
+      // the tooltip reads the same whether the chart has one line or many.
+      hoverlabel: {
+        bgcolor: '#ffffff',
+        bordercolor: INK,
+        font: { color: INK, size: 11, family: 'Metrophobic, sans-serif' },
+        namelength: -1
+      }
     };
+
+    var annotations = [];
     if (title) {
-      layout.title = {
+      annotations.push({
         text: '<b>' + title + '</b>',
-        font: { color: TEXT_COLOR, size: 13 },
-        x: 0.02,
-        xanchor: 'left',
-        y: 0.97,
-        yanchor: 'top'
-      };
+        xref: 'paper', yref: 'paper',
+        x: 0.5, y: 1.12,
+        xanchor: 'center', yanchor: 'middle',
+        showarrow: false,
+        font: { color: '#ffffff', size: 13, family: 'Metrophobic, sans-serif' },
+        align: 'center',
+        // Pill styling — Plotly annotations support these directly.
+        bgcolor: pillColor,
+        bordercolor: pillColor,
+        borderwidth: 1,
+        borderpad: 6
+      });
     }
+
     var hostname = (typeof getHostname === 'function' ? getHostname() || '' : '');
     if (hostname) {
-      layout.annotations = [{
+      annotations.push({
         text: hostname,
         xref: 'paper', yref: 'paper',
         x: 1, y: 1.02,
         xanchor: 'right', yanchor: 'bottom',
         showarrow: false,
-        font: { color: subtitleColor || ORANGE, size: 10, weight: 700 }
-      }];
+        font: { color: pillColor, size: 10, weight: 700 }
+      });
     }
+
+    if (annotations.length) layout.annotations = annotations;
     return layout;
   }
 
@@ -186,7 +250,11 @@
   // manually, debounced, at the bottom of this file.
   var BASE_CONFIG = {
     displaylogo: false,
-    modeBarButtonsToRemove: ['lasso2d', 'select2d', 'autoScale2d', 'hoverCompareCartesian'],
+    modeBarButtonsToRemove: [
+      'lasso2d', 'select2d', 'autoScale2d',
+      'hoverCompareCartesian', 'hoverClosestCartesian',
+      'toggleSpikelines'
+    ],
     toImageButtonOptions: {
       format: 'png',
       filename: 'sarkart-chart',
@@ -201,6 +269,38 @@
     if (!el) return null;
     el.style.height = CHART_HEIGHT + 'px';
     return el;
+  }
+
+  // Plotly freezes the SVG width at whatever the container measures at
+  // newPlot() time. If that happens before the surrounding layout has
+  // settled (sidebar still collapsing, parent card just un-hidden, etc.),
+  // the chart renders narrow and looks clipped on the right. Two safeguards:
+  //
+  //   1. Resize on the next two animation frames after newPlot — by then
+  //      the current layout pass has committed.
+  //   2. Install a ResizeObserver (once per element) so any later size
+  //      change to the container triggers a debounced resize.
+  function settleAndObserve(el) {
+    if (!el || typeof window.Plotly === 'undefined') return;
+
+    function safeResize() {
+      if (el.data && el.layout) {
+        try { window.Plotly.Plots.resize(el); } catch (e) {}
+      }
+    }
+
+    requestAnimationFrame(function () {
+      safeResize();
+      requestAnimationFrame(safeResize);
+    });
+
+    if (el._sarkartRO || typeof ResizeObserver === 'undefined') return;
+    var t = null;
+    el._sarkartRO = new ResizeObserver(function () {
+      if (t) clearTimeout(t);
+      t = setTimeout(safeResize, 100);
+    });
+    el._sarkartRO.observe(el);
   }
 
   // -- printChart (single line) ----------------------------------------------
@@ -231,15 +331,19 @@
       line: { color: seriesColor, width: 1.3, shape: 'linear', simplify: true },
       name: displayTitle,
       connectgaps: false,
-      hovertemplate: '%{x|%Y-%m-%d %H:%M}<br><b>%{y}</b><extra></extra>'
+      hovertemplate: '<b>%{y}</b><extra>' + displayTitle + '</extra>'
     };
 
     var layout = baseLayout(displayTitle, seriesColor);
     layout.xaxis = timeAxis();
     layout.yaxis = valueAxis(yAxisTitle, yMin, yMax);
-    layout.hovermode = 'x';  // single line — per-point hover is faster than 'x unified'
+    // Use unified hover mode (same as multi-chart) so a single-line chart's
+    // tooltip matches the multi-line look: one labeled bubble at the x value
+    // with the series name and value.
+    layout.hovermode = 'x unified';
 
     window.Plotly.newPlot(el, [trace], layout, BASE_CONFIG);
+    settleAndObserve(el);
   }
 
   // -- printMultiChart (multi-series line, shared y) -------------------------
@@ -250,7 +354,15 @@
     var el = prepContainer(containerId);
     if (!el) return;
 
+    // Per-container color offset. Each chart slot (A/B/C/D -> 0/1/2/3) shifts
+    // the starting index into MULTI_PALETTE so stacked charts on a multi-chart
+    // page don't all look identical. The pill color is pulled from the first
+    // trace after it's assigned, guaranteeing pill == line[0] color.
+    var slot = /container([A-Z])$/.exec(containerId || '');
+    var offset = slot ? (slot[1].charCodeAt(0) - 65) : 0;
+
     var traces = [];
+    var firstLineColor = null;
     for (var s = 0; s < series.length; s++) {
       var d = series[s].data || [];
       if (d.length > 1 && d[0] && d[0][0] !== undefined) {
@@ -258,7 +370,8 @@
       }
       var plotData = d.length > MAX_POINTS_PER_SERIES ? lttb(d, MAX_POINTS_PER_SERIES) : d;
       var xy = splitXY(plotData);
-      var color = MULTI_PALETTE[s % MULTI_PALETTE.length];
+      var color = MULTI_PALETTE[(offset + s) % MULTI_PALETTE.length];
+      if (s === 0) firstLineColor = color;
       traces.push({
         type: 'scatter',
         mode: 'lines',
@@ -271,21 +384,22 @@
       });
     }
 
-    var titleColor = MULTI_PALETTE[0];
-    var layout = baseLayout(title, titleColor);
+    // Pill color comes from the actual first trace, not a parallel calculation.
+    var layout = baseLayout(title, firstLineColor || MULTI_PALETTE[0]);
     layout.xaxis = timeAxis();
     layout.yaxis = valueAxis(yAxisTitle, 0, null);
     layout.hovermode = 'x unified';
     layout.showlegend = true;
     layout.legend = {
       orientation: 'h',
-      x: 0, y: -0.22,
+      x: 0, y: -0.18,
       xanchor: 'left', yanchor: 'top',
       font: { size: 10, color: TEXT_COLOR }
     };
-    layout.margin.b = 90;
+    layout.margin.b = 120;
 
     window.Plotly.newPlot(el, traces, layout, BASE_CONFIG);
+    settleAndObserve(el);
   }
 
   // -- printPieChart (tiny donut gauge) --------------------------------------

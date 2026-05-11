@@ -8,8 +8,8 @@ app.get('', (req, res) => {
     })
 })
 
-app.get('*', (req, res) => {
-    res.render('404', {
+app.get('*path', (req, res) => {
+    res.status(404).render('404', {
         title: 'SARchart - 404',
         errorMessage: 'This page does not exist'
     })

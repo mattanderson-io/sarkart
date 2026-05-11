@@ -1,0 +1,6 @@
+node_modules
+test_data
+bench
+.git
+.DS_Store
+*.md

@@ -1,67 +1,99 @@
-# SARkart Plotly (experimental)
+# SARkart
 
-An experimental fork of [SARkart](../sarkart) that swaps the rendering
-engine from **Highcharts** to **Plotly.js** (MIT licensed).
+A fast, local tool for viewing Unix SAR (System Activity Report) data as interactive charts. Built by Matt Anderson, inspired by [SARchart](https://github.com/sargraph/sargraph.github.io).
 
-This is a work in progress. The main SARkart still uses Highcharts; this
-fork exists to explore the Plotly path without destabilizing the stable
-tool.
+![SARkart Dashboard](docs/screenshot-dashboard.png)
 
-## Why a fork
+<details>
+<summary>More screenshots</summary>
 
-- Highcharts is under a proprietary dual license that requires a paid
-  license for most commercial use. Plotly.js is MIT-licensed and free for
-  any use.
-- Plotly's `x unified` hover, synced zoom, brush selection, and
-  self-contained HTML export open up features (unified crosshair, CPU
-  heatmap, interactive HTML reports) that Highcharts cannot match without
-  significant custom code.
-- Plotly's SVG renderer is noticeably slower than Highcharts for very large
-  SAR datasets (30 days × thousands of samples per day). This fork is where
-  we iterate on that tradeoff.
+**Landing page**
+![Landing](docs/screenshot-landing.png)
 
-## What's different from SARkart
+**CPU chart (interactive)**
+![CPU Chart](docs/screenshot-cpu-chart.png)
 
-- Bundles `public/js/plotly-cartesian-3.5.1.min.js` (Plotly partial bundle,
-  MIT, 1.4 MB)
-- Adds `public/js/plotly-charts.js` which replaces the `printChart`,
-  `printMultiChart`, and `printPieChart` functions in the SARkart bundle
-  with Plotly equivalents
-- `templates/views/index.hbs` loads both of the above
+**Heatmap dashboard**
+![Heatmaps](docs/screenshot-heatmaps.png)
 
-Everything else (parser, index, date filter, PDF export, theme) is
-inherited from SARkart unchanged.
+</details>
 
-## Performance notes
+## Features
 
-- Series are downsampled to 2000 points via LTTB (Largest Triangle Three
-  Buckets) before rendering. Visually indistinguishable from raw for
-  line charts, ~10× faster to render.
-- `line.simplify: true` collapses collinear path segments in the SVG.
-- Window resizes are debounced instead of using Plotly's ResizeObserver.
-- For truly massive datasets the next step is to switch to the `gl2d`
-  bundle and use `scattergl` (WebGL-accelerated). Not done yet.
+- **Up to 20× faster** than sarchart — a 313 MB RHEL 9 SAR file loads in ~2 seconds
+- **Interactive charts** powered by Plotly.js — zoom, pan, drag-to-select, unified hover tooltips
+- **Heatmap dashboard** — 7 time-of-day × date heatmaps (CPU, Memory, I/O Wait, Load, Swap, Network, Disk) for instant pattern recognition
+- **AI-powered summary** — natural-language performance analysis (uses Chrome's Gemini Nano when available, template fallback everywhere else)
+- **Client-side only** — all parsing happens in your browser. Files never leave your machine.
+- **PDF export** — generate a multi-page report locally
+- **Date range filtering** — view a single day or custom range from multi-day SAR files
+- **Supports** Linux (RHEL, SuSE, Ubuntu), AIX, and Solaris
 
-## Run
+## Quick Start
 
 ```bash
+# Clone and install
+git clone https://github.com/zstar125/SARkart.git
+cd SARkart
 npm install
+
+# Run
 npm start
+# Open http://localhost:3000
 ```
 
-Open http://localhost:3000/
+Or with Docker:
 
-## Upstream
+```bash
+docker build -t sarkart .
+docker run -p 3000:3000 sarkart
+```
 
-Based on [SARkart](https://github.com/zstar125/SARkart), which is itself a
-fork of [SARchart](https://github.com/sargraph/sargraph.github.io) by
-Suresh Raju (GPLv3).
+## Try It
+
+Click **"Try with sample data"** on the landing page to load a bundled 1-day SAR file without needing your own data.
+
+## How to Generate a SAR File
+
+```bash
+# Linux — single day
+sar -A -f /var/log/sa/sa$(date +%d) > /tmp/sar_$(uname -n).txt
+
+# Linux — all days
+ls /var/log/sa/sa?? | xargs -i sar -A -f {} > /tmp/sar_$(uname -n).txt
+```
+
+Upload the resulting `.txt` file to SARkart.
+
+## Development
+
+```bash
+npm run dev    # auto-restart on file changes (uses nodemon)
+```
+
+### Benchmarks
+
+See [PERFORMANCE.md](PERFORMANCE.md) for parse-only and end-to-end browser benchmarks.
+
+```bash
+# Run parse benchmark
+node bench/parse-bench.js
+
+# Run browser benchmark (requires Playwright)
+node bench/browser-bench.js
+```
+
+## Tech Stack
+
+| Layer | Technology | Version |
+|-------|-----------|---------|
+| Server | Express | 5.2.1 |
+| Templates | Handlebars (hbs) | 4.2.1 |
+| Charts | Plotly.js (cartesian) | 3.5.1 |
+| UI Framework | Bootstrap | 5.3.6 |
+| Icons | Font Awesome | 6.7.2 |
+| DOM | jQuery | 4.0.0 |
 
 ## License
 
-GNU General Public License v3.0 (same as SARkart).
-
-## Credits
-
-- Charts: [Plotly.js](https://github.com/plotly/plotly.js) (MIT)
-- PDF: [jsPDF](https://github.com/parallax/jsPDF) + [html2canvas](https://html2canvas.hertzen.com/)
+[GPLv3](LICENSE)

@@ -67,3 +67,56 @@ Each chart creates a full Highcharts instance with thousands of data points. Thi
 | Medium | Data downsampling for Highcharts (item 7) | Faster chart rendering for 30-day views |
 | Low | Pre-split index (item 4) | Trades ~2x memory for faster chart building |
 | Low | Batch DOM append (item 6) | Minor — only affects initial sidebar build |
+
+
+## Benchmarks (parser only)
+
+Measured head-to-head vs the upstream sarchart parser (`sarchart-v5.1.3.min.js`) using the Node harness at `bench/parse-bench.js`. The harness extracts each parser's hot loop into a plain function and feeds it the file as a string — no DOM, no jQuery, no progress updates. 1 warmup + 5 timed runs per file; median reported.
+
+Hardware: Apple Silicon, Node 22.
+
+| File | Size | Lines | Old (median) | New (median) | Speedup |
+|------|------|-------|--------------|--------------|---------|
+| sar-data_CaseID-00295132_Host-LIVE-900-09 (RHEL 9) | 69 MB | 760,215 | 1.79 s | 381 ms | **4.7×** |
+| sar-data_CaseID-12345678_Host-Server60 (RHEL 9) | 313 MB | 3,451,472 | 9.60 s | 1.85 s | **5.2×** |
+
+Reproduce:
+
+```
+cd sarkart-plotly
+node bench/parse-bench.js [path-to-sar-file ...]
+```
+
+Files default to everything in `./test_data/*.txt` if no paths are given.
+
+
+## End-to-end browser benchmark
+
+Measures wall-clock from file-selected to dashboard-ready in real Chromium (headless, Playwright). Stop signal: `#peakCPU` element contains a numeric value. 3 runs per (app, file); median reported.
+
+Hardware: Apple Silicon, Node 22, Playwright Chromium 147.
+
+| File | Size | sarchart-old | sarkart-plotly | Speedup |
+|------|------|--------------|-----------------|---------|
+| LIVE-900-09 RHEL 9 | 69 MB / 760K lines | 4.94 s | 708 ms | **7.0×** |
+| Server60 RHEL 9 | 313 MB / 3.45M lines | 52.04 s | 2.32 s | **22.4×** |
+
+Why is the browser speedup bigger than the parse-only ~5× number? The old app does all dashboard setup synchronously in `loaded()` — parse, build headers, scan all CPU lines per-core for the peak, render 3 Highcharts donuts, etc. The new app has:
+
+- Chunked parser that yields to the browser every 200K lines
+- Pre-built `_idx` hash so per-section lookups are O(1)
+- Fast peak-CPU scan over only `CPU-%usr all` lines instead of per-core
+- Plotly donut charts rendered with `staticPlot: true` (no interactivity wiring)
+
+File-read time (`FileReader.readAsText`) is essentially identical between the two apps — ~30 ms on 69 MB, ~130 ms on 313 MB — so the gap is all parse + render.
+
+Reproduce:
+
+```
+cd sarkart-plotly
+npm install --save-dev playwright
+npx playwright install chromium
+node bench/browser-bench.js [runs]   # default 3
+```
+
+The script spawns both apps (old on 3001, new on 3000), opens each in Chromium, uploads each `.txt` in `test_data/`, and waits for the dashboard. Writes a JSON report to `bench/browser-bench-results.json`.

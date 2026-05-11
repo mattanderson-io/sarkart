@@ -243,7 +243,11 @@
       var containers = [];
       ['#containerA', '#containerB', '#containerC', '#containerD'].forEach(function(id) {
         var el = $(id);
-        if (el.is(':visible') && el.html().trim() && el.find('.highcharts-container').length > 0) {
+        // A Plotly chart is rendered when the container has a .js-plotly-plot
+        // descendant (Plotly adds this class on newPlot). We also check the
+        // element itself in case Plotly was called with the container as root.
+        var hasPlot = el.find('.js-plotly-plot').length > 0 || el.hasClass('js-plotly-plot');
+        if (el.is(':visible') && el.html().trim() && hasPlot) {
           containers.push(el[0]);
         }
       });
