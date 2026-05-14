@@ -28,6 +28,16 @@ partialFiles.forEach(function(file) {
   }
 })
 
+// Immutable cache for versioned assets
+app.use('/js/plotly-cartesian-3.5.1.min.js', express.static(path.join(publicDirPath, 'js/plotly-cartesian-3.5.1.min.js'), {
+  maxAge: '1y',
+  immutable: true
+}))
+app.use('/js/sarkart-v1.0.0.min.js', express.static(path.join(publicDirPath, 'js/sarkart-v1.0.0.min.js'), {
+  maxAge: '1y',
+  immutable: true
+}))
+
 // Setup Static directory to serve
 app.use(express.static(publicDirPath))
 
