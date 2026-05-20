@@ -209,11 +209,33 @@
 
     if (!dateList.length) return null;
 
+    // Apply unit conversion if the user has chosen a non-default unit. The
+    // network-units module exposes a helper that takes kB/s and returns
+    // { value, suffix }. We pick the suffix based on the grid peak so all
+    // cells share the same scale even in Auto mode.
+    var unitSuffix = ' KB/s';
+    var unitFactor = 1;
+    if (window.sarkartNetUnit) {
+      // Find peak across the grid to feed Auto picker.
+      var peak = 0;
+      for (var dk in grid) {
+        if (!grid.hasOwnProperty(dk)) continue;
+        for (var hk in grid[dk]) {
+          if (grid[dk].hasOwnProperty(hk) && grid[dk][hk] > peak) peak = grid[dk][hk];
+        }
+      }
+      var conv = window.sarkartNetUnit.convertKBs(peak);
+      // conv.value is the converted peak; factor is value/peak (guard /0).
+      unitFactor = peak > 0 ? (conv.value / peak) : 1;
+      unitSuffix = ' ' + conv.suffix;
+    }
+
     var z = [];
     for (var h = 0; h < 24; h++) {
       var row = [];
       for (var d = 0; d < dateList.length; d++) {
-        row.push((grid[dateList[d]] && grid[dateList[d]][h]) || 0);
+        var v = (grid[dateList[d]] && grid[dateList[d]][h]) || 0;
+        row.push(v * unitFactor);
       }
       z.push(row);
     }
@@ -221,7 +243,7 @@
     var hourLabels = [];
     for (var hl = 0; hl < 24; hl++) hourLabels.push((hl < 10 ? '0' : '') + hl + ':00');
 
-    return { z: z, x: dateList, y: hourLabels };
+    return { z: z, x: dateList, y: hourLabels, unitLabel: unitSuffix };
   }
 
   function getDiskData() {
@@ -424,7 +446,8 @@
       renderSingleHeatmap(document.getElementById('hm-iowait'), iowaitData, 'I/O Wait', SCALES.iowait, null, '%');
       renderSingleHeatmap(document.getElementById('hm-load'), loadData, 'Run Queue (Load)', SCALES.load, null, '');
       renderSingleHeatmap(document.getElementById('hm-swap'), swapData, 'Swap Usage', SCALES.swap, null, '%');
-      renderSingleHeatmap(document.getElementById('hm-network'), networkData, 'Network Traffic (rx+tx)', SCALES.network, null, ' KB/s');
+      var netUnit = (networkData && networkData.unitLabel) || ' KB/s';
+      renderSingleHeatmap(document.getElementById('hm-network'), networkData, 'Network Traffic (rx+tx)', SCALES.network, null, netUnit);
       renderSingleHeatmap(document.getElementById('hm-disk'), diskData, 'Disk Transfers', SCALES.disk, null, ' tps');
 
       var cells = [
@@ -433,7 +456,7 @@
         { el: 'hm-iowait', data: iowaitData, title: 'I/O Wait', scale: SCALES.iowait, zmax: null, unit: '%' },
         { el: 'hm-load', data: loadData, title: 'Run Queue (Load)', scale: SCALES.load, zmax: null, unit: '' },
         { el: 'hm-swap', data: swapData, title: 'Swap Usage', scale: SCALES.swap, zmax: null, unit: '%' },
-        { el: 'hm-network', data: networkData, title: 'Network Traffic (rx+tx)', scale: SCALES.network, zmax: null, unit: ' KB/s' },
+        { el: 'hm-network', data: networkData, title: 'Network Traffic (rx+tx)', scale: SCALES.network, zmax: null, unit: netUnit },
         { el: 'hm-disk', data: diskData, title: 'Disk Transfers', scale: SCALES.disk, zmax: null, unit: ' tps' }
       ];
 
@@ -504,6 +527,14 @@
   } else {
     waitForData();
   }
+
+  // Hook for network-units.js: re-render the heatmap dashboard when the
+  // user changes display units. No-op unless the dashboard is currently up
+  // (we detect that by the presence of the heatmap grid in containerA).
+  window.sarkartRefreshHeatmaps = function () {
+    var grid = document.querySelector('#containerA .heatmap-grid');
+    if (grid) renderHeatmapDashboard();
+  };
 })();
 
 

@@ -1,6 +1,8 @@
 # SARkart
 
-A fast, local tool for viewing Unix SAR (System Activity Report) data as interactive charts. Built by Matt Anderson, inspired by [SARchart](https://github.com/sargraph/sargraph.github.io).
+SARkart is a fast, browser-based viewer for Linux and Unix SAR (sysstat) files. Drop in a sar text file and get interactive charts for CPU, memory, disk, network, and load — all rendered locally, no server, no upload.
+
+**🚀 Try it live: [sarkart.onrender.com](https://sarkart.onrender.com/)** — no install, no signup. Click "Try with sample data" or upload your own sar file.
 
 ![SARkart Dashboard](docs/screenshot-dashboard.png)
 
@@ -51,7 +53,9 @@ docker run -p 3000:3000 sarkart
 
 ## Try It
 
-Click **"Try with sample data"** on the landing page to load a bundled 1-day SAR file without needing your own data.
+The fastest way to try SARkart is the hosted demo: **[sarkart.onrender.com](https://sarkart.onrender.com/)**. Click "Try with sample data" to load a bundled 1-day SAR file, or upload your own. All parsing happens in your browser — files are never uploaded to the server.
+
+> Note: the demo runs on Render's free tier and sleeps after ~15 minutes of inactivity. The first request after sleep takes ~30 seconds to wake up.
 
 ## How to Generate a SAR File
 
@@ -93,6 +97,10 @@ node bench/browser-bench.js
 | UI Framework | Bootstrap | 5.3.6 |
 | Icons | Font Awesome | 6.7.2 |
 | DOM | jQuery | 4.0.0 |
+
+## Credits
+
+Built by Matt Anderson. Inspired by [SARchart](https://github.com/sargraph/sargraph.github.io) by sargraph.
 
 ## License
 
