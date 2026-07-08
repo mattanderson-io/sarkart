@@ -1,13 +1,6 @@
 const app = require('./app')
 const port = process.env.PORT || 3000
 
-app.get('', (req, res) => {
-    res.render('index', {
-        title: 'SARchart',
-        name: 'Tool to view Unix SAR data as Charts'
-    })
-})
-
 app.get('*path', (req, res) => {
     res.status(404).render('404', {
         title: 'SARchart - 404',

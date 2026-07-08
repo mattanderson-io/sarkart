@@ -76,10 +76,14 @@ Upload the resulting `.txt` file to SARkart.
 ## Development
 
 ```bash
-npm run dev    # nodemon — auto-restart on .js / .hbs changes
+npm run dev       # Vite dev server for the Preact app
+npm run build     # production Preact bundle in ./dist
+npm run dev:server # Express server fallback / 404 development
 ```
 
-Handlebars partials hot-reload on localhost without restarting the server (`src/app.js`).
+The main app shell is rendered by Preact. The existing SAR parser, Plotly bridge,
+PDF export, and remaining UI bridge scripts are loaded after the Preact shell
+mounts so the legacy DOM IDs/classes remain stable during the migration.
 
 ### Benchmarks & smoke tests
 
@@ -101,12 +105,15 @@ node bench/ui-shot.js docs
 | Layer | Technology | Version |
 |-------|-----------|---------|
 | Server | Express | 5.2.1 |
-| Templates | Handlebars (hbs) | 4.2.1 |
+| App shell | Preact | 10.29.6 |
+| Build tool | Vite | 8.1.3 |
+| Language | TypeScript / TSX | 6.0.3 |
+| Legacy fallback / 404 | Handlebars (hbs) | 4.2.1 |
 | Charts | Plotly.js (cartesian) | 3.5.1 |
 | UI | Custom design system (`sarkart-v2.css`) | v2.0.0 |
 | Icons | Inline SVG sprite | — |
 | Fonts | Inter, JetBrains Mono | — |
-| DOM helpers | jQuery | 4.0.0 |
+| Legacy DOM helpers | jQuery | 4.0.0 |
 | Layout primitives | Bootstrap | 5.3.6 |
 
 ## Credits

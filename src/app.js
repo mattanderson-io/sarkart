@@ -9,6 +9,7 @@ const app = express()
 
 // Define Paths for Express config
 const publicDirPath = path.join(__dirname, '../public')
+const distDirPath = path.join(__dirname, '../dist')
 const viewsPath = path.join(__dirname, '../templates/views')
 const partialsPath = path.join(__dirname, '../templates/partials')
 
@@ -57,7 +58,24 @@ app.use('/js/sarkart-v1.0.0.min.js', express.static(path.join(publicDirPath, 'js
   immutable: true
 }))
 
+app.use('/assets', express.static(path.join(distDirPath, 'assets'), {
+  maxAge: '1y',
+  immutable: true
+}))
+
 // Setup Static directory to serve
 app.use(express.static(publicDirPath))
+
+app.get('', (req, res) => {
+  const indexPath = path.join(distDirPath, 'index.html')
+  if (fs.existsSync(indexPath)) {
+    res.sendFile(indexPath)
+    return
+  }
+  res.render('index', {
+    title: 'SARchart',
+    name: 'Tool to view Unix SAR data as Charts'
+  })
+})
 
 module.exports = app

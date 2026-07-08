@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta property="og:url" content="https://github.com/mattanderson-io/sarkart">
+    <meta property="og:type" content="website">
+    <meta property="og:title" content="SARkart">
+    <meta property="og:description" content="Fast, local tool for viewing Unix SAR data as interactive charts">
+    <meta property="og:image" content="/images/racing-penguin-favicon.webp">
+    <title>SARkart</title>
+    <link rel="icon" href="/images/racing-penguin-favicon.webp" sizes="any" type="image/webp">
+
+    <script>
+      (function () {
+        var m = document.cookie.match(/(?:^|;\s*)sarkart-theme=(light|dark)(?:;|$)/);
+        var theme = m ? m[1] : 'dark';
+        document.documentElement.setAttribute('data-theme', theme);
+      })();
+    </script>
+
+    <link rel="stylesheet" type="text/css" href="/css/bootstrap.min.css">
+    <link rel="stylesheet" type="text/css" href="/css/sarkart-v2.css?v=30">
+  </head>
+  <body>
+    <div id="app"></div>
+
+    <script type="module" src="/src/client/main.tsx"></script>
+  </body>
+</html>

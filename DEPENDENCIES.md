@@ -2,28 +2,32 @@
 
 Last reviewed: July 2026 (v2 UI).
 
-## Node.js (server)
+## Node.js / app shell
 
-Requires **Node 18+** for Playwright benchmarks; **Node 24 LTS** recommended (see `.nvmrc`).
+Requires **Node 18+** for Vite / Playwright benchmarks; **Node 24 LTS** recommended (see `.nvmrc`).
 
 | Package | Installed | Role | Status |
 |---------|-----------|------|--------|
 | express | 5.2.1 | HTTP server | ✅ Current |
-| hbs | 4.2.1 | Handlebars view engine | ✅ Latest |
+| preact | 10.29.6 | Main app shell | ✅ Current |
+| vite | 8.1.3 | Frontend build/dev server | ✅ Current |
+| @preact/preset-vite | 2.10.5 | Preact/Vite integration | ✅ Current |
+| typescript | 6.0.3 | TSX type checking / source language | ✅ Current |
+| hbs | 4.2.1 | Legacy fallback + 404 view engine | ✅ Latest |
 | handlebars | 4.7.9 | Template compiler (transitive) | ✅ Latest |
 | ansi-regex | 6.0.1 | Transitive security override | ✅ |
 | nodemon | 3.1.14 | Dev auto-restart | ✅ Latest |
 | playwright | 1.59.1 | Dev browser benchmarks / UI shots | ✅ Latest |
 
-Production Docker image uses `npm ci --omit=dev` on Node 22 Alpine (`Dockerfile`).
+Production Docker image installs dev dependencies, builds the Preact bundle, then prunes to production dependencies on Node 22 Alpine (`Dockerfile`).
 
 ## Browser libraries (`public/`)
 
-Loaded by the main app (`templates/views/index.hbs`):
+Loaded by the Preact shell after mount (`src/client/components/LegacyScripts.tsx`):
 
 | Library | File | Version | Notes |
 |---------|------|---------|-------|
-| jQuery | `jquery-4.0.0.min.js` | 4.0.0 | Required by legacy engine + export helpers |
+| jQuery | `jquery-4.0.0.min.js` | 4.0.0 | Required by the remaining legacy engine |
 | Bootstrap | `bootstrap.min.css`, `bootstrap.bundle.min.js` | 5.3.6 | Collapse/sidebar only; layout is `sarkart-v2.css` |
 | Plotly.js (cartesian) | `plotly-cartesian-3.5.1.min.js` | 3.5.1 | All line/pie/heatmap charts |
 | html2canvas | `html2canvas.min.js` | 1.4.1 | PDF export screenshots |
@@ -33,16 +37,16 @@ Loaded by the main app (`templates/views/index.hbs`):
 
 | Module | Purpose |
 |--------|---------|
-| `sarkart-v1.0.0.min.js` | Core SAR parser + navigation engine (minified upstream) |
-| `sar-chunked-parser.js` | Chunked upload parser for large files |
+| `sarkart-v1.0.0.min.js` | Remaining legacy chart data helpers + navigation engine (minified upstream) |
+| Preact `SarDataBridge` + `sarParser` / `sarStore` | Chunked parser, typed SAR data store, legacy global mirror, dashboard bootstrap |
 | `highcharts-shim.js` | Load-order stub before Plotly overrides |
 | `plotly-charts.js` | Plotly replacements for `printChart` / `printMultiChart` / `printPieChart` |
-| `network-units.js` | Interface traffic unit selector (KB/s, Mbps, Gbps, % of link speed) |
-| `sarkart-ui.js` | v2 UI: themes, command palette, CPU chips, sidebar, progress |
-| `landing.js` | Upload flow, sample data, title helpers |
-| `heatmap.js` | Heatmap dashboard (7 panels) |
-| `export-pdf.js` | Multi-page PDF report |
-| `ai-summary.js` | Performance summary (Gemini Nano or template fallback) |
+| Preact `NetworkUnitBridge` | Interface traffic unit selector (KB/s, Mbps, Gbps, % of link speed) |
+| `sarkart-ui.js` | Remaining legacy bridge: progress, CPU chips, sidebar, dashboard state |
+| Preact `LandingBridge` | Upload lifecycle, sample data, loaded state, file info, title helpers |
+| Preact `HeatmapDashboard` | Heatmap dashboard (7 panels) |
+| Preact `PdfExportBridge` | Multi-page PDF report |
+| Preact `AiSummary` | Performance summary (Gemini Nano or template fallback) |
 
 ## Fonts & icons
 

@@ -617,20 +617,26 @@
 
   /* --- Init ---------------------------------------------------------------- */
   function start() {
-    initTheme();
-    wireThemeToggle();
+    if (!window.__sarkartPreactTopUi) {
+      initTheme();
+      wireThemeToggle();
+    }
     wrapUpdateProgress();
     wrapChartPage();
     wireFileTracking();
-    wireCmdkKeys();
-    wireCmdkButton();
-    wireTopMenu();
+    if (!window.__sarkartPreactTopUi) {
+      wireCmdkKeys();
+      wireCmdkButton();
+      wireTopMenu();
+    }
     wireShortcuts();
     wireSidebar();
     wireSectionLabels();
     wireCpuChips();
     wireDashboardState();
-    watchExportBtn();
+    if (!window.__sarkartPreactTopUi) {
+      watchExportBtn();
+    }
   }
 
   if (document.readyState === 'loading') {

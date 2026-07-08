@@ -4,8 +4,11 @@
   "description": "SARkart Plotly - experimental Plotly.js-based charts fork of SARkart",
   "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "dev": "nodemon src/index.js -e js,hbs",
+    "build": "vite build",
+    "preview": "vite preview --host 0.0.0.0",
+    "start": "node src/ensure-build.js && node src/index.js",
+    "dev": "vite --host 0.0.0.0",
+    "dev:server": "nodemon src/index.js -e js,hbs,html,tsx,ts",
     "test": "echo \"Error: no test specified\" && exit 0"
   },
   "keywords": [],
@@ -15,10 +18,14 @@
     "ansi-regex": ">=5.0.1",
     "express": "^5.2.1",
     "handlebars": ">=4.7.7",
-    "hbs": "^4.1.2"
+    "hbs": "^4.1.2",
+    "preact": "^10.29.6"
   },
   "devDependencies": {
+    "@preact/preset-vite": "^2.10.5",
     "nodemon": "^3.1.14",
-    "playwright": "^1.59.1"
+    "playwright": "^1.59.1",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.3"
   }
 }
