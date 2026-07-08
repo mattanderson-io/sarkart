@@ -18,9 +18,12 @@ app.set('view engine', 'hbs')
 app.set('views', viewsPath)
 app.set('view cache', false)
 
-// Register partials synchronously before exporting
+// Register partials synchronously before exporting. The app shell is served
+// from the Preact build (dist/index.html); Handlebars now only backs 404.hbs,
+// which uses no partials, so the partials dir may be absent.
 const fs = require('fs')
 function registerPartials() {
+  if (!fs.existsSync(partialsPath)) return
   const partialFiles = fs.readdirSync(partialsPath)
   partialFiles.forEach(function(file) {
     if (file.endsWith('.hbs')) {
@@ -68,10 +71,12 @@ app.get('', (req, res) => {
     res.sendFile(indexPath)
     return
   }
-  res.render('index', {
-    title: 'SARchart',
-    name: 'Tool to view Unix SAR data as Charts'
-  })
+  // The Preact build is the only app shell now (the legacy Handlebars fallback
+  // was retired). If dist/ is missing the server was started without building.
+  res
+    .status(503)
+    .type('text/plain')
+    .send('SARkart build not found. Run "npm run build" to generate dist/index.html before starting the server.')
 })
 
 module.exports = app

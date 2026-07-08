@@ -13,7 +13,7 @@ Requires **Node 18+** for Vite / Playwright benchmarks; **Node 24 LTS** recommen
 | vite | 8.1.3 | Frontend build/dev server | ✅ Current |
 | @preact/preset-vite | 2.10.5 | Preact/Vite integration | ✅ Current |
 | typescript | 6.0.3 | TSX type checking / source language | ✅ Current |
-| hbs | 4.2.1 | Legacy fallback + 404 view engine | ✅ Latest |
+| hbs | 4.2.1 | `404.hbs` view engine only | ✅ Latest |
 | handlebars | 4.7.9 | Template compiler (transitive) | ✅ Latest |
 | ansi-regex | 6.0.1 | Transitive security override | ✅ |
 | nodemon | 3.1.14 | Dev auto-restart | ✅ Latest |
@@ -57,15 +57,14 @@ link in the document head.
 |-------|----------|-------|
 | Inter (variable) | `public/fonts/inter/` | UI text |
 | JetBrains Mono | `public/fonts/jetbrains-mono/` | Numbers, code |
-| SVG icon sprite | `templates/partials/icons.hbs` | Replaces Font Awesome in v2 UI |
+| SVG icon sprite | Preact `IconSprite` (`src/client/components/IconSprite.tsx`) | Replaces Font Awesome in v2 UI |
 
 ## Legacy static files (not used by main app)
 
-These remain on disk but are **not linked** from `index.hbs` after the v2 overhaul:
+These remain on disk but are **not linked** from the Preact app shell:
 
 | File | Notes |
 |------|-------|
-| `public/js/jquery-4.0.0.min.js` | No longer loaded by the Preact app; kept only for the `index.hbs` fallback |
 | `public/css/all.min.css` | Font Awesome 5 — still referenced by `404.hbs` only |
 | `public/css/animate.min.css` | Unused; safe to delete |
 | `public/css/sarkart-v1.0.0.min.css` | Removed in v2 |
@@ -75,6 +74,8 @@ These remain on disk but are **not linked** from `index.hbs` after the v2 overha
 | `public/js/highcharts-shim.js` | **Deleted** — Plotly load-order stub no longer needed |
 | `public/js/bootstrap.bundle.min.js` | **Deleted** — sidebar collapse ported to the Preact `SidebarCollapse` component (`bootstrap.min.css` retained) |
 | `public/js/sarkart-ui.js` | **Deleted** — remaining UI behaviors ported to the Preact `UiBridge` / `legacyUi` |
+| `public/js/jquery-4.0.0.min.js` | **Deleted** — the Handlebars `index.hbs` fallback that referenced it was retired |
+| `templates/views/index.hbs` + `partials/{icons,sidebar,content,footer}.hbs` | **Deleted** — Handlebars app shell retired; `dist/index.html` (Preact) is the only entry point |
 
 ## Security audit
 
@@ -87,6 +88,7 @@ Browser-side libraries are vendored minified files — audit separately when upg
 ## Upgrade notes
 
 - **Bootstrap 5**: JS bundle (`bootstrap.bundle.min.js`) removed — the sidebar collapse accordion is now handled by the Preact `SidebarCollapse` component. `bootstrap.min.css` (5.3.x) is retained for the `.collapse` display rule and utility classes; the `data-bs-toggle="collapse"` markup is kept as the hook `SidebarCollapse` listens on.
-- **jQuery**: No longer loaded by the Preact app. `jquery-4.0.0.min.js` remains on disk only because the Handlebars `index.hbs` fallback still references it; it can be deleted once that fallback is retired.
-- **Plotly**: Pin filename includes version; update both file and `index.hbs` cache-bust if upgrading.
+- **jQuery**: Fully removed — no longer loaded and `jquery-4.0.0.min.js` is deleted.
+- **Handlebars app shell**: Retired. Express serves `dist/index.html` (the Vite/Preact build); if `dist/` is missing it returns a 503 asking you to run `npm run build`. Handlebars (`hbs`) now backs only `404.hbs`.
+- **Plotly**: Pin filename includes version; the Vite build hashes `dist/assets`, so update the vendored `public/js/plotly-cartesian-*.js` filename (and the `LegacyScripts.tsx` reference) when upgrading.
 - **Font Awesome / animate.css**: Remove from `404.hbs` and delete files when the 404 page is restyled.

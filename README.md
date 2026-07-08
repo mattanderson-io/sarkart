@@ -108,7 +108,7 @@ node bench/ui-shot.js docs
 | App shell | Preact | 10.29.6 |
 | Build tool | Vite | 8.1.3 |
 | Language | TypeScript / TSX | 6.0.3 |
-| Legacy fallback / 404 | Handlebars (hbs) | 4.2.1 |
+| 404 page | Handlebars (hbs) | 4.2.1 |
 | Charts | Plotly.js (cartesian) | 3.5.1 |
 | UI | Custom design system (`sarkart-v2.css`) | v2.0.0 |
 | Icons | Inline SVG sprite | — |
