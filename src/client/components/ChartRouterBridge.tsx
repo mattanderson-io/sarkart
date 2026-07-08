@@ -202,8 +202,11 @@ function renderLoad() {
 
 // -- Devices ----------------------------------------------------------------
 
+const deviceListState: { series: ReturnType<typeof getDeviceSeries> | null } = { series: null };
+
 function renderDeviceList(key: string) {
   const series = getDeviceSeries(key);
+  deviceListState.series = series;
   const list = document.getElementById('ulDev');
   if (!list) return;
 
@@ -214,14 +217,18 @@ function renderDeviceList(key: string) {
   if (list.dataset.sarkartRouted === 'true') return;
   list.dataset.sarkartRouted = 'true';
 
+  // Reads `deviceListState.series` (not the `series` closed over above) so
+  // a later re-render (e.g. after a date filter change swaps in fresh
+  // data) is reflected even though this listener is only attached once.
   list.addEventListener('click', (event) => {
     const link = (event.target as Element | null)?.closest?.('a') as HTMLAnchorElement | null;
-    if (!link) return;
+    if (!link || !deviceListState.series) return;
     event.preventDefault();
     window.chartPage?.();
 
     const index = Number(link.dataset.sns || 0);
-    const deviceId = series.ids[index];
+    const deviceId = deviceListState.series.ids[index];
+    const currentSeries = deviceListState.series;
     const hostname = window.getHostname?.() || '';
 
     const pageTitle = document.getElementById('pageTitle');
@@ -238,20 +245,20 @@ function renderDeviceList(key: string) {
     showNotes('D', '%util - Device saturation occurs when this value is close to 100%');
 
     window.printMultiChart?.('containerA', `Transfers per second to ${deviceId}`, 'tps/s', null, [
-      { name: 'tps/s', data: series.tps[index] }
+      { name: 'tps/s', data: currentSeries.tps[index] }
     ]);
     window.printMultiChart?.('containerB', `Number of sectors read/written from/to to ${deviceId}`, 'rd_sec/wr_sec /s', null, [
-      { name: 'rd_sec /s', data: series.readSectors[index] },
-      { name: 'wr_sec /s', data: series.writeSectors[index] }
+      { name: 'rd_sec /s', data: currentSeries.readSectors[index] },
+      { name: 'wr_sec /s', data: currentSeries.writeSectors[index] }
     ]);
     window.printMultiChart?.('containerC', `Average size/queue length to ${deviceId}`, 'avgRq-sz/avrgqu-sz/await/svctm/%util', null, [
-      { name: 'The average size (in sectors) of the requests that were issued to the device (avrgrq-sz)', data: series.avgRqSize[index] },
-      { name: 'The average queue length of the requests that were issued to the device (avrgqu-sz)', data: series.avgQueueSize[index] }
+      { name: 'The average size (in sectors) of the requests that were issued to the device (avrgrq-sz)', data: currentSeries.avgRqSize[index] },
+      { name: 'The average queue length of the requests that were issued to the device (avrgqu-sz)', data: currentSeries.avgQueueSize[index] }
     ]);
     window.printMultiChart?.('containerD', `Average time/service time/utilization to ${deviceId}`, 'avgRq-sz/avrgqu-sz/await/svctm/%util', null, [
-      { name: 'The average time [in ms] for I/O requests issued to the device to be served (await)', data: series.await[index] },
-      { name: 'The average service time [in ms] for I/O requests that were issued to the device (svctm)', data: series.serviceTime[index] },
-      { name: 'Percentage of CPU time bandwidth utilization for the device (util %)', data: series.utilPercent[index] }
+      { name: 'The average time [in ms] for I/O requests issued to the device to be served (await)', data: currentSeries.await[index] },
+      { name: 'The average service time [in ms] for I/O requests that were issued to the device (svctm)', data: currentSeries.serviceTime[index] },
+      { name: 'Percentage of CPU time bandwidth utilization for the device (util %)', data: currentSeries.utilPercent[index] }
     ]);
     window.hideBlock?.('D');
   });
@@ -391,8 +398,11 @@ function renderMemoryAllocation() {
 
 // -- Interface Traffic / Errors ------------------------------------------
 
+const interfaceTrafficListState: { series: ReturnType<typeof getInterfaceTrafficSeries> | null } = { series: null };
+
 function renderInterfaceTrafficList(key: string) {
   const series = getInterfaceTrafficSeries(key);
+  interfaceTrafficListState.series = series;
   const list = document.getElementById('ulInterfaceTraffic');
   if (!list) return;
 
@@ -403,33 +413,40 @@ function renderInterfaceTrafficList(key: string) {
   if (list.dataset.sarkartRouted === 'true') return;
   list.dataset.sarkartRouted = 'true';
 
+  // See renderDeviceList for why this reads the shared state holder rather
+  // than closing over `series` directly (date-filter re-renders swap data
+  // in without re-attaching this listener).
   list.addEventListener('click', (event) => {
     const link = (event.target as Element | null)?.closest?.('a') as HTMLAnchorElement | null;
-    if (!link) return;
+    if (!link || !interfaceTrafficListState.series) return;
     event.preventDefault();
     window.chartPage?.();
 
     const index = Number(link.dataset.sns || 0);
-    const ifaceId = series.ids[index];
+    const currentSeries = interfaceTrafficListState.series;
+    const ifaceId = currentSeries.ids[index];
 
     window.printMultiChart?.('containerA', `Total number of packets received/transmitted per second on ${ifaceId}`, 'rxpck/s | txpck/s', null, [
-      { name: 'Total number of packets received per second (rxpck/s)', data: series.rxpck[index] },
-      { name: 'Total number of packets transmitted per second (txpck/s)', data: series.txpck[index] }
+      { name: 'Total number of packets received per second (rxpck/s)', data: currentSeries.rxpck[index] },
+      { name: 'Total number of packets transmitted per second (txpck/s)', data: currentSeries.txpck[index] }
     ]);
     window.printMultiChart?.('containerB', `Total number of kilobytes received/transmitted per second on ${ifaceId}`, 'rxkB/s | txkB/s', null, [
-      { name: 'Total number of kilobytes received per second (rxkB/s)', data: series.rxkB[index] },
-      { name: 'Total number of kilobytes transmitted per second (txkB/s)', data: series.txkB[index] }
+      { name: 'Total number of kilobytes received per second (rxkB/s)', data: currentSeries.rxkB[index] },
+      { name: 'Total number of kilobytes transmitted per second (txkB/s)', data: currentSeries.txkB[index] }
     ]);
     window.printMultiChart?.('containerC', `Number of compressed/multicast packets received/transmitted per second on ${ifaceId}`, 'rxcmp/s | txcmp/s | rxmcst/s', null, [
-      { name: 'Number of compressed packets received per second (rxcmp/s)', data: series.rxcmp[index] },
-      { name: 'Number of compressed packets transmitted per second (txcmp/s)', data: series.txcmp[index] },
-      { name: 'Number of multicast packets received per second (rxmcst/s)', data: series.rxmcst[index] }
+      { name: 'Number of compressed packets received per second (rxcmp/s)', data: currentSeries.rxcmp[index] },
+      { name: 'Number of compressed packets transmitted per second (txcmp/s)', data: currentSeries.txcmp[index] },
+      { name: 'Number of multicast packets received per second (rxmcst/s)', data: currentSeries.rxmcst[index] }
     ]);
   });
 }
 
+const interfaceErrorListState: { series: ReturnType<typeof getInterfaceErrorSeries> | null } = { series: null };
+
 function renderInterfaceErrorList(key: string) {
   const series = getInterfaceErrorSeries(key);
+  interfaceErrorListState.series = series;
   const list = document.getElementById('ulInterfaceErrors');
   if (!list) return;
 
@@ -442,27 +459,28 @@ function renderInterfaceErrorList(key: string) {
 
   list.addEventListener('click', (event) => {
     const link = (event.target as Element | null)?.closest?.('a') as HTMLAnchorElement | null;
-    if (!link) return;
+    if (!link || !interfaceErrorListState.series) return;
     event.preventDefault();
     window.chartPage?.();
 
     const index = Number(link.dataset.sns || 0);
-    const ifaceId = series.ids[index];
+    const currentSeries = interfaceErrorListState.series;
+    const ifaceId = currentSeries.ids[index];
 
     window.printMultiChart?.('containerA', `Total number of bad packets received per second on ${ifaceId}`, 'rxerr/s | txerr/s | coll/s', null, [
-      { name: 'Total number of bad packets received per second (rxerr/s)', data: series.rxerr[index] },
-      { name: 'Total number of errors that happened per second while transmitting packets (txerr/s)', data: series.txerr[index] },
-      { name: 'Number of collisions that happened per second while transmitting packets (coll/s)', data: series.coll[index] }
+      { name: 'Total number of bad packets received per second (rxerr/s)', data: currentSeries.rxerr[index] },
+      { name: 'Total number of errors that happened per second while transmitting packets (txerr/s)', data: currentSeries.txerr[index] },
+      { name: 'Number of collisions that happened per second while transmitting packets (coll/s)', data: currentSeries.coll[index] }
     ]);
     window.printMultiChart?.('containerB', `Number of received/transmitted packets dropped per second from linux buffers on ${ifaceId}`, 'rxdrop/s | txdrop/s | txcarr/s', null, [
-      { name: 'Number of received packets dropped per second because of a lack of space in linux buffers (rxdrop/s)', data: series.rxdrop[index] },
-      { name: 'Number of transmitted packets dropped per second because of a lack of space in linux buffers (txdrop/s)', data: series.txdrop[index] },
-      { name: 'Number of carrier-errors that happened per second while transmitting packets (txcarr/s)', data: series.txcarr[index] }
+      { name: 'Number of received packets dropped per second because of a lack of space in linux buffers (rxdrop/s)', data: currentSeries.rxdrop[index] },
+      { name: 'Number of transmitted packets dropped per second because of a lack of space in linux buffers (txdrop/s)', data: currentSeries.txdrop[index] },
+      { name: 'Number of carrier-errors that happened per second while transmitting packets (txcarr/s)', data: currentSeries.txcarr[index] }
     ]);
     window.printMultiChart?.('containerC', `Number of [frame alignment/FIFO overrun] errors per second on received packets on ${ifaceId}`, 'rxfram/s | rxfifo/s | txfifo/s', null, [
-      { name: 'Number of frame alignment errors that happened per second on received packets (rxfram/s)', data: series.rxfram[index] },
-      { name: 'Number of FIFO overrun errors that happened per second on received packets (rxfifo/s)', data: series.rxfifo[index] },
-      { name: 'Number of FIFO overrun errors that happened per second on transmitted packets (txfifo/s)', data: series.txfifo[index] }
+      { name: 'Number of frame alignment errors that happened per second on received packets (rxfram/s)', data: currentSeries.rxfram[index] },
+      { name: 'Number of FIFO overrun errors that happened per second on received packets (rxfifo/s)', data: currentSeries.rxfifo[index] },
+      { name: 'Number of FIFO overrun errors that happened per second on transmitted packets (txfifo/s)', data: currentSeries.txfifo[index] }
     ]);
   });
 }

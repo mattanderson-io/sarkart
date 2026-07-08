@@ -1,6 +1,6 @@
 import { useEffect } from 'preact/hooks';
 import { parseSarTextChunked } from '../lib/sarParser';
-import { setSarData } from '../lib/sarStore';
+import { filterSarDataByDates, setSarData } from '../lib/sarStore';
 
 function delay(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
@@ -92,15 +92,33 @@ function configureDateFilter() {
   }
 }
 
+/**
+ * `sarkart-v1.0.0.min.js` binds its own `$("#dateFilterMode").change(...)`
+ * and `$("#dateFilterApply").click(...)` handlers (calling the legacy
+ * `_dateFilterRefresh` by name) when it loads. Since that happens
+ * asynchronously after this component mounts, simply calling
+ * `addEventListener` here would leave both handler sets attached —
+ * the same double-handler hazard fixed for ChartRouterBridge's nav
+ * takeovers. Clone-and-replace before attaching our listeners so any
+ * legacy binding (present or not-yet-added) is dropped.
+ */
+function takeOverElement<T extends HTMLElement>(id: string): T | null {
+  const el = document.getElementById(id) as T | null;
+  if (!el) return null;
+  const clone = el.cloneNode(true) as T;
+  el.replaceWith(clone);
+  return clone;
+}
+
 function wireDateFilter() {
   if (window.__sarkartPreactDateFilter) return;
   window.__sarkartPreactDateFilter = true;
 
-  const mode = document.getElementById('dateFilterMode') as HTMLSelectElement | null;
+  const mode = takeOverElement<HTMLSelectElement>('dateFilterMode');
   const start = document.getElementById('dateFilterStart') as HTMLSelectElement | null;
   const end = document.getElementById('dateFilterEnd') as HTMLSelectElement | null;
   const sep = document.getElementById('dateFilterRangeSep');
-  const apply = document.getElementById('dateFilterApply') as HTMLButtonElement | null;
+  const apply = takeOverElement<HTMLButtonElement>('dateFilterApply');
   if (!mode || !start || !end || !sep || !apply) return;
 
   const syncMode = () => {
@@ -111,7 +129,7 @@ function wireDateFilter() {
     apply.hidden = value === 'all';
 
     if (value === 'all') {
-      window._dateFilterRefresh?.(null, `${window._allDatesArr?.length || 0} days shown`);
+      dateFilterRefresh(null, `${window._allDatesArr?.length || 0} days shown`);
     }
   };
 
@@ -130,7 +148,7 @@ function wireDateFilter() {
       dates = allDates.slice(first, last + 1);
       info = `Showing: ${dates.length} days (${dates[0]} to ${dates[dates.length - 1]})`;
     }
-    window._dateFilterRefresh?.(dates, info);
+    dateFilterRefresh(dates, info);
   };
 
   mode.addEventListener('change', syncMode);
@@ -138,9 +156,77 @@ function wireDateFilter() {
   syncMode();
 }
 
-async function buildCpuList() {
-  await delay(500);
+/**
+ * Port of the legacy `_dateFilterRefresh(dates, info)`. Re-slices the active
+ * data index to the selected dates and redoes everything that depends on it:
+ * peak KPI cards + their pie charts, the per-core CPU index, and the
+ * device/interface traffic/error lists. Async (via delay(0) between steps)
+ * to match the legacy engine's step() task queue, which yielded back to the
+ * browser between each task so the "Filtering..." label could paint before
+ * the (potentially expensive) re-index work ran.
+ */
+async function dateFilterRefresh(dates: string[] | null, info: string) {
+  // No file loaded yet (e.g. wireDateFilter's initial syncMode() call on
+  // mount, before any data exists) — nothing to (re)filter.
+  if (!window._idx) return;
 
+  const applyBtn = document.getElementById('dateFilterApply') as HTMLButtonElement | null;
+  const infoEl = document.getElementById('dateFilterInfo');
+  if (infoEl) infoEl.textContent = 'Filtering...';
+  if (applyBtn) applyBtn.disabled = true;
+
+  await delay(0);
+  try {
+    filterSarDataByDates(dates);
+  } catch (error) {
+    console.error('[SARkart] _filterByDates failed:', error);
+  }
+  if (infoEl) infoEl.textContent = info;
+
+  await delay(0);
+  updatePeakCpu();
+
+  await delay(0);
+  window.getGenericData?.('runq-sz-plist-sz', 1, 'no', '#peakLoad');
+  const memoryHeader = window.grepHeaders?.('kbmemfree');
+  if (memoryHeader && memoryHeader !== -1) {
+    const cols = memoryHeader.split(',');
+    const key = cols.slice(0, 2).join('-');
+    const memoryIndex = cols.indexOf('%memused') + 1;
+    window.getGenericData?.(key, memoryIndex, 'no', '#peakMemory');
+  }
+
+  await delay(0);
+  window.printPieChart?.('peakCPUChart', parseInt(document.getElementById('peakCPU')?.textContent || '0', 10), '#00ADEF');
+  window.printPieChart?.('peakLoadChart', parseInt(document.getElementById('peakLoad')?.textContent || '0', 10), '#119944');
+  window.printPieChart?.('peakMemoryChart', parseInt(document.getElementById('peakMemory')?.textContent || '0', 10), '#F1912E');
+
+  await delay(0);
+  const cpuIds = await rebuildCpuByCore();
+  renderCpuList(cpuIds);
+
+  await delay(0);
+  window.getDevices?.('DEV-tps', 'no', null);
+
+  await delay(0);
+  window.getInterfaceTraffic?.('IFACE-rxpck/s', 'no', null);
+
+  await delay(0);
+  window.getInterfaceErrors?.('IFACE-rxerr/s', 'no', null);
+
+  if (applyBtn) applyBtn.disabled = false;
+}
+
+/**
+ * Rebuilds `window._cpuByCore` (the per-core row index `getCPU()` reads)
+ * from the currently active `window._idx`. Chunked to avoid a long task on
+ * large files. Shared by the initial dashboard build and by
+ * `dateFilterRefresh` — a date filter change swaps `window._idx` to a
+ * filtered subset, and without rebuilding this, per-core CPU charts would
+ * keep showing pre-filter data (the underlying bug class fixed for the
+ * device/interface lists in ChartRouterBridge).
+ */
+async function rebuildCpuByCore() {
   const cpuLines = window._idx?.['CPU-%usr'] || [];
   const cpuIds: string[] = [];
   const cpuIdSet: Record<string, 1> = {};
@@ -165,23 +251,38 @@ async function buildCpuList() {
 
   cpuIds.sort(naturalCompare);
   window._cpuByCore = cpuByCore;
+  return cpuIds;
+}
 
+function renderCpuList(cpuIds: string[]) {
   const list = document.getElementById('ulCPU');
   if (!list) return;
   list.innerHTML = cpuIds.map((id, index) => (
     `<li><a href="#" data-sns="${index}"><i class="fa fa-microchip" style="color: #6A55C2" aria-hidden="true"><span class="icon-bg bg-violet"></span></i>${id}</a></li>`
   )).join('');
 
-  list.addEventListener('click', (event) => {
-    const link = (event.target as Element | null)?.closest?.('a') as HTMLAnchorElement | null;
-    if (!link) return;
-    event.preventDefault();
-    window.chartPage?.();
-    const index = Number(link.dataset.sns || 0);
-    window.getCPUchart?.(cpuIds[index]);
-  });
+  if (list.dataset.sarkartRouted !== 'true') {
+    list.dataset.sarkartRouted = 'true';
+    // Reads `window._cpuByCore`'s current id order via a fresh DOM query
+    // rather than closing over `cpuIds`, so a later rebuild (date filter
+    // change) is reflected without needing to re-attach this listener.
+    list.addEventListener('click', (event) => {
+      const link = (event.target as Element | null)?.closest?.('a') as HTMLAnchorElement | null;
+      if (!link) return;
+      event.preventDefault();
+      window.chartPage?.();
+      const label = (link.textContent || '').trim();
+      if (label) window.getCPUchart?.(label);
+    });
+  }
 
   window.dispatchEvent(new Event('sarkart:cpu-list'));
+}
+
+async function buildCpuList() {
+  await delay(500);
+  const cpuIds = await rebuildCpuByCore();
+  renderCpuList(cpuIds);
 }
 
 async function initializeDashboard() {
@@ -271,7 +372,11 @@ export function SarDataBridge() {
   window.sarkartProcessPendingData = processPendingResult;
 
   useEffect(() => {
-    wireDateFilter();
+    // Deferred until after sarkart-v1.0.0.min.js loads (see wireDateFilter's
+    // doc comment) — cloning-and-replacing at mount time wouldn't help
+    // since the legacy script binds its own handlers on whatever element
+    // exists *when it loads*, which happens after this effect runs.
+    window.addEventListener('sarkart:legacy-engine-loaded', wireDateFilter);
 
     const onClick = (event: MouseEvent) => {
       const target = event.target as Element | null;
@@ -296,6 +401,7 @@ export function SarDataBridge() {
     }
 
     return () => {
+      window.removeEventListener('sarkart:legacy-engine-loaded', wireDateFilter);
       document.removeEventListener('click', onClick);
       processObserver?.disconnect();
       if (window.sarkartProcessPendingData === processPendingResult) delete window.sarkartProcessPendingData;
