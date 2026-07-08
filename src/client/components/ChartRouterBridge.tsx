@@ -11,6 +11,7 @@ import {
   headerColumnIndex,
   headerSectionKey
 } from '../lib/sarData';
+import { displayTitle, showNotes } from '../lib/sarEngine';
 
 /**
  * Chunk 1 of the Preact chart migration: takes every chart category's
@@ -31,45 +32,44 @@ import {
  *    No DOM surgery required.
  *
  * 2. Listener takeover — every other nav link (`#btnCPU`, `#btnLoad`,
- *    `#btnMemUsg`, `#btnProcs`, `#btnIO`, etc.) has a click handler bound
- *    directly by the legacy engine's jQuery ready block at script-load
- *    time, before this component ever mounts. Simply adding another
- *    listener would run BOTH handlers. To fully retire the legacy handler
- *    we clone the element (which drops all previously bound listeners,
- *    jQuery's included) and swap it in before attaching our own listener.
+ *    `#btnMemUsg`, `#btnProcs`, `#btnIO`, etc.) gets a click listener here.
+ *    These links are Preact-rendered static markup with no other handlers
+ *    (the legacy engine's jQuery ready block that used to bind them is gone),
+ *    so a plain `addEventListener` suffices — guarded by a `dataset` flag so a
+ *    re-install can't double-bind.
+ *
+ * `displayTitle` and `showNotes` are shared with `lib/sarEngine` (the same
+ * implementations installed as `window.displayTitle` / `window.showNotes`),
+ * so this file no longer keeps private copies.
  *
  * Every category is now Preact-owned; `sarkart-v1.0.0.min.js` is no longer
  * needed for chart routing (see preact-migration-remaining.md Chunk 1/2).
  */
 
-function displayTitle(title: string) {
-  window.chartPage?.();
-  const hostname = window.getHostname?.() || '';
-  const pageTitle = document.getElementById('pageTitle');
-  const pageName = document.getElementById('pageName');
-  const pageShortName = document.getElementById('pageShortName');
-  if (pageTitle) pageTitle.textContent = `${title} for ${hostname}`;
-  if (pageName) pageName.textContent = hostname;
-  if (pageShortName) pageShortName.textContent = title;
-}
-
-function showNotes(blockId: string, text: string) {
-  window.setTimeout(() => {
-    const el = document.getElementById(`container${blockId}Notes`);
-    if (!el) return;
-    el.style.display = '';
-    el.textContent = text;
-  }, 10);
+/**
+ * Shared guard for the category renderers: look up a section by a signature
+ * column and, when it's absent, show the "No data found" fallback in slot M and
+ * return null so the caller can bail. On success returns the raw header line
+ * (for `headerColumnIndex`) and its section key. Collapses the repeated
+ * grepHeader -> null-check -> showBlock('M')/showNotes -> headerSectionKey block
+ * that appeared in ~17 renderers.
+ */
+function requireSection(pattern: string): { header: string; sectionKey: string } | null {
+  const header = grepHeader(pattern);
+  if (header === null) {
+    window.showBlock?.('M');
+    showNotes('M', 'No data found');
+    return null;
+  }
+  return { header, sectionKey: headerSectionKey(header) };
 }
 
 function takeOverClick(id: string, handler: (event: MouseEvent) => void) {
   const el = document.getElementById(id);
   if (!el || el.dataset.sarkartRouted === 'true') return;
 
-  const clone = el.cloneNode(true) as HTMLElement;
-  clone.dataset.sarkartRouted = 'true';
-  el.replaceWith(clone);
-  clone.addEventListener('click', (event) => {
+  el.dataset.sarkartRouted = 'true';
+  el.addEventListener('click', (event) => {
     event.preventDefault();
     handler(event);
   });
@@ -104,13 +104,9 @@ function renderCpuSummary() {
   }
 
   if (os === 'AIX') {
-    const header = grepHeader('%usr');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('%usr');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const usrCol = headerColumnIndex(header, '%usr');
     const sysCol = headerColumnIndex(header, '%sys');
     const wioCol = headerColumnIndex(header, '%wio');
@@ -147,13 +143,9 @@ function renderLoad() {
   const os = window.getOS?.();
 
   if (os === 'LINUX') {
-    const header = grepHeader('runq-sz');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('runq-sz');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const runqCol = headerColumnIndex(header, 'runq-sz');
     const plistCol = headerColumnIndex(header, 'plist-sz');
     const ldavg1Col = headerColumnIndex(header, 'ldavg-1');
@@ -177,13 +169,9 @@ function renderLoad() {
   }
 
   if (os === 'AIX' || os === 'SUNOS') {
-    const header = grepHeader('runq-sz');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('runq-sz');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const runqCol = headerColumnIndex(header, 'runq-sz');
     const runoccCol = headerColumnIndex(header, '%runocc');
     const swpqCol = headerColumnIndex(header, 'swpq-sz');
@@ -271,13 +259,9 @@ function renderMemoryFree() {
   const os = window.getOS?.();
   if (os !== 'LINUX') return;
 
-  const header = grepHeader('kbmemfree');
-  if (header === null) {
-    window.showBlock?.('M');
-    showNotes('M', 'No data found');
-    return;
-  }
-  const sectionKey = headerSectionKey(header);
+  const section = requireSection('kbmemfree');
+  if (!section) return;
+  const { header, sectionKey } = section;
   const freeCol = headerColumnIndex(header, 'kbmemfree');
   const buffersCol = headerColumnIndex(header, 'kbbuffers');
   const cachedCol = headerColumnIndex(header, 'kbcached');
@@ -293,13 +277,9 @@ function renderMemoryUsage() {
   const os = window.getOS?.();
 
   if (os === 'LINUX') {
-    const header = grepHeader('kbmemfree');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('kbmemfree');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const memUsedPctCol = headerColumnIndex(header, '%memused');
     const memUsedCol = headerColumnIndex(header, 'kbmemused');
     const commitCol = headerColumnIndex(header, 'kbcommit');
@@ -316,13 +296,9 @@ function renderMemoryUsage() {
   }
 
   if (os === 'AIX' || os === 'SUNOS') {
-    const header = grepHeader('msg/s');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('msg/s');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const msgCol = headerColumnIndex(header, 'msg/s');
     const semaCol = headerColumnIndex(header, 'sema/s');
 
@@ -340,13 +316,9 @@ function renderSwapUsage() {
   const os = window.getOS?.();
 
   if (os === 'LINUX') {
-    const header = grepHeader('kbswpfree');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('kbswpfree');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const freeCol = headerColumnIndex(header, 'kbswpfree');
     const usedCol = headerColumnIndex(header, 'kbswpused');
     const usedPctCol = headerColumnIndex(header, '%swpused');
@@ -499,17 +471,14 @@ function renderProcesses() {
   const os = window.getOS?.();
 
   if (os === 'LINUX') {
-    const header = grepHeader('proc/s');
-    if (header !== null) {
-      const sectionKey = headerSectionKey(header);
+    const section = requireSection('proc/s');
+    if (section) {
+      const { header, sectionKey } = section;
       const procCol = headerColumnIndex(header, 'proc/s');
       const cswchCol = headerColumnIndex(header, 'cswch/s');
       window.printChart?.('containerA', 0, null, 'Total number of tasks created per second (proc/s)', 10, '#8d4654', getGenericData(sectionKey, procCol));
       window.printChart?.('containerB', 0, null, 'Total number of context switches per second (cswch/s)', 100, '#8085e9', getGenericData(sectionKey, cswchCol));
       window.hideBlock?.('D');
-    } else {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
     }
 
     const intrHeader = grepHeader('INTR');
@@ -524,13 +493,9 @@ function renderProcesses() {
   }
 
   if (os === 'AIX') {
-    const header = grepHeader('proc-sz');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('proc-sz');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const procCol = headerColumnIndex(header, 'proc-sz');
     const inodCol = headerColumnIndex(header, 'inod-sz');
     const fileCol = headerColumnIndex(header, 'file-sz');
@@ -557,13 +522,9 @@ function renderSwapping() {
   const os = window.getOS?.();
 
   if (os === 'LINUX') {
-    const header = grepHeader('pswpin/s');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('pswpin/s');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const inCol = headerColumnIndex(header, 'pswpin/s');
     const outCol = headerColumnIndex(header, 'pswpout/s');
     window.printChart?.('containerA', 0, null, 'Total number of swap pages the system brought in per second (pswpin/s)', null, '#55BF3B', getGenericData(sectionKey, inCol));
@@ -608,13 +569,9 @@ function renderPaging() {
   }
 
   if (os === 'AIX') {
-    const header = grepHeader('slots');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('slots');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const slotsCol = headerColumnIndex(header, 'slots');
     const cycleCol = headerColumnIndex(header, 'cycle/s');
     const faultCol = headerColumnIndex(header, 'fault/s');
@@ -668,13 +625,9 @@ function renderIO() {
   const os = window.getOS?.();
 
   if (os === 'LINUX') {
-    const header = grepHeader('tps');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('tps');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const tpsCol = headerColumnIndex(header, 'tps');
     const rtpsCol = headerColumnIndex(header, 'rtps');
     const wtpsCol = headerColumnIndex(header, 'wtps');
@@ -695,13 +648,9 @@ function renderIO() {
   }
 
   if (os === 'AIX') {
-    const header = grepHeader('bread/s');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('bread/s');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const breadCol = headerColumnIndex(header, 'bread/s');
     const bwritCol = headerColumnIndex(header, 'bwrit/s');
     const lreadCol = headerColumnIndex(header, 'lread/s');
@@ -755,13 +704,9 @@ function renderFile() {
   if (os === 'LINUX') return;
 
   if (os === 'AIX') {
-    const header = grepHeader('iget/s');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('iget/s');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const igetCol = headerColumnIndex(header, 'iget/s');
     const lookuppnCol = headerColumnIndex(header, 'lookuppn/s');
     const dirblkCol = headerColumnIndex(header, 'dirblk/s');
@@ -776,13 +721,9 @@ function renderFile() {
   }
 
   if (os === 'SUNOS') {
-    const header = grepHeader('iget/s');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('iget/s');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const igetCol = headerColumnIndex(header, 'iget/s');
     const nameiCol = headerColumnIndex(header, 'namei/s');
     const dirblkCol = headerColumnIndex(header, 'dirblk/s');
@@ -804,13 +745,9 @@ function renderTTY() {
   if (os === 'LINUX') return;
 
   if (os === 'AIX' || os === 'SUNOS') {
-    const header = grepHeader('rawch/s');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('rawch/s');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const rawchCol = headerColumnIndex(header, 'rawch/s');
     const canchCol = headerColumnIndex(header, 'canch/s');
     const outchCol = headerColumnIndex(header, 'outch/s');
@@ -840,13 +777,9 @@ function renderSysCalls() {
   if (os === 'LINUX') return;
 
   if (os === 'AIX' || os === 'SUNOS') {
-    const header = grepHeader('scall/s');
-    if (header === null) {
-      window.showBlock?.('M');
-      showNotes('M', 'No data found');
-      return;
-    }
-    const sectionKey = headerSectionKey(header);
+    const section = requireSection('scall/s');
+    if (!section) return;
+    const { header, sectionKey } = section;
     const scallCol = headerColumnIndex(header, 'scall/s');
     const sreadCol = headerColumnIndex(header, 'sread/s');
     const swritCol = headerColumnIndex(header, 'swrit/s');
@@ -879,13 +812,9 @@ function renderSockets() {
   const os = window.getOS?.();
   if (os !== 'LINUX') return;
 
-  const header = grepHeader('totsck');
-  if (header === null) {
-    window.showBlock?.('M');
-    showNotes('M', 'No data found');
-    return;
-  }
-  const sectionKey = headerSectionKey(header);
+  const section = requireSection('totsck');
+  if (!section) return;
+  const { header, sectionKey } = section;
   const totsckCol = headerColumnIndex(header, 'totsck');
   const ipFragCol = headerColumnIndex(header, 'ip-frag');
   const tcpsckCol = headerColumnIndex(header, 'tcpsck');
@@ -1010,8 +939,7 @@ export function ChartRouterBridge() {
     // getDevices / getInterfaceTraffic / getInterfaceErrors has been
     // removed, so there's no longer a late-loading script to race. The
     // nav links this routes are Preact-rendered and present at mount, so
-    // install directly. (takeOverClick's clone-and-replace is now belt-
-    // and-braces — there are no prior listeners to drop — but harmless.)
+    // install directly with a plain addEventListener (see takeOverClick).
     install();
   }, []);
 

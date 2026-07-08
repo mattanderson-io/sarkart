@@ -192,9 +192,17 @@ export function grepHeaders(pattern: string): string | -1 {
   return match ?? -1;
 }
 
-/** Legacy `displayTitle(title)`. */
+/**
+ * Legacy `displayTitle(title)`.
+ *
+ * Prefers the global `window.chartPage` when present so the caller gets the
+ * `legacyUi` fast-path wrapper (which avoids the footer-flash on CPU-core
+ * switches); falls back to the raw local `chartPage` when the global has not
+ * been installed (e.g. in isolation/tests). This lets `ChartRouterBridge`
+ * share this one implementation instead of keeping its own copy.
+ */
 export function displayTitle(title: string) {
-  chartPage();
+  (window.chartPage ?? chartPage)();
   const hostname = getHostname();
   const pageTitle = document.getElementById('pageTitle');
   const pageName = document.getElementById('pageName');
