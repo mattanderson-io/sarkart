@@ -402,7 +402,7 @@ function renderInterfaceTrafficList(key: string) {
       { name: 'Total number of packets received per second (rxpck/s)', data: currentSeries.rxpck[index] },
       { name: 'Total number of packets transmitted per second (txpck/s)', data: currentSeries.txpck[index] }
     ]);
-    window.printMultiChart?.('containerB', `Total number of kilobytes received/transmitted per second on ${ifaceId}`, 'rxkB/s | txkB/s', null, [
+    window.printMultiChart?.('containerB', `Data received/transmitted per second on ${ifaceId}`, 'rxkB/s | txkB/s', null, [
       { name: 'Total number of kilobytes received per second (rxkB/s)', data: currentSeries.rxkB[index] },
       { name: 'Total number of kilobytes transmitted per second (txkB/s)', data: currentSeries.txkB[index] }
     ]);
