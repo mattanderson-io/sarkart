@@ -75,6 +75,44 @@ function takeOverClick(id: string, handler: (event: MouseEvent) => void) {
   });
 }
 
+/**
+ * Shared renderer for the sidebar's per-id submenu lists (devices, interface
+ * traffic, interface errors). Renders one `<li><a data-sns=index>` per id and
+ * attaches a single delegated click listener that routes the picked index to
+ * `onSelect`. The current series for each list lives in a module map keyed by
+ * `listId` (rather than being closed over) so a re-render after a date-filter
+ * change is picked up without re-binding the listener — the reason the three
+ * renderers previously each kept their own `*ListState` holder. Collapses those
+ * three near-identical bodies into one.
+ */
+const idListSeriesByList = new Map<string, { ids: string[] }>();
+
+function renderIdListNav<S extends { ids: string[] }>(
+  listId: string,
+  series: S,
+  onSelect: (index: number, series: S) => void
+) {
+  idListSeriesByList.set(listId, series);
+  const list = document.getElementById(listId);
+  if (!list) return;
+
+  list.innerHTML = series.ids.map((id, index) => (
+    `<li><a href="#" data-sns="${index}"><i class="submenu-dot" aria-hidden="true"></i>${id}</a></li>`
+  )).join('');
+
+  if (list.dataset.sarkartRouted === 'true') return;
+  list.dataset.sarkartRouted = 'true';
+
+  list.addEventListener('click', (event) => {
+    const link = (event.target as Element | null)?.closest?.('a') as HTMLAnchorElement | null;
+    const current = idListSeriesByList.get(listId) as S | undefined;
+    if (!link || !current) return;
+    event.preventDefault();
+    window.chartPage?.();
+    onSelect(Number(link.dataset.sns || 0), current);
+  });
+}
+
 // -- CPU ----------------------------------------------------------------
 
 function renderCpuChart(coreId: string) {
@@ -190,33 +228,9 @@ function renderLoad() {
 
 // -- Devices ----------------------------------------------------------------
 
-const deviceListState: { series: ReturnType<typeof getDeviceSeries> | null } = { series: null };
-
 function renderDeviceList(key: string) {
-  const series = getDeviceSeries(key);
-  deviceListState.series = series;
-  const list = document.getElementById('ulDev');
-  if (!list) return;
-
-  list.innerHTML = series.ids.map((id, index) => (
-    `<li><a href="#" data-sns="${index}"><i class="submenu-dot" aria-hidden="true"></i>${id}</a></li>`
-  )).join('');
-
-  if (list.dataset.sarkartRouted === 'true') return;
-  list.dataset.sarkartRouted = 'true';
-
-  // Reads `deviceListState.series` (not the `series` closed over above) so
-  // a later re-render (e.g. after a date filter change swaps in fresh
-  // data) is reflected even though this listener is only attached once.
-  list.addEventListener('click', (event) => {
-    const link = (event.target as Element | null)?.closest?.('a') as HTMLAnchorElement | null;
-    if (!link || !deviceListState.series) return;
-    event.preventDefault();
-    window.chartPage?.();
-
-    const index = Number(link.dataset.sns || 0);
-    const deviceId = deviceListState.series.ids[index];
-    const currentSeries = deviceListState.series;
+  renderIdListNav('ulDev', getDeviceSeries(key), (index, currentSeries) => {
+    const deviceId = currentSeries.ids[index];
     const hostname = window.getHostname?.() || '';
 
     const pageTitle = document.getElementById('pageTitle');
@@ -370,32 +384,8 @@ function renderMemoryAllocation() {
 
 // -- Interface Traffic / Errors ------------------------------------------
 
-const interfaceTrafficListState: { series: ReturnType<typeof getInterfaceTrafficSeries> | null } = { series: null };
-
 function renderInterfaceTrafficList(key: string) {
-  const series = getInterfaceTrafficSeries(key);
-  interfaceTrafficListState.series = series;
-  const list = document.getElementById('ulInterfaceTraffic');
-  if (!list) return;
-
-  list.innerHTML = series.ids.map((id, index) => (
-    `<li><a href="#" data-sns="${index}"><i class="submenu-dot" aria-hidden="true"></i>${id}</a></li>`
-  )).join('');
-
-  if (list.dataset.sarkartRouted === 'true') return;
-  list.dataset.sarkartRouted = 'true';
-
-  // See renderDeviceList for why this reads the shared state holder rather
-  // than closing over `series` directly (date-filter re-renders swap data
-  // in without re-attaching this listener).
-  list.addEventListener('click', (event) => {
-    const link = (event.target as Element | null)?.closest?.('a') as HTMLAnchorElement | null;
-    if (!link || !interfaceTrafficListState.series) return;
-    event.preventDefault();
-    window.chartPage?.();
-
-    const index = Number(link.dataset.sns || 0);
-    const currentSeries = interfaceTrafficListState.series;
+  renderIdListNav('ulInterfaceTraffic', getInterfaceTrafficSeries(key), (index, currentSeries) => {
     const ifaceId = currentSeries.ids[index];
 
     window.printMultiChart?.('containerA', `Packets received/transmitted per second on ${ifaceId}`, 'rxpck/s | txpck/s', null, [
@@ -419,29 +409,8 @@ function renderInterfaceTrafficList(key: string) {
   });
 }
 
-const interfaceErrorListState: { series: ReturnType<typeof getInterfaceErrorSeries> | null } = { series: null };
-
 function renderInterfaceErrorList(key: string) {
-  const series = getInterfaceErrorSeries(key);
-  interfaceErrorListState.series = series;
-  const list = document.getElementById('ulInterfaceErrors');
-  if (!list) return;
-
-  list.innerHTML = series.ids.map((id, index) => (
-    `<li><a href="#" data-sns="${index}"><i class="submenu-dot" aria-hidden="true"></i>${id}</a></li>`
-  )).join('');
-
-  if (list.dataset.sarkartRouted === 'true') return;
-  list.dataset.sarkartRouted = 'true';
-
-  list.addEventListener('click', (event) => {
-    const link = (event.target as Element | null)?.closest?.('a') as HTMLAnchorElement | null;
-    if (!link || !interfaceErrorListState.series) return;
-    event.preventDefault();
-    window.chartPage?.();
-
-    const index = Number(link.dataset.sns || 0);
-    const currentSeries = interfaceErrorListState.series;
+  renderIdListNav('ulInterfaceErrors', getInterfaceErrorSeries(key), (index, currentSeries) => {
     const ifaceId = currentSeries.ids[index];
 
     window.printMultiChart?.('containerA', `Total number of bad packets received per second on ${ifaceId}`, 'rxerr/s | txerr/s | coll/s', null, [
