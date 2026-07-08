@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
+import { ChartRouterBridge } from './ChartRouterBridge';
 import { CommandPalette } from './CommandPalette';
 import { Content } from './Content';
 import { IconSprite } from './IconSprite';

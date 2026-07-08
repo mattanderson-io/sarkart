@@ -15,6 +15,7 @@ declare global {
       purge?: (el: HTMLElement) => void;
       relayout?: (el: HTMLElement, patch: Record<string, unknown>) => void;
     };
+    printChart?: (containerId: string, yMin: number | null, yMax: number | null, yAxisTitle: string, yTickInterval: unknown, color: string, data: LegacyPoint[]) => void;
     printMultiChart?: (containerId: string, title: string, yAxisTitle: string, yTickInterval: unknown, series: LegacySeries[]) => void;
     printPieChart?: (containerId: string, value: number, color: string) => void;
     __sarkartUnitsWrapped?: boolean;
