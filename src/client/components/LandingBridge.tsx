@@ -120,6 +120,10 @@ export function LandingBridge() {
       }
 
       if (target?.closest?.('#btnSAR')) {
+        // Move the sidebar active highlight to Dashboard (this branch returns
+        // before the generic topLink active-state code below, so do it here).
+        document.querySelectorAll('#sidebar ul.sidebar-nav > li').forEach((item) => item.classList.remove('active'));
+        document.getElementById('btnSAR')?.closest('li')?.classList.add('active');
         // App.tsx's nav handler clears the page title and hides the chart
         // blocks for the dashboard; re-sync title-row visibility afterwards so
         // the (now empty) heading stays hidden, matching the initial dashboard.
