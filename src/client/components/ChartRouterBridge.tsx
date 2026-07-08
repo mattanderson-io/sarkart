@@ -439,6 +439,11 @@ function renderInterfaceTrafficList(key: string) {
       { name: 'Number of compressed packets transmitted per second (txcmp/s)', data: currentSeries.txcmp[index] },
       { name: 'Number of multicast packets received per second (rxmcst/s)', data: currentSeries.rxmcst[index] }
     ]);
+    // Only 3 charts for this category. The legacy handler never cleared
+    // slot D either, so it could show stale content left over from a
+    // previously-viewed 4-chart category (e.g. Devices) in the same
+    // session — fixed here rather than reproduced.
+    window.hideBlock?.('D');
   });
 }
 
@@ -482,6 +487,8 @@ function renderInterfaceErrorList(key: string) {
       { name: 'Number of FIFO overrun errors that happened per second on received packets (rxfifo/s)', data: currentSeries.rxfifo[index] },
       { name: 'Number of FIFO overrun errors that happened per second on transmitted packets (txfifo/s)', data: currentSeries.txfifo[index] }
     ]);
+    // See renderInterfaceTrafficList — only 3 charts for this category.
+    window.hideBlock?.('D');
   });
 }
 
