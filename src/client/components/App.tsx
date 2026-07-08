@@ -3,6 +3,7 @@ import { ChartRouterBridge } from './ChartRouterBridge';
 import { CommandPalette } from './CommandPalette';
 import { CoreEngineBridge } from './CoreEngineBridge';
 import { Content } from './Content';
+import { FileUploadBridge } from './FileUploadBridge';
 import { IconSprite } from './IconSprite';
 import { LandingBridge } from './LandingBridge';
 import { LegacyScripts } from './LegacyScripts';
@@ -61,6 +62,7 @@ export function App() {
       <CommandPalette />
       <CoreEngineBridge />
       <ChartRouterBridge />
+      <FileUploadBridge />
       <LandingBridge />
       <NetworkUnitBridge />
       <PdfExportBridge />
