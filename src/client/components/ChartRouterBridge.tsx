@@ -398,7 +398,7 @@ function renderInterfaceTrafficList(key: string) {
     const currentSeries = interfaceTrafficListState.series;
     const ifaceId = currentSeries.ids[index];
 
-    window.printMultiChart?.('containerA', `Total number of packets received/transmitted per second on ${ifaceId}`, 'rxpck/s | txpck/s', null, [
+    window.printMultiChart?.('containerA', `Packets received/transmitted per second on ${ifaceId}`, 'rxpck/s | txpck/s', null, [
       { name: 'Total number of packets received per second (rxpck/s)', data: currentSeries.rxpck[index] },
       { name: 'Total number of packets transmitted per second (txpck/s)', data: currentSeries.txpck[index] }
     ]);
