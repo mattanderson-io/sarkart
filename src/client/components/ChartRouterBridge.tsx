@@ -1005,21 +1005,14 @@ function install() {
 
 export function ChartRouterBridge() {
   useEffect(() => {
-    // `takeOverClick` clones each nav link to drop any previously bound
-    // jQuery click handler. sarkart-v1.0.0.min.js binds its own
-    // `$("#btnCPU").click(...)` handlers (and defines window.getCPUchart /
-    // getDevices / getInterfaceTraffic / getInterfaceErrors) when IT loads,
-    // which happens asynchronously via LegacyScripts, after this effect
-    // would otherwise run. Running `install()` before that point means our
-    // clone-and-replace happens too early: the legacy script's ready
-    // handler would then bind a *second* click listener onto our already-
-    // cloned element, and its plain-function overrides would clobber ours
-    // moments after mount. Deferring to `sarkart:legacy-engine-loaded`
-    // (dispatched by LegacyScripts right after sarkart-v1.0.0.min.js
-    // resolves) guarantees we take over strictly after the legacy engine
-    // has finished binding, so only our handlers remain active.
-    window.addEventListener('sarkart:legacy-engine-loaded', install);
-    return () => window.removeEventListener('sarkart:legacy-engine-loaded', install);
+    // The legacy engine (sarkart-v1.0.0.min.js) that used to bind its own
+    // `$("#btnCPU").click(...)` handlers and define window.getCPUchart /
+    // getDevices / getInterfaceTraffic / getInterfaceErrors has been
+    // removed, so there's no longer a late-loading script to race. The
+    // nav links this routes are Preact-rendered and present at mount, so
+    // install directly. (takeOverClick's clone-and-replace is now belt-
+    // and-braces — there are no prior listeners to drop — but harmless.)
+    install();
   }, []);
 
   return null;

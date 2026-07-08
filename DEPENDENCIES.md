@@ -27,7 +27,6 @@ Loaded by the Preact shell after mount (`src/client/components/LegacyScripts.tsx
 
 | Library | File | Version | Notes |
 |---------|------|---------|-------|
-| jQuery | `jquery-4.0.0.min.js` | 4.0.0 | Required by the remaining legacy engine |
 | Bootstrap | `bootstrap.min.css`, `bootstrap.bundle.min.js` | 5.3.6 | Collapse/sidebar only; layout is `sarkart-v2.css` |
 | Plotly.js (cartesian) | `plotly-cartesian-3.5.1.min.js` | 3.5.1 | All line/pie/heatmap charts |
 | html2canvas | `html2canvas.min.js` | 1.4.1 | PDF export screenshots |
@@ -37,9 +36,10 @@ Loaded by the Preact shell after mount (`src/client/components/LegacyScripts.tsx
 
 | Module | Purpose |
 |--------|---------|
-| `sarkart-v1.0.0.min.js` | Remaining legacy chart data helpers + navigation engine (minified upstream) |
+| Preact `CoreEngineBridge` + `sarEngine` | Core navigation/engine primitives (showBlock, chartPage, homePage, server info) — replaces `sarkart-v1.0.0.min.js` |
 | Preact `SarDataBridge` + `sarParser` / `sarStore` | Chunked parser, typed SAR data store, legacy global mirror, dashboard bootstrap |
-| `highcharts-shim.js` | Load-order stub before Plotly overrides |
+| Preact `ChartRouterBridge` + `sarData` | Chart category routing + typed chart data helpers — replaces the legacy engine's chart plumbing |
+| Preact `FileUploadBridge` | Drag-and-drop + browse upload pipeline — replaces the legacy `makeDroppable` / `getAsText` |
 | `plotly-charts.js` | Plotly replacements for `printChart` / `printMultiChart` / `printPieChart` |
 | Preact `NetworkUnitBridge` | Interface traffic unit selector (KB/s, Mbps, Gbps, % of link speed) |
 | `sarkart-ui.js` | Remaining legacy bridge: progress, CPU chips, sidebar, dashboard state |
@@ -62,11 +62,14 @@ These remain on disk but are **not linked** from `index.hbs` after the v2 overha
 
 | File | Notes |
 |------|-------|
+| `public/js/jquery-4.0.0.min.js` | No longer loaded by the Preact app; kept only for the `index.hbs` fallback |
 | `public/css/all.min.css` | Font Awesome 5 — still referenced by `404.hbs` only |
 | `public/css/animate.min.css` | Unused; safe to delete |
 | `public/css/sarkart-v1.0.0.min.css` | Removed in v2 |
 | `public/css/theme-override.css` | Removed in v2 |
 | `public/js/faq.js` | Removed in v2 |
+| `public/js/sarkart-v1.0.0.min.js` | **Deleted** — legacy engine fully ported to Preact bridges |
+| `public/js/highcharts-shim.js` | **Deleted** — Plotly load-order stub no longer needed |
 
 ## Security audit
 
@@ -79,6 +82,6 @@ Browser-side libraries are vendored minified files — audit separately when upg
 ## Upgrade notes
 
 - **Bootstrap 5**: Already on 5.3.x; sidebar uses `data-bs-toggle` collapse.
-- **jQuery 4**: Major bump from 3.x; keep when testing legacy engine paths after upgrades.
+- **jQuery**: No longer loaded by the Preact app. `jquery-4.0.0.min.js` remains on disk only because the Handlebars `index.hbs` fallback still references it; it can be deleted once that fallback is retired.
 - **Plotly**: Pin filename includes version; update both file and `index.hbs` cache-bust if upgrading.
 - **Font Awesome / animate.css**: Remove from `404.hbs` and delete files when the 404 page is restyled.

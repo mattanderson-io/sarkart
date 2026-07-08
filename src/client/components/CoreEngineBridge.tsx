@@ -25,16 +25,13 @@ import {
  * progressBarReset, chartPage, homePage, getOS, getHostname, getKernel,
  * getServerInfo, grepHeaders, displayTitle.
  *
- * Load-order hazard: `sarkart-v1.0.0.min.js` defines these same names as
- * plain global `function` statements. Because LegacyScripts loads that file
- * asynchronously *after* this component's mount effect has already run,
- * the legacy script would silently clobber whatever we install here the
- * moment it finishes loading. `LegacyScripts` fires
- * `sarkart:legacy-engine-loaded` synchronously right after that script
- * resolves (and before the next script in the chain, `sarkart-ui.js`,
- * loads) — we re-install on that event so our versions win, and
- * `sarkart-ui.js`'s `wrapUpdateProgress`/`wrapChartPage` end up wrapping
- * the Preact versions rather than the legacy ones.
+ * (Historically these were installed both on mount AND again on a
+ * `sarkart:legacy-engine-loaded` event, because sarkart-v1.0.0.min.js
+ * defined the same names as plain global `function` statements and would
+ * clobber our versions when it loaded late. That engine has since been
+ * deleted, so a single install on mount is enough. sarkart-ui.js's
+ * `wrapUpdateProgress`/`wrapChartPage` still wrap whatever
+ * window.updateProgress/chartPage exist when it loads — now always ours.)
  */
 function install() {
   resetOsCache();
@@ -57,9 +54,11 @@ function install() {
 
 export function CoreEngineBridge() {
   useEffect(() => {
+    // The legacy engine (sarkart-v1.0.0.min.js) that used to define — and
+    // clobber — these globals has been removed, so a single install on
+    // mount is sufficient; there's no longer a late-loading script to
+    // re-assert against.
     install();
-    window.addEventListener('sarkart:legacy-engine-loaded', install);
-    return () => window.removeEventListener('sarkart:legacy-engine-loaded', install);
   }, []);
 
   return null;

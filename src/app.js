@@ -53,10 +53,6 @@ app.use('/js/plotly-cartesian-3.5.1.min.js', express.static(path.join(publicDirP
   maxAge: '1y',
   immutable: true
 }))
-app.use('/js/sarkart-v1.0.0.min.js', express.static(path.join(publicDirPath, 'js/sarkart-v1.0.0.min.js'), {
-  maxAge: '1y',
-  immutable: true
-}))
 
 app.use('/assets', express.static(path.join(distDirPath, 'assets'), {
   maxAge: '1y',

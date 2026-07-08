@@ -1,4 +1,5 @@
 import { useEffect } from 'preact/hooks';
+import { getGenericData } from '../lib/sarData';
 import { parseSarTextChunked } from '../lib/sarParser';
 import { filterSarDataByDates, setSarData } from '../lib/sarStore';
 
@@ -92,33 +93,15 @@ function configureDateFilter() {
   }
 }
 
-/**
- * `sarkart-v1.0.0.min.js` binds its own `$("#dateFilterMode").change(...)`
- * and `$("#dateFilterApply").click(...)` handlers (calling the legacy
- * `_dateFilterRefresh` by name) when it loads. Since that happens
- * asynchronously after this component mounts, simply calling
- * `addEventListener` here would leave both handler sets attached —
- * the same double-handler hazard fixed for ChartRouterBridge's nav
- * takeovers. Clone-and-replace before attaching our listeners so any
- * legacy binding (present or not-yet-added) is dropped.
- */
-function takeOverElement<T extends HTMLElement>(id: string): T | null {
-  const el = document.getElementById(id) as T | null;
-  if (!el) return null;
-  const clone = el.cloneNode(true) as T;
-  el.replaceWith(clone);
-  return clone;
-}
-
 function wireDateFilter() {
   if (window.__sarkartPreactDateFilter) return;
   window.__sarkartPreactDateFilter = true;
 
-  const mode = takeOverElement<HTMLSelectElement>('dateFilterMode');
+  const mode = document.getElementById('dateFilterMode') as HTMLSelectElement | null;
   const start = document.getElementById('dateFilterStart') as HTMLSelectElement | null;
   const end = document.getElementById('dateFilterEnd') as HTMLSelectElement | null;
   const sep = document.getElementById('dateFilterRangeSep');
-  const apply = takeOverElement<HTMLButtonElement>('dateFilterApply');
+  const apply = document.getElementById('dateFilterApply') as HTMLButtonElement | null;
   if (!mode || !start || !end || !sep || !apply) return;
 
   const syncMode = () => {
@@ -187,13 +170,13 @@ async function dateFilterRefresh(dates: string[] | null, info: string) {
   updatePeakCpu();
 
   await delay(0);
-  window.getGenericData?.('runq-sz-plist-sz', 1, 'no', '#peakLoad');
+  getGenericData('runq-sz-plist-sz', 1, '#peakLoad');
   const memoryHeader = window.grepHeaders?.('kbmemfree');
   if (memoryHeader && memoryHeader !== -1) {
     const cols = memoryHeader.split(',');
     const key = cols.slice(0, 2).join('-');
     const memoryIndex = cols.indexOf('%memused') + 1;
-    window.getGenericData?.(key, memoryIndex, 'no', '#peakMemory');
+    getGenericData(key, memoryIndex, '#peakMemory');
   }
 
   await delay(0);
@@ -303,15 +286,15 @@ async function initializeDashboard() {
 
     window.updateProgress?.(92, 'Calculating peak values...');
     updatePeakCpu();
-    window.getGenericData?.('runq-sz-plist-sz', 1, 'no', '#peakLoad');
+    getGenericData('runq-sz-plist-sz', 1, '#peakLoad');
     const memoryHeader = window.grepHeaders?.('kbmemfree');
     if (memoryHeader && memoryHeader !== -1) {
       const cols = memoryHeader.split(',');
       const key = cols.slice(0, 2).join('-');
       const memoryIndex = cols.indexOf('%memused') + 1;
-      window.getGenericData?.(key, memoryIndex, 'no', '#peakMemory');
+      getGenericData(key, memoryIndex, '#peakMemory');
     }
-    window.getGenericData?.('kbswpfree-kbswpused', 3, 'no', '#peakIO');
+    getGenericData('kbswpfree-kbswpused', 3, '#peakIO');
 
     window.updateProgress?.(95, 'Loading devices & interfaces...');
     window.getDevices?.('DEV-tps', 'no', null);
@@ -372,11 +355,10 @@ export function SarDataBridge() {
   window.sarkartProcessPendingData = processPendingResult;
 
   useEffect(() => {
-    // Deferred until after sarkart-v1.0.0.min.js loads (see wireDateFilter's
-    // doc comment) — cloning-and-replacing at mount time wouldn't help
-    // since the legacy script binds its own handlers on whatever element
-    // exists *when it loads*, which happens after this effect runs.
-    window.addEventListener('sarkart:legacy-engine-loaded', wireDateFilter);
+    // The legacy engine that used to bind its own #dateFilterMode/
+    // #dateFilterApply handlers has been removed, so wire directly on
+    // mount — no late-loading script to race against anymore.
+    wireDateFilter();
 
     const onClick = (event: MouseEvent) => {
       const target = event.target as Element | null;
@@ -401,7 +383,6 @@ export function SarDataBridge() {
     }
 
     return () => {
-      window.removeEventListener('sarkart:legacy-engine-loaded', wireDateFilter);
       document.removeEventListener('click', onClick);
       processObserver?.disconnect();
       if (window.sarkartProcessPendingData === processPendingResult) delete window.sarkartProcessPendingData;

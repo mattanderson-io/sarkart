@@ -69,57 +69,19 @@ function handleFileSelected(file: File) {
 }
 
 /**
- * `sarkart-v1.0.0.min.js` calls `makeDroppable(document.querySelector(
- * '.sar-file-uploader'), ...)` in its own `$(document).ready` block, which
- * attaches its own dragover/dragleave/drop/click listeners (plus its own
- * hidden `<input type=file>` child) to this same element — the same
- * double-handler hazard fixed for chart nav takeovers and the date filter
- * UI. Must be called via `deferredInstall` below, after that binding has
- * happened (see its doc comment for the exact ordering).
+ * Wires drag-and-drop and click-to-browse on `.sar-file-uploader`, plus a
+ * hidden `<input type=file>` for the browse path. The legacy engine's
+ * `makeDroppable` that used to own this (and the elaborate clone-and-race
+ * dance previously needed to take over from it) has been removed, so this
+ * installs cleanly on mount.
  *
- * `.sar-file-uploader` can't be cloned-and-replaced wholesale like the nav
- * links: it contains `#btnProcessData`, whose "Process data" click
- * handler is a real Preact `onClick` prop (an actual DOM listener Preact
- * attaches directly to that node, not something jQuery bound). Cloning
- * the subtree would silently drop that listener along with the legacy
- * one. So `#btnProcessData` is detached before cloning and reattached
- * (as the *original*, Preact-owned node — not a clone) to the new
- * dropzone afterward, dropping the legacy engine's listeners on every
- * other part of the subtree while preserving Preact's on this one.
+ * The click handler skips events targeting `#btnProcessData` (a Preact-
+ * owned button nested inside the dropzone with its own onClick) so opening
+ * the file picker never swallows the "Process data" click.
  */
-function install() {
-  const existing = document.querySelector<HTMLElement>('.sar-file-uploader');
-  if (!existing || existing.dataset.sarkartRouted === 'true') return;
-
-  const processButton = existing.querySelector('#btnProcessData');
-  const processButtonParent = processButton?.parentElement ?? null;
-  const processButtonNextSibling = processButton?.nextSibling ?? null;
-  if (processButton) processButton.remove();
-
-  const dropzone = existing.cloneNode(true) as HTMLElement;
-  existing.replaceWith(dropzone);
+function install(dropzone: HTMLElement) {
+  if (dropzone.dataset.sarkartRouted === 'true') return;
   dropzone.dataset.sarkartRouted = 'true';
-
-  if (processButton && processButtonParent) {
-    // processButtonParent is a node from the OLD subtree (now detached);
-    // find its counterpart in the new clone by id chain would be
-    // overkill — #progressContainer is unique enough to re-locate directly.
-    const newParent = dropzone.querySelector('#progressContainer');
-    if (newParent) {
-      const before = processButtonNextSibling && newParent.contains(processButtonNextSibling)
-        ? processButtonNextSibling
-        : null;
-      newParent.insertBefore(processButton, before);
-    }
-  }
-
-  // By the time this runs, makeDroppable has typically already executed
-  // (its $(document).ready callback fires synchronously once the script
-  // finishes evaluating, before this component's 'legacy-engine-loaded'
-  // handler runs) and appended its own hidden <input type=file> to the
-  // original dropzone. cloneNode(true) above copied that input along
-  // with everything else — strip it so only our own input remains.
-  dropzone.querySelectorAll('input[type="file"]').forEach((el) => el.remove());
 
   const input = document.createElement('input');
   input.type = 'file';
@@ -156,30 +118,13 @@ function install() {
   });
 }
 
-function deferredInstall() {
-  // sarkart-v1.0.0.min.js's `$(document).ready(fn)` call, made while
-  // document.readyState is already "complete" (LegacyScripts injects it
-  // well after page load), defers `fn` — which includes the
-  // makeDroppable(...) call — via a macrotask (jQuery's ready mechanism
-  // falls back to setTimeout in that case). That macrotask is scheduled
-  // synchronously during the script's evaluation, i.e. strictly *before*
-  // the script's `onload` fires. Our `sarkart:legacy-engine-loaded`
-  // listener runs off that same `onload`, so calling install() directly
-  // from it would run *before* makeDroppable — cloning the dropzone too
-  // early and leaving the legacy listeners to bind onto our clone
-  // afterward. Wrapping in our own setTimeout here registers a macrotask
-  // *after* jQuery's already-queued one, so it reliably runs once
-  // makeDroppable has finished binding to the original element — which
-  // install()'s clone-and-replace then discards. Verified empirically:
-  // without this wrapper the cloned dropzone ends up with two file
-  // inputs (ours + the legacy one bound after our clone).
-  window.setTimeout(install, 0);
-}
-
 export function FileUploadBridge() {
   useEffect(() => {
-    window.addEventListener('sarkart:legacy-engine-loaded', deferredInstall);
-    return () => window.removeEventListener('sarkart:legacy-engine-loaded', deferredInstall);
+    const dropzone = document.querySelector<HTMLElement>('.sar-file-uploader');
+    if (dropzone) install(dropzone);
+    return () => {
+      if (dropzone) delete dropzone.dataset.sarkartRouted;
+    };
   }, []);
 
   return null;
