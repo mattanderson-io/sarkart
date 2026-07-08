@@ -9,7 +9,7 @@
     "start": "node src/ensure-build.js && node src/index.js",
     "dev": "vite --host 0.0.0.0",
     "dev:server": "nodemon src/index.js -e js,hbs,html,tsx,ts",
-    "test": "echo \"Error: no test specified\" && exit 0"
+    "test": "node --test --disable-warning=MODULE_TYPELESS_PACKAGE_JSON test/*.test.ts"
   },
   "keywords": [],
   "author": "",

@@ -76,14 +76,17 @@ Upload the resulting `.txt` file to SARkart.
 ## Development
 
 ```bash
-npm run dev       # Vite dev server for the Preact app
-npm run build     # production Preact bundle in ./dist
-npm run dev:server # Express server fallback / 404 development
+npm run dev        # Vite dev server for the Preact app
+npm run build      # production Preact bundle in ./dist
+npm run dev:server # Express server (serves ./dist; renders 404.hbs for misses)
+npm test           # fixture-based regression tests (Node's built-in runner)
 ```
 
-The main app shell is rendered by Preact. The existing SAR parser, Plotly bridge,
-PDF export, and remaining UI bridge scripts are loaded after the Preact shell
-mounts so the legacy DOM IDs/classes remain stable during the migration.
+The app is Preact/Vite/TypeScript end to end. Express serves the built
+`dist/index.html`; only vendored libraries load at runtime (Plotly, html2canvas,
+jsPDF) plus `bootstrap.min.css` for a few utility classes. `npm test` runs the
+data-layer regression suite in `test/` (parses the bundled sample SAR file and
+asserts the parsed metrics) — no test dependencies required.
 
 ### Benchmarks & smoke tests
 

@@ -78,6 +78,19 @@ These remain on disk but are **not linked** from the Preact app shell:
 | `templates/views/index.hbs` + `partials/{icons,sidebar,content,footer}.hbs` | **Deleted** — Handlebars app shell retired; `dist/index.html` (Preact) is the only entry point |
 | `public/js/{network-units,sar-chunked-parser,export-pdf,landing,ai-summary,heatmap}.js` | **Deleted** — orphaned once `index.hbs` was retired; superseded by the Preact `NetworkUnitBridge` / `sarParser` / `PdfExportBridge` / `LandingBridge` / `AiSummary` / `HeatmapDashboard` |
 
+## Testing
+
+Fixture-based regression tests live in `test/` and run on Node's built-in test
+runner with native TypeScript type-stripping — **no test dependencies** (`npm test`,
+which runs `node --test test/*.test.ts`). `test/regression.test.ts` parses the
+bundled `public/sample/sample-sar.txt` through the real `parseSarTextChunked`
+and locks in the data-layer output the dashboard renders: server metadata, the
+18 parsed section keys, peak CPU/load/memory (15/44/5), CPU/device/interface
+counts (65/11/11), representative series shape, and `sarStore` date filtering.
+
+The suite lives outside `src/client`, so it is excluded from the Vite build and
+the app's `tsc` typecheck and needs no `@types/node`.
+
 ## Security audit
 
 As of July 2026 (`npm audit`):
