@@ -57,7 +57,13 @@ function ChartBlock({ blockClass, containerId, titleId, notesId, head = true }: 
         {head ? (
           <div className="chart-head is-empty">
             <h3 className="chart-heading" />
-            <p className="chart-subtitle" />
+            <div className="chart-head-tools">
+              <p className="chart-subtitle" />
+              <button type="button" className="chart-info-btn" hidden aria-expanded="false" aria-label="What does this chart show?" title="What does this chart show?">
+                <svg className="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10" /><path d="M12 16v-4" /><path d="M12 8h.01" /></svg>
+              </button>
+              <div className="chart-info-pop" role="tooltip" hidden />
+            </div>
           </div>
         ) : (
           <h5 className="container-title" id={titleId}>&nbsp;</h5>
@@ -140,18 +146,18 @@ function TopBar() {
           <svg className="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M21 21l-4.3-4.3" /></svg>
           <kbd>⌘K</kbd>
         </a>
-        <a href="#" className="top-bar-btn toolbar-post-upload" id="btnExportPDF" title="Export PDF report" onClick={(event) => {
-          event.preventDefault();
-          void window.sarkartGeneratePDFReport?.();
-        }}>
-          <svg className="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
-          Export PDF
-        </a>
         <div className="top-bar-menu toolbar-post-upload">
           <button type="button" className="top-bar-btn top-bar-menu-btn" id="btnTopMenu" aria-haspopup="menu" aria-expanded="false" aria-controls="topBarMenuPanel" title="Menu">
             <svg className="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16" /></svg>
           </button>
           <div className="top-bar-menu-panel" id="topBarMenuPanel" role="menu" hidden>
+            <a href="#" className="top-bar-menu-item" id="btnExportPDF" role="menuitem" title="Export PDF report" onClick={(event) => {
+              event.preventDefault();
+              void window.sarkartGeneratePDFReport?.();
+            }}>
+              <svg className="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
+              Export PDF
+            </a>
             <a href="#" className="top-bar-menu-item" id="btnOpenAnother" role="menuitem" title="Open another SAR file">
               <svg className="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="17 8 12 3 7 8" /><line x1="12" y1="3" x2="12" y2="15" /></svg>
               Open file

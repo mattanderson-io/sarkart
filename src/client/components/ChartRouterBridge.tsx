@@ -11,7 +11,8 @@ import {
   headerColumnIndex,
   headerSectionKey
 } from '../lib/sarData';
-import { displayTitle, getHostname, hideBlock, showBlock, showNotes } from '../lib/sarEngine';
+import { displayTitle, getHostname, hideBlock, setChartInfo, setChartInfos, showBlock, showNotes } from '../lib/sarEngine';
+import { chartInfo } from '../lib/metricInfo';
 
 /**
  * Chunk 1 of the Preact chart migration: takes every chart category's
@@ -122,6 +123,13 @@ function renderCpuChart(coreId: string) {
   window.printChart?.('containerB', 0, null, `Percentage of CPU-${coreId} utilization at the user level with nice priority (%nice)`, null, '#527bad', getCPU(coreId, 3));
   window.printChart?.('containerC', 0, 100, `Percentage of time that the CPU-${coreId} were idle with outstanding disk I/O request (%iowait)`, 10, '#DF5353', getCPU(coreId, 5));
   hideBlock('D');
+
+  const scope = coreId === 'all' ? 'all cores combined' : `core ${coreId}`;
+  setChartInfos({
+    A: chartInfo(`How busy the CPU (${scope}) is running normal application code, as a percentage of its total capacity.`, ['%usr']),
+    B: chartInfo(`Application CPU time (${scope}) that came from low-priority "niced" programs.`, ['%nice']),
+    C: chartInfo(`How often the CPU (${scope}) was idle only because it was waiting on storage.`, ['%iowait'], 'High %iowait usually means slow storage, not a lack of CPU. Note: %usr, %nice and %iowait are three slices of the same 100%; the remaining time is system, idle, and other categories not charted here.')
+  });
 }
 
 // -- Load -----------------------------------------------------------------
@@ -150,6 +158,13 @@ function renderLoad() {
   } else {
     hideBlock('D');
   }
+
+  setChartInfos({
+    A: chartInfo('How many tasks are ready to run but waiting for a free CPU at each sample.', ['runq-sz'], 'Compare against the CPU core count: a run queue that stays above your core count means the machine is CPU-bound.'),
+    B: chartInfo('The classic Unix "load average" over three time windows, so you can tell a brief spike from sustained pressure.', ['ldavg-1', 'ldavg-5', 'ldavg-15'], 'Rule of thumb: a load average roughly equal to the number of CPU cores means fully loaded; well above it means work is backing up.'),
+    C: chartInfo('The total number of tasks (processes and threads) present on the system.', ['plist-sz']),
+    D: blockedCol > 1 ? chartInfo('Tasks stuck waiting for I/O to finish before they can run.', ['blocked'], 'A steady stream of blocked tasks usually points to a storage or network bottleneck.') : null
+  });
 }
 
 // -- Devices ----------------------------------------------------------------
@@ -159,35 +174,45 @@ function renderDeviceList(key: string) {
     const deviceId = currentSeries.ids[index];
     const hostname = getHostname();
 
+    const sectors = currentSeries.throughputUnit === 'sectors';
+
     const pageTitle = document.getElementById('pageTitle');
     if (pageTitle) pageTitle.textContent = `Block Transfer on ${deviceId} for ${hostname}`;
-    const titleA = document.getElementById('containerATitle');
-    if (titleA) titleA.textContent = 'Total number of transfers per second that were issued to physical devices';
-    const titleB = document.getElementById('containerBTitle');
-    if (titleB) titleB.textContent = 'Number of sectors read/written from/to the device';
-    showNotes('B', 'The size of a sector is 512 bytes');
-    const titleC = document.getElementById('containerCTitle');
-    if (titleC) titleC.textContent = 'Average size/queue length for I/O requests that were issued to the device';
-    const titleD = document.getElementById('containerDTitle');
-    if (titleD) titleD.textContent = 'Average time/service-time/utilization for I/O requests that were issued to the device';
-    showNotes('D', '%util - Device saturation occurs when this value is close to 100%');
 
     window.printMultiChart?.('containerA', `Transfers per second to ${deviceId}`, 'tps/s', null, [
-      { name: 'tps/s', data: currentSeries.tps[index] }
+      { name: 'I/O transfers per second (tps)', data: currentSeries.tps[index] }
     ]);
-    window.printMultiChart?.('containerB', `Number of sectors read/written from/to to ${deviceId}`, 'rd_sec/wr_sec /s', null, [
-      { name: 'rd_sec /s', data: currentSeries.readSectors[index] },
-      { name: 'wr_sec /s', data: currentSeries.writeSectors[index] }
+
+    const readWriteTitle = sectors
+      ? `Sectors read/written per second on ${deviceId}`
+      : `Data read/written per second on ${deviceId}`;
+    window.printMultiChart?.('containerB', readWriteTitle, sectors ? 'rd_sec/s | wr_sec/s' : 'rkB/s | wkB/s', null, [
+      { name: sectors ? 'Sectors read per second (rd_sec/s)' : 'Kilobytes read per second (rkB/s)', data: currentSeries.readSectors[index] },
+      { name: sectors ? 'Sectors written per second (wr_sec/s)' : 'Kilobytes written per second (wkB/s)', data: currentSeries.writeSectors[index] }
     ]);
-    window.printMultiChart?.('containerC', `Average size/queue length to ${deviceId}`, 'avgRq-sz/avrgqu-sz/await/svctm/%util', null, [
-      { name: 'The average size (in sectors) of the requests that were issued to the device (avrgrq-sz)', data: currentSeries.avgRqSize[index] },
-      { name: 'The average queue length of the requests that were issued to the device (avrgqu-sz)', data: currentSeries.avgQueueSize[index] }
+    if (sectors) showNotes('B', 'The size of a sector is 512 bytes');
+
+    window.printMultiChart?.('containerC', `Average request size/queue length to ${deviceId}`, sectors ? 'avgrq-sz | avgqu-sz' : 'areq-sz | aqu-sz', null, [
+      { name: 'Average size of the I/O requests issued to the device', data: currentSeries.avgRqSize[index] },
+      { name: 'Average queue length of the requests issued to the device', data: currentSeries.avgQueueSize[index] }
     ]);
-    window.printMultiChart?.('containerD', `Average time/service time/utilization to ${deviceId}`, 'avgRq-sz/avrgqu-sz/await/svctm/%util', null, [
-      { name: 'The average time [in ms] for I/O requests issued to the device to be served (await)', data: currentSeries.await[index] },
-      { name: 'The average service time [in ms] for I/O requests that were issued to the device (svctm)', data: currentSeries.serviceTime[index] },
-      { name: 'Percentage of CPU time bandwidth utilization for the device (util %)', data: currentSeries.utilPercent[index] }
-    ]);
+
+    const latencySeries = [
+      { name: 'Average request time — waiting + being served (await, ms)', data: currentSeries.await[index] }
+    ];
+    if (currentSeries.hasServiceTime) {
+      latencySeries.push({ name: 'Average device service time (svctm, ms)', data: currentSeries.serviceTime[index] });
+    }
+    latencySeries.push({ name: 'Percentage of time the device was busy (%util)', data: currentSeries.utilPercent[index] });
+    window.printMultiChart?.('containerD', `Latency and utilization for ${deviceId}`, currentSeries.hasServiceTime ? 'await / svctm / %util' : 'await / %util', null, latencySeries);
+    showNotes('D', '%util - Device saturation occurs when this value is close to 100%');
+
+    setChartInfos({
+      A: chartInfo(`How many I/O operations per second the disk device "${deviceId}" completed.`, ['dev-tps']),
+      B: chartInfo(`How much data "${deviceId}" read and wrote per second.`, ['dev-throughput']),
+      C: chartInfo(`Request size and how deep the device's I/O queue got for "${deviceId}".`, ['dev-queue']),
+      D: chartInfo(`Latency and how saturated "${deviceId}" was.`, ['dev-latency'], 'If %util sits near 100% while await climbs, this disk is the bottleneck.')
+    });
   });
 }
 
@@ -206,6 +231,13 @@ function renderMemoryFree() {
   window.printChart?.('containerB', 0, null, 'Amount of free memory available in kilobytes (kbmemfree)', 102400, '#ff0066', getGenericData(sectionKey, freeCol));
   window.printChart?.('containerC', 0, null, 'Amount of memory used as buffers by the kernel in kilobytes (kbbuffers)', 102400, '#166c7d', getGenericData(sectionKey, buffersCol));
   window.printChart?.('containerD', null, null, 'Amount of memory used to cache data by the kernel in kilobytes (kbcached)', null, '#527bad', getGenericData(sectionKey, cachedCol));
+
+  setChartInfos({
+    A: chartInfo('Truly reclaimable memory: free RAM plus the buffer and cache memory the kernel will hand back on demand. A better "how much room is left" gauge than free memory alone.', ['kbmemfree', 'kbbuffers', 'kbcached'], 'On Linux, low free memory is normal because spare RAM is used for cache. Watch this combined total instead.'),
+    B: chartInfo('RAM that is completely unused.', ['kbmemfree']),
+    C: chartInfo('RAM the kernel is using as buffers for disk blocks and filesystem metadata.', ['kbbuffers']),
+    D: chartInfo('RAM holding cached file data so repeat reads skip the disk.', ['kbcached'])
+  });
 }
 
 function renderMemoryUsage() {
@@ -225,6 +257,13 @@ function renderMemoryUsage() {
   showNotes('C', 'kbcommit - This is an estimate of how much RAM/swap is needed to guarantee that there never is out of memory.');
   window.printChart?.('containerD', null, null, 'Percentage of memory needed for current workload [RAM+swap] (%commit)', null, '#f45b5b', getGenericData(sectionKey, commitPctCol));
   showNotes('D', '%commit - This number may be greater than 100% because the kernel usually overcommits memory.');
+
+  setChartInfos({
+    A: chartInfo('Percentage of physical RAM in use.', ['%memused'], 'A high value is normal on Linux because cache and buffers count as "used". Judge real pressure by watching swap activity too.'),
+    B: chartInfo('The amount of RAM in use, in kilobytes.', ['kbmemused']),
+    C: chartInfo('How much memory the current workload has actually committed to (asked for).', ['kbcommit']),
+    D: chartInfo('Committed memory as a percentage of total RAM plus swap.', ['%commit'])
+  });
 }
 
 function renderSwapUsage() {
@@ -234,13 +273,14 @@ function renderSwapUsage() {
   const { header, sectionKey } = section;
   const freeCol = headerColumnIndex(header, 'kbswpfree');
   const usedCol = headerColumnIndex(header, 'kbswpused');
+  const cadCol = headerColumnIndex(header, 'kbswpcad');
   const usedPctCol = headerColumnIndex(header, '%swpused');
   const cadPctCol = headerColumnIndex(header, '%swpcad');
 
   window.printChart?.('containerA', 0, null, 'Amount of free swap space in kilobytes (kbswpfree)', null, '#166c7d', getGenericData(sectionKey, freeCol));
   window.printMultiChart?.('containerB', 'Amount of used swap space in kilobytes', 'kbswpused | kbswpcad ', null, [
     { name: 'Amount of used swap space in kilobytes (kbswpused)', data: getGenericData(sectionKey, usedCol) },
-    { name: 'Amount of cached swap memory in kilobytes (kbswpcad)', data: getGenericData(sectionKey, cadPctCol) }
+    { name: 'Amount of cached swap memory in kilobytes (kbswpcad)', data: getGenericData(sectionKey, cadCol) }
   ]);
   showNotes('B', "kbswpcad - This is memory that once was swapped out, is swapped back in but still also is in the swap area (if memory is needed it doesn't need to be swapped out again because it is already in the swap area. This saves I/O).");
   window.printMultiChart?.('containerC', 'Percentage of used swap space', '%swpused | %swpcad ', null, [
@@ -248,6 +288,13 @@ function renderSwapUsage() {
     { name: 'Percentage of cached swap memory of used swap space (%swpcad)', data: getGenericData(sectionKey, cadPctCol) }
   ]);
   hideBlock('D');
+
+  setChartInfos({
+    A: chartInfo('How much swap space (disk used as overflow for RAM) is still free.', ['kbswpfree']),
+    B: chartInfo('Swap space in use, plus the portion that is "cached" (kept in both RAM and swap at once).', ['kbswpused', 'kbswpcad'], 'Steadily rising used swap is a sign the system is short on RAM.'),
+    C: chartInfo('The same used and cached swap figures expressed as percentages of total swap.', ['%swpused', '%swpcad']),
+    D: null
+  });
 }
 
 // -- Interface Traffic / Errors ------------------------------------------
@@ -256,24 +303,38 @@ function renderInterfaceTrafficList(key: string) {
   renderIdListNav('ulInterfaceTraffic', getInterfaceTrafficSeries(key), (index, currentSeries) => {
     const ifaceId = currentSeries.ids[index];
 
-    window.printMultiChart?.('containerA', `Packets received/transmitted per second on ${ifaceId}`, 'rxpck/s | txpck/s', null, [
-      { name: 'Total number of packets received per second (rxpck/s)', data: currentSeries.rxpck[index] },
-      { name: 'Total number of packets transmitted per second (txpck/s)', data: currentSeries.txpck[index] }
-    ]);
-    window.printMultiChart?.('containerB', `Data received/transmitted per second on ${ifaceId}`, 'rxkB/s | txkB/s', null, [
-      { name: 'Total number of kilobytes received per second (rxkB/s)', data: currentSeries.rxkB[index] },
-      { name: 'Total number of kilobytes transmitted per second (txkB/s)', data: currentSeries.txkB[index] }
-    ]);
-    window.printMultiChart?.('containerC', `Number of compressed/multicast packets received/transmitted per second on ${ifaceId}`, 'rxcmp/s | txcmp/s | rxmcst/s', null, [
-      { name: 'Number of compressed packets received per second (rxcmp/s)', data: currentSeries.rxcmp[index] },
-      { name: 'Number of compressed packets transmitted per second (txcmp/s)', data: currentSeries.txcmp[index] },
-      { name: 'Number of multicast packets received per second (rxmcst/s)', data: currentSeries.rxmcst[index] }
-    ]);
+    // Signal to NetworkUnitBridge that these are genuine network charts, so its
+    // Mbps/Gbps unit conversion + toolbar apply here (and only here).
+    window.__sarkartNetTrafficRender = true;
+    try {
+      window.printMultiChart?.('containerA', `Packets received/transmitted per second on ${ifaceId}`, 'rxpck/s | txpck/s', null, [
+        { name: 'Total number of packets received per second (rxpck/s)', data: currentSeries.rxpck[index] },
+        { name: 'Total number of packets transmitted per second (txpck/s)', data: currentSeries.txpck[index] }
+      ]);
+      window.printMultiChart?.('containerB', `Data received/transmitted per second on ${ifaceId}`, 'rxkB/s | txkB/s', null, [
+        { name: 'Total number of kilobytes received per second (rxkB/s)', data: currentSeries.rxkB[index] },
+        { name: 'Total number of kilobytes transmitted per second (txkB/s)', data: currentSeries.txkB[index] }
+      ]);
+      window.printMultiChart?.('containerC', `Number of compressed/multicast packets received/transmitted per second on ${ifaceId}`, 'rxcmp/s | txcmp/s | rxmcst/s', null, [
+        { name: 'Number of compressed packets received per second (rxcmp/s)', data: currentSeries.rxcmp[index] },
+        { name: 'Number of compressed packets transmitted per second (txcmp/s)', data: currentSeries.txcmp[index] },
+        { name: 'Number of multicast packets received per second (rxmcst/s)', data: currentSeries.rxmcst[index] }
+      ]);
+    } finally {
+      window.__sarkartNetTrafficRender = false;
+    }
     // Only 3 charts for this category. The legacy handler never cleared
     // slot D either, so it could show stale content left over from a
     // previously-viewed 4-chart category (e.g. Devices) in the same
     // session — fixed here rather than reproduced.
     hideBlock('D');
+
+    setChartInfos({
+      A: chartInfo(`Packet rate in and out of "${ifaceId}". Watch alongside the data-rate chart: lots of tiny packets can strain a host even at low bandwidth.`, ['rxpck/s', 'txpck/s']),
+      B: chartInfo(`Actual bandwidth used by "${ifaceId}" in each direction.`, ['rxkB/s', 'txkB/s'], 'The "Display units" control above the chart switches the unit (KB/s, MB/s, Mbps, Gbps, or % of a link speed). The underlying SAR data is in kilobytes per second.'),
+      C: chartInfo(`Less common traffic on "${ifaceId}": compressed and multicast packets.`, ['rxcmp/s', 'txcmp/s', 'rxmcst/s']),
+      D: null
+    });
   });
 }
 
@@ -298,6 +359,13 @@ function renderInterfaceErrorList(key: string) {
     ]);
     // See renderInterfaceTrafficList — only 3 charts for this category.
     hideBlock('D');
+
+    setChartInfos({
+      A: chartInfo(`Transmission faults and collisions on "${ifaceId}". On a healthy modern switched network these should stay near zero.`, ['rxerr/s', 'txerr/s', 'coll/s'], 'A steady error rate usually means a physical-layer problem: bad cable, failing NIC, or a duplex mismatch.'),
+      B: chartInfo(`Packets dropped on "${ifaceId}" because buffers were full, plus carrier (link-signal) errors.`, ['rxdrop/s', 'txdrop/s', 'txcarr/s'], 'Drops often mean the host cannot keep up with traffic; carrier errors point to a flapping link.'),
+      C: chartInfo(`Low-level framing and buffer-overrun errors on "${ifaceId}".`, ['rxfram/s', 'rxfifo/s', 'txfifo/s']),
+      D: null
+    });
   });
 }
 
@@ -314,6 +382,10 @@ function renderProcesses() {
     window.printChart?.('containerA', 0, null, 'Total number of tasks created per second (proc/s)', 10, '#8d4654', getGenericData(sectionKey, procCol));
     window.printChart?.('containerB', 0, null, 'Total number of context switches per second (cswch/s)', 100, '#8085e9', getGenericData(sectionKey, cswchCol));
     hideBlock('D');
+    setChartInfos({
+      A: chartInfo('The rate at which new processes are being created.', ['proc/s'], 'Spikes can mean a fork-heavy workload — or a process crashing and restarting in a loop.'),
+      B: chartInfo('How often the CPU switched from one task to another.', ['cswch/s'], 'Very high rates can mean the system is spending more effort juggling tasks than doing useful work.')
+    });
   }
 
   const intrHeader = grepHeader('INTR');
@@ -321,6 +393,7 @@ function renderProcesses() {
     const sectionKey = headerSectionKey(intrHeader);
     const intrCol = headerColumnIndex(intrHeader, 'intr/s');
     window.printChart?.('containerC', 0, null, 'Total number of interrupts received per second (intr/s)', 100, '#55BF3B', getInterrupts(sectionKey, intrCol));
+    setChartInfo('containerC', chartInfo('Hardware interrupts serviced per second across all CPUs.', ['intr/s'], 'Interrupts are signals from devices (network cards, disks, timers) asking the CPU for attention.'));
   } else {
     hideBlock('C');
   }
@@ -339,6 +412,11 @@ function renderSwapping() {
   window.printChart?.('containerB', 0, null, 'Total number of swap pages the system brought out per second (pswpout/s)', null, '#8085e9', getGenericData(sectionKey, outCol));
   hideBlock('C');
   hideBlock('D');
+
+  setChartInfos({
+    A: chartInfo('Memory pages read back from swap into RAM.', ['pswpin/s'], 'Swap lives on disk and is far slower than RAM. Sustained swap-in means the system is actively pulling data back off disk to run.'),
+    B: chartInfo('Memory pages written from RAM out to swap.', ['pswpout/s'], 'Sustained swap-out is a classic sign that RAM is under real pressure.')
+  });
 }
 
 // -- Paging Activity ---------------------------------------------------------
@@ -362,6 +440,13 @@ function renderPaging() {
   ]);
   window.printChart?.('containerD', 0, 100, 'Metric of efficiency of page reclaim (%vmeff)', null, '#8085e9', getGenericData('pgpgin/s-pgpgout/s', 9));
   showNotes('D', '%vmeff - Calculated as pgsteal / pgscan, this is a metric of the efficiency of page reclaim. If it is near 100% then almost every page coming off the tail of the inactive list is being reaped. If it gets too low (e.g. less than 30%) then the virtual memory is having some difficulty. This field is displayed as zero if no pages have been scanned during the interval of time.');
+
+  setChartInfos({
+    A: chartInfo('Data moved between disk and memory for normal file/program access (not swapping).', ['pgpgin/s', 'pgpgout/s'], 'This is routine activity: loading program code and reading/writing files. Do not confuse it with the Swapping charts.'),
+    B: chartInfo('Page faults — moments when a program touches memory that must first be set up or fetched.', ['fault/s', 'majflt/s'], 'Minor faults are cheap and normal. Major faults hit the disk, so a high major-fault rate slows things down.'),
+    C: chartInfo('Memory-reclaim activity: pages freed, and pages scanned looking for memory to reclaim.', ['pgfree/s', 'pgscank/s', 'pgscand/s', 'pgsteal/s'], 'Heavy scanning — especially direct scanning — is a sign the system is working hard to free memory.'),
+    D: chartInfo('How efficient that memory reclaim is.', ['%vmeff'], 'Near 100% is healthy; consistently under ~30% means the memory system is struggling.')
+  });
 }
 
 // -- Page (Linux frmpg/bufpg/campg) ------------------------------------------
@@ -372,12 +457,18 @@ function renderPage() {
   window.printChart?.('containerB', null, null, 'Number of additional memory pages used as buffers per second (bufpg/s)', null, '#8085e9', getGenericData('frmpg/s-bufpg/s', 2));
   window.printChart?.('containerC', null, null, 'Number of additional memory pages cached per second (campg/s)', 100, '#90ee7e', getGenericData('frmpg/s-bufpg/s', 3));
   hideBlock('D');
+
+  setChartInfos({
+    A: chartInfo('Net change in freed memory pages each second.', ['frmpg/s'], 'These are net values: a negative number means the system allocated more memory than it freed during the interval.'),
+    B: chartInfo('Net change in memory pages used as disk buffers each second.', ['bufpg/s']),
+    C: chartInfo('Net change in memory pages used for the file cache each second.', ['campg/s'])
+  });
 }
 
 // -- I/O ----------------------------------------------------------------
 
 function renderIO() {
-  displayTitle('IO');
+  displayTitle('I/O');
   const section = requireSection('tps');
   if (!section) return;
   const { header, sectionKey } = section;
@@ -397,6 +488,13 @@ function renderIO() {
     { name: 'Total number of write requests per second (wtps)', data: getGenericData(sectionKey, wtpsCol) }
   ]);
   hideBlock('D');
+
+  setChartInfos({
+    A: chartInfo('Total storage I/O operations per second across all devices combined. This is the whole-system view; the per-device Devices pages break it down disk by disk.', ['tps']),
+    B: chartInfo('How much data the system read from and wrote to storage per second.', ['bread/s', 'bwrtn/s']),
+    C: chartInfo('The same activity split into read versus write operations per second.', ['rtps', 'wtps']),
+    D: null
+  });
 }
 
 // -- Sockets ------------------------------------------------------------
@@ -420,6 +518,13 @@ function renderSockets() {
     { name: 'Number of RAW sockets (rawsck)', data: getGenericData(sectionKey, rawsckCol) }
   ]);
   hideBlock('D');
+
+  setChartInfos({
+    A: chartInfo('Total open network sockets across all protocols — a quick gauge of overall connection load.', ['totsck']),
+    B: chartInfo('IP packet fragments currently queued.', ['ip-frag'], 'A high count can indicate MTU or fragmentation problems on the network path.'),
+    C: chartInfo('Open sockets broken down by protocol.', ['tcpsck', 'udpsck', 'rawsck']),
+    D: null
+  });
 }
 
 // -- NFS Client / Server ------------------------------------------------
@@ -439,6 +544,13 @@ function renderNfsClient() {
     { name: "Number of 'getattr' RPC calls made per second (getatt/s)", data: getGenericData('call/s-retrans/s', 6) }
   ]);
   hideBlock('D');
+
+  setChartInfos({
+    A: chartInfo('This host acting as an NFS client: total requests it sent to NFS servers, and how many had to be retransmitted.', ['call/s', 'retrans/s'], 'Retransmits above roughly zero suggest network loss or an overloaded server.'),
+    B: chartInfo('How much of the NFS traffic is reading versus writing file data.', ['read/s', 'write/s']),
+    C: chartInfo('Metadata-style NFS calls: permission checks and attribute lookups.', ['access/s', 'getatt/s']),
+    D: null
+  });
 }
 
 function renderNfsServer() {
@@ -461,6 +573,13 @@ function renderNfsServer() {
     { name: "Number of 'write' RPC calls received per second (swrite/s)", data: getGenericData('scall/s-badcall/s', 9) }
   ]);
   hideBlock('D');
+
+  setChartInfos({
+    A: chartInfo('This host acting as an NFS server: total requests received, how many were bad, and the access/attribute calls it served.', ['scall/s', 'badcall/s', 'saccess/s', 'sgetatt/s'], 'A rising bad-request rate can indicate a misbehaving client or an authentication problem.'),
+    B: chartInfo('Inbound NFS network packets, split by transport protocol.', ['packet/s', 'udp/s', 'tcp/s']),
+    C: chartInfo('Reply-cache effectiveness plus the read/write calls served to clients.', ['hit/s', 'miss/s', 'sread/s', 'swrite/s'], 'Reply-cache hits let the server skip repeating work for duplicate requests.'),
+    D: null
+  });
 }
 
 function install() {

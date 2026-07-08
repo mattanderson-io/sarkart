@@ -70,6 +70,43 @@ export function showNotes(id: string, text: string) {
   el.textContent = text;
 }
 
+// -- Chart info popovers (the "i" button in each chart header) ---------------
+
+/**
+ * Populate (or clear) the info popover for a chart slot. Each `.chart-head`
+ * (see Content.tsx `ChartBlock`) carries an `.chart-info-btn` and a hidden
+ * `.chart-info-pop`; the click-to-toggle behaviour lives in `ChartInfoBridge`.
+ *
+ * Pass developer-authored HTML (from `metricInfo.chartInfo`) to show the
+ * button and load the popover, or `null` to hide the button and empty it.
+ * Content is reset to the closed state on every set, so switching chart
+ * categories never leaves a stale popover open.
+ */
+export function setChartInfo(containerId: string, html: string | null) {
+  const container = document.getElementById(containerId);
+  const head = container?.closest('.chart-card')?.querySelector('.chart-head');
+  if (!head) return;
+  const btn = head.querySelector<HTMLButtonElement>('.chart-info-btn');
+  const pop = head.querySelector<HTMLElement>('.chart-info-pop');
+  if (!btn || !pop) return;
+
+  if (html) {
+    pop.innerHTML = html;
+  } else {
+    pop.innerHTML = '';
+  }
+  pop.hidden = true;
+  btn.hidden = !html;
+  btn.setAttribute('aria-expanded', 'false');
+}
+
+/** Convenience: set info for the A/B/C/D chart slots in one call. */
+export function setChartInfos(map: Partial<Record<'A' | 'B' | 'C' | 'D', string | null>>) {
+  (['A', 'B', 'C', 'D'] as const).forEach((id) => {
+    if (id in map) setChartInfo(`container${id}`, map[id] ?? null);
+  });
+}
+
 // -- Page transitions (chartPage/homePage) -----------------------------------
 
 /**

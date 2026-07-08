@@ -201,26 +201,55 @@ export function uniqueIds(key: string) {
 export type DeviceSeries = {
   ids: string[];
   tps: LegacyPointList[];
+  /** Read throughput per second (kB on modern sar, 512-byte sectors on legacy). */
   readSectors: LegacyPointList[];
+  /** Write throughput per second (kB on modern sar, 512-byte sectors on legacy). */
   writeSectors: LegacyPointList[];
   avgRqSize: LegacyPointList[];
   avgQueueSize: LegacyPointList[];
   await: LegacyPointList[];
   serviceTime: LegacyPointList[];
   utilPercent: LegacyPointList[];
+  /** Unit of the read/write throughput series: 'kB' (modern) or 'sectors' (legacy). */
+  throughputUnit: 'kB' | 'sectors' | '';
+  /** Whether the source reported a service-time (svctm) column (legacy sar only). */
+  hasServiceTime: boolean;
 };
 
 /**
  * Port of the legacy `getDevices(key, table, target)`.
  * Splits a DEV-tps style section into per-device series, keyed by device id.
- * Column layout (0-indexed after the date|time field):
- *   3 tps, 4 rd_sec/s, 5 wr_sec/s, 6 avgrq-sz, 7 avgqu-sz, 8 await, 9 svctm, 10 %util
+ *
+ * Columns are resolved by NAME from the section header rather than by fixed
+ * position, so both modern and legacy sysstat layouts map correctly:
+ *   - modern  (sar -d):  tps, rkB/s, wkB/s, dkB/s, areq-sz, aqu-sz, await, %util
+ *   - legacy  (sar -d):  tps, rd_sec/s, wr_sec/s, avgrq-sz, avgqu-sz, await, svctm, %util
+ * A header token at index h corresponds to row field parts[h + 2]
+ * (parts[0] = section key, parts[1] = date|time, parts[2] = device id).
  */
 export function getDeviceSeries(key: string): DeviceSeries {
   const rows = toRows(key);
   const ids = uniqueIds(key);
   const idIndex: Record<string, number> = {};
   ids.forEach((id, index) => { idIndex[id] = index; });
+
+  const cols = (getHeaders().find((header) => headerSectionKey(header) === key) || '').split(',');
+  const dataIndex = (...names: string[]) => {
+    for (let i = 0; i < names.length; i += 1) {
+      const at = cols.indexOf(names[i]);
+      if (at >= 0) return at + 2;
+    }
+    return -1;
+  };
+
+  const tpsIdx = dataIndex('tps');
+  const readIdx = dataIndex('rkB/s', 'rd_sec/s');
+  const writeIdx = dataIndex('wkB/s', 'wr_sec/s');
+  const rqSizeIdx = dataIndex('areq-sz', 'avgrq-sz');
+  const queueIdx = dataIndex('aqu-sz', 'avgqu-sz');
+  const awaitIdx = dataIndex('await');
+  const svctmIdx = dataIndex('svctm');
+  const utilIdx = dataIndex('%util');
 
   const tps: LegacyPointList[] = ids.map(() => []);
   const readSectors: LegacyPointList[] = ids.map(() => []);
@@ -244,17 +273,32 @@ export function getDeviceSeries(key: string): DeviceSeries {
     if (time === '00:00:01') continue;
 
     const timestamp = toTimestamp(dateTime[0], time);
-    tps[deviceIndex].push([timestamp, parseFloat(parts[3])]);
-    readSectors[deviceIndex].push([timestamp, parseFloat(parts[4])]);
-    writeSectors[deviceIndex].push([timestamp, parseFloat(parts[5])]);
-    avgRqSize[deviceIndex].push([timestamp, parseFloat(parts[6])]);
-    avgQueueSize[deviceIndex].push([timestamp, parseFloat(parts[7])]);
-    awaitTime[deviceIndex].push([timestamp, parseFloat(parts[8])]);
-    serviceTime[deviceIndex].push([timestamp, parseFloat(parts[9])]);
-    utilPercent[deviceIndex].push([timestamp, parseFloat(parts[10])]);
+    if (tpsIdx >= 0) tps[deviceIndex].push([timestamp, parseFloat(parts[tpsIdx])]);
+    if (readIdx >= 0) readSectors[deviceIndex].push([timestamp, parseFloat(parts[readIdx])]);
+    if (writeIdx >= 0) writeSectors[deviceIndex].push([timestamp, parseFloat(parts[writeIdx])]);
+    if (rqSizeIdx >= 0) avgRqSize[deviceIndex].push([timestamp, parseFloat(parts[rqSizeIdx])]);
+    if (queueIdx >= 0) avgQueueSize[deviceIndex].push([timestamp, parseFloat(parts[queueIdx])]);
+    if (awaitIdx >= 0) awaitTime[deviceIndex].push([timestamp, parseFloat(parts[awaitIdx])]);
+    if (svctmIdx >= 0) serviceTime[deviceIndex].push([timestamp, parseFloat(parts[svctmIdx])]);
+    if (utilIdx >= 0) utilPercent[deviceIndex].push([timestamp, parseFloat(parts[utilIdx])]);
   }
 
-  return { ids, tps, readSectors, writeSectors, avgRqSize, avgQueueSize, await: awaitTime, serviceTime, utilPercent };
+  const throughputUnit: DeviceSeries['throughputUnit'] =
+    cols.includes('rkB/s') ? 'kB' : cols.includes('rd_sec/s') ? 'sectors' : '';
+
+  return {
+    ids,
+    tps,
+    readSectors,
+    writeSectors,
+    avgRqSize,
+    avgQueueSize,
+    await: awaitTime,
+    serviceTime,
+    utilPercent,
+    throughputUnit,
+    hasServiceTime: svctmIdx >= 0
+  };
 }
 
 export type InterfaceTrafficSeries = {

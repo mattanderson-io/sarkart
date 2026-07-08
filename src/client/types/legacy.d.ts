@@ -11,6 +11,13 @@ declare global {
     printMultiChart?: (containerId: string, title: string, yAxisTitle: string, yTickInterval: unknown, series: LegacySeries[]) => void;
     printPieChart?: (containerId: string, value: number, color: string) => void;
     __sarkartUnitsWrapped?: boolean;
+    /**
+     * Set true by ChartRouterBridge only while it renders the Interface Traffic
+     * category, so NetworkUnitBridge applies its Mbps/Gbps unit conversion to
+     * genuine network charts and never to look-alike charts from other
+     * categories (e.g. per-device disk throughput, which is also in kB/s).
+     */
+    __sarkartNetTrafficRender?: boolean;
     sarkartRefreshHeatmaps?: () => void;
     sarkartNetUnit?: {
       get: () => string;

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'preact/hooks';
 import { hideBlock } from '../lib/sarEngine';
+import { ChartInfoBridge } from './ChartInfoBridge';
 import { ChartRouterBridge } from './ChartRouterBridge';
 import { CommandPalette } from './CommandPalette';
 import { CoreEngineBridge } from './CoreEngineBridge';
@@ -87,6 +88,7 @@ export function App() {
       <UiBridge />
       <SidebarCollapse />
       <ChartRouterBridge />
+      <ChartInfoBridge />
       <FileUploadBridge />
       <LandingBridge />
       <NetworkUnitBridge />

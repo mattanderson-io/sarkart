@@ -88,7 +88,11 @@ export function NetworkUnitBridge() {
 
       const original = window.printMultiChart;
       window.printMultiChart = (containerId, title, yAxisTitle, yTickInterval, series) => {
-        if (!looksLikeNetworkBytesChart(yAxisTitle, series)) {
+        // Only convert units for genuine Interface Traffic charts. Content
+        // sniffing alone is too broad — other categories (e.g. per-device disk
+        // throughput) also report kB/s and must not be rescaled to Mbps or get
+        // the network-units toolbar. ChartRouterBridge flags the network render.
+        if (!window.__sarkartNetTrafficRender || !looksLikeNetworkBytesChart(yAxisTitle, series)) {
           return original.apply(window, [containerId, title, yAxisTitle, yTickInterval, series]);
         }
 
