@@ -8,43 +8,40 @@
  *   - System Load (runq-sz)
  *
  * Each heatmap is time-of-day (y) × date (x), colored by intensity.
- * Click any heatmap to expand it full-size in containerA.
  *
  * Triggered by a "Heatmaps" button in the sidebar.
  */
 (function () {
   'use strict';
 
-  // --- Color scales per metric ---
+  // --- Theme helpers ---
+  function cssVar(name, fallback) {
+    var v = getComputedStyle(document.documentElement).getPropertyValue(name);
+    return (v && v.trim()) || fallback;
+  }
+
+  function hmTheme() {
+    return {
+      text: cssVar('--chart-axis', '#67728a'),
+      plot: cssVar('--chart-plot-bg', '#10151d'),
+      grid: cssVar('--chart-grid', '#1d2532'),
+      font: cssVar('--font-ui', 'Inter var, sans-serif')
+    };
+  }
+
+  // Perceptually smoother scales (low → high)
+  function scale(stops) {
+    return stops;
+  }
+
   var SCALES = {
-    cpu: [
-      [0, '#ffffff'], [0.2, '#e3f2fd'], [0.4, '#1B9AAA'],
-      [0.6, '#FF9900'], [0.8, '#DF5353'], [1.0, '#ff1744']
-    ],
-    memory: [
-      [0, '#ffffff'], [0.2, '#e8f5e9'], [0.4, '#17c671'],
-      [0.6, '#FFAC31'], [0.8, '#DF5353'], [1.0, '#ff1744']
-    ],
-    iowait: [
-      [0, '#ffffff'], [0.15, '#e3f2fd'], [0.3, '#527bad'],
-      [0.5, '#FF9900'], [0.75, '#DF5353'], [1.0, '#ff1744']
-    ],
-    load: [
-      [0, '#ffffff'], [0.2, '#e0f7fa'], [0.4, '#42E2B8'],
-      [0.6, '#FFAC31'], [0.8, '#DF5353'], [1.0, '#ff1744']
-    ],
-    swap: [
-      [0, '#ffffff'], [0.1, '#e3f2fd'], [0.25, '#527bad'],
-      [0.5, '#FF9900'], [0.75, '#DF5353'], [1.0, '#ff1744']
-    ],
-    network: [
-      [0, '#ffffff'], [0.2, '#e0f7fa'], [0.4, '#1B9AAA'],
-      [0.6, '#17c671'], [0.8, '#FFAC31'], [1.0, '#FF9900']
-    ],
-    disk: [
-      [0, '#ffffff'], [0.2, '#ede7f6'], [0.4, '#6A55C2'],
-      [0.6, '#FF9900'], [0.8, '#DF5353'], [1.0, '#ff1744']
-    ]
+    cpu: scale([[0, '#10151d'], [0.15, '#1e3a5f'], [0.35, '#2563eb'], [0.55, '#ffa02e'], [0.75, '#f97316'], [1, '#ef4444']]),
+    memory: scale([[0, '#10151d'], [0.15, '#14532d'], [0.35, '#22c55e'], [0.55, '#fbbf24'], [0.75, '#f97316'], [1, '#ef4444']]),
+    iowait: scale([[0, '#10151d'], [0.2, '#1e3a5f'], [0.4, '#6366f1'], [0.6, '#ffa02e'], [0.8, '#f97316'], [1, '#ef4444']]),
+    load: scale([[0, '#10151d'], [0.2, '#134e4a'], [0.4, '#14b8a6'], [0.6, '#fbbf24'], [0.8, '#f97316'], [1, '#ef4444']]),
+    swap: scale([[0, '#10151d'], [0.15, '#312e81'], [0.35, '#6366f1'], [0.55, '#ffa02e'], [0.75, '#f97316'], [1, '#ef4444']]),
+    network: scale([[0, '#10151d'], [0.2, '#164e63'], [0.4, '#06b6d4'], [0.6, '#22c55e'], [0.8, '#fbbf24'], [1, '#ffa02e']]),
+    disk: scale([[0, '#10151d'], [0.2, '#3b0764'], [0.4, '#7c3aed'], [0.6, '#ffa02e'], [0.8, '#f97316'], [1, '#ef4444']])
   };
 
   // --- Extract heatmap grid from _idx ---
@@ -297,8 +294,25 @@
   }
 
   // --- Render a single heatmap into a container ---
+  function resetContainerForHeatmaps(el) {
+    if (!el) return;
+    if (window.Plotly && el.data) {
+      try { window.Plotly.purge(el); } catch (e) {}
+    }
+    if (el._sarkartRO) {
+      try { el._sarkartRO.disconnect(); } catch (e) {}
+      el._sarkartRO = null;
+    }
+    el._sarkartPlotWidth = 0;
+    el.style.height = '';
+    el.style.width = '';
+    el.style.minWidth = '';
+    el.classList.add('is-heatmap-host');
+  }
+
   function renderSingleHeatmap(el, data, title, colorscale, zmax, unit) {
     if (!data || !el) return;
+    var th = hmTheme();
 
     var trace = {
       type: 'heatmap',
@@ -309,102 +323,44 @@
       zmin: 0,
       zmax: zmax || undefined,
       colorbar: {
-        title: { text: unit || '%', font: { color: '#232F3E', size: 10 } },
-        tickfont: { color: '#232F3E', size: 9 },
+        title: { text: unit || '%', font: { color: th.text, size: 10, family: th.font } },
+        tickfont: { color: th.text, size: 9, family: th.font },
         thickness: 12,
         len: 0.85
       },
       hovertemplate: '<b>%{x}</b> at %{y}<br>' + title + ': %{z:.1f}' + (unit || '%') + '<extra></extra>',
-      xgap: 1,
-      ygap: 1
+      xgap: 2,
+      ygap: 2
     };
 
     var layout = {
       paper_bgcolor: 'rgba(0,0,0,0)',
-      plot_bgcolor: '#d0d0d0',
+      plot_bgcolor: th.plot,
       margin: { l: 50, r: 60, t: 36, b: 50 },
       height: 280,
+      font: { family: th.font, color: th.text },
       title: {
         text: '<b>' + title + '</b>',
-        font: { color: '#232F3E', size: 12 },
+        font: { color: th.text, size: 12, family: th.font },
         x: 0.5, xanchor: 'center', y: 0.98, yanchor: 'top'
       },
       xaxis: {
-        tickfont: { color: '#232F3E', size: 8 },
+        tickfont: { color: th.text, size: 8, family: th.font },
         tickangle: -45,
-        gridcolor: '#eee'
+        gridcolor: th.grid,
+        fixedrange: true
       },
       yaxis: {
-        tickfont: { color: '#232F3E', size: 8 },
+        tickfont: { color: th.text, size: 8, family: th.font },
         autorange: 'reversed',
-        gridcolor: '#eee'
+        gridcolor: th.grid,
+        fixedrange: true
       }
     };
 
-    var config = { displaylogo: false, displayModeBar: false, staticPlot: false };
+    var config = { displaylogo: false, displayModeBar: false, staticPlot: false, scrollZoom: false };
 
     window.Plotly.newPlot(el, [trace], layout, config);
-  }
-
-  // --- Render full-size expanded heatmap ---
-  function renderExpanded(data, title, colorscale, zmax, unit) {
-    if (typeof chartPage === 'function') chartPage();
-
-    var el = document.getElementById('containerA');
-    if (!el) return;
-
-    var titleEl = document.getElementById('pageTitle');
-    if (titleEl) titleEl.textContent = title + ' Heatmap';
-
-    var trace = {
-      type: 'heatmap',
-      z: data.z,
-      x: data.x,
-      y: data.y,
-      colorscale: colorscale,
-      zmin: 0,
-      zmax: zmax || undefined,
-      colorbar: {
-        title: { text: unit || '%', font: { color: '#232F3E', size: 11 } },
-        tickfont: { color: '#232F3E', size: 10 },
-        thickness: 15,
-        len: 0.8
-      },
-      hovertemplate: '<b>%{x}</b> at %{y}<br>' + title + ': %{z:.1f}' + (unit || '%') + '<extra></extra>',
-      xgap: 1,
-      ygap: 1
-    };
-
-    var layout = {
-      paper_bgcolor: 'rgba(0,0,0,0)',
-      plot_bgcolor: '#d0d0d0',
-      margin: { l: 60, r: 80, t: 50, b: 70 },
-      height: 500,
-      title: {
-        text: '<b>' + title + ' Heatmap</b>',
-        font: { color: '#232F3E', size: 14 },
-        x: 0.5, xanchor: 'center'
-      },
-      xaxis: {
-        title: { text: 'Date', font: { color: '#232F3E', size: 11 } },
-        tickfont: { color: '#232F3E', size: 9 },
-        tickangle: -45
-      },
-      yaxis: {
-        title: { text: 'Hour of Day', font: { color: '#232F3E', size: 11 } },
-        tickfont: { color: '#232F3E', size: 9 },
-        autorange: 'reversed'
-      }
-    };
-
-    var config = {
-      displaylogo: false,
-      modeBarButtonsToRemove: ['lasso2d', 'select2d'],
-      toImageButtonOptions: { format: 'png', filename: 'sarkart-heatmap-' + title.toLowerCase().replace(/\s+/g, '-'), height: 700, width: 1400, scale: 2 }
-    };
-
-    window.Plotly.newPlot(el, [trace], layout, config);
-    ['B', 'C', 'D'].forEach(function (id) { if (typeof hideBlock === 'function') hideBlock(id); });
   }
 
   // --- Render the heatmap dashboard ---
@@ -417,6 +373,10 @@
 
     var containerA = document.getElementById('containerA');
     if (!containerA) return;
+
+    resetContainerForHeatmaps(containerA);
+
+    if (typeof window.sarkartHideChartHead === 'function') window.sarkartHideChartHead('containerA');
 
     containerA.innerHTML =
       '<div class="heatmap-grid">' +
@@ -449,27 +409,6 @@
       var netUnit = (networkData && networkData.unitLabel) || ' KB/s';
       renderSingleHeatmap(document.getElementById('hm-network'), networkData, 'Network Traffic (rx+tx)', SCALES.network, null, netUnit);
       renderSingleHeatmap(document.getElementById('hm-disk'), diskData, 'Disk Transfers', SCALES.disk, null, ' tps');
-
-      var cells = [
-        { el: 'hm-cpu', data: cpuData, title: 'CPU Utilization', scale: SCALES.cpu, zmax: 100, unit: '%' },
-        { el: 'hm-mem', data: memData, title: 'Memory Utilization', scale: SCALES.memory, zmax: 100, unit: '%' },
-        { el: 'hm-iowait', data: iowaitData, title: 'I/O Wait', scale: SCALES.iowait, zmax: null, unit: '%' },
-        { el: 'hm-load', data: loadData, title: 'Run Queue (Load)', scale: SCALES.load, zmax: null, unit: '' },
-        { el: 'hm-swap', data: swapData, title: 'Swap Usage', scale: SCALES.swap, zmax: null, unit: '%' },
-        { el: 'hm-network', data: networkData, title: 'Network Traffic (rx+tx)', scale: SCALES.network, zmax: null, unit: netUnit },
-        { el: 'hm-disk', data: diskData, title: 'Disk Transfers', scale: SCALES.disk, zmax: null, unit: ' tps' }
-      ];
-
-      cells.forEach(function (c) {
-        var cellEl = document.getElementById(c.el);
-        if (cellEl && c.data) {
-          cellEl.style.cursor = 'pointer';
-          cellEl.title = 'Click to expand';
-          cellEl.addEventListener('click', function () {
-            renderExpanded(c.data, c.title, c.scale, c.zmax, c.unit);
-          });
-        }
-      });
     }, 50);
   }
 
@@ -483,7 +422,8 @@
     var insertAfter = dashItem ? dashItem.closest('li') : sidebar.querySelector('li');
 
     var li = document.createElement('li');
-    li.innerHTML = '<a href="#" id="btnHeatmap" class="hide1"><i class="fas fa-fire fa-fw" style="color: #ff5722" aria-hidden="true"></i>Heatmaps</a>';
+    li.className = 'nav-item-primary nav-sec-primary nav-item-heatmaps';
+    li.innerHTML = '<a href="#" id="btnHeatmap"><svg class="icon" aria-hidden="true"><use href="#i-flame"/></svg>Heatmaps</a>';
 
     if (insertAfter && insertAfter.nextSibling) {
       sidebar.insertBefore(li, insertAfter.nextSibling);
@@ -540,6 +480,26 @@
 
 // --- Cleanup: remove heatmap grid when navigating away ----------------------
 (function () {
+  function resetHeatmapHost(containerA) {
+    if (!containerA) return;
+    if (window.Plotly && containerA.data) {
+      try { window.Plotly.purge(containerA); } catch (ex) {}
+    }
+    if (containerA._sarkartRO) {
+      try { containerA._sarkartRO.disconnect(); } catch (ex) {}
+      containerA._sarkartRO = null;
+    }
+    containerA._sarkartPlotWidth = 0;
+    containerA.classList.remove('is-heatmap-host');
+    containerA.style.height = '';
+    containerA.style.width = '';
+    containerA.style.minWidth = '';
+    containerA.innerHTML = '';
+  }
+
+  // Capture phase: run before the legacy engine clears containerA on
+  // Dashboard clicks, otherwise .heatmap-grid is already gone and the
+  // is-heatmap-host class sticks (breaking line-chart height).
   document.addEventListener('click', function (e) {
     var link = e.target.closest && e.target.closest('#sidebar ul a');
     if (!link) return;
@@ -548,19 +508,15 @@
     // Devices, etc.) — those just expand/collapse sub-menus without
     // navigating to a chart view.
     if (link.hasAttribute('data-bs-toggle')) return;
+
+    var containerA = document.getElementById('containerA');
     var grid = document.querySelector('.heatmap-grid');
-    if (grid) {
-      grid.remove();
-      // Reset containerA so the next chart renders into a clean element
-      var containerA = document.getElementById('containerA');
-      if (containerA) {
-        if (window.Plotly && containerA.data) {
-          try { window.Plotly.purge(containerA); } catch (ex) {}
-        }
-        containerA.innerHTML = '';
-      }
-      var titleEl = document.getElementById('pageTitle');
-      if (titleEl) titleEl.textContent = '';
-    }
-  });
+    if (!grid && !(containerA && containerA.classList.contains('is-heatmap-host'))) return;
+
+    if (grid) grid.remove();
+    resetHeatmapHost(containerA);
+
+    var titleEl = document.getElementById('pageTitle');
+    if (titleEl) titleEl.textContent = '';
+  }, true);
 })();

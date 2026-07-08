@@ -201,12 +201,13 @@
       convertedSeries[i].name = relabelSeries(convertedSeries[i].name, suffix);
     }
     var newAxisTitle = relabelAxisTitle(call.yAxisTitle, suffix);
-    var newTitle = relabelAxisTitle(call.title, suffix);
 
-    origFn.call(window, call.containerId, newTitle, newAxisTitle, call.yTickInterval, convertedSeries);
+    origFn.call(window, call.containerId, call.title, newAxisTitle, call.yTickInterval, convertedSeries);
 
     // Update the toolbar's "showing" hint with the resolved unit when Auto.
-    var hint = document.getElementById('netUnitsHint');
+    var container = document.getElementById(call.containerId);
+    var block = container && chartBlock(container);
+    var hint = block && block.querySelector('.netUnitsToolbar-hint');
     if (hint) {
       hint.textContent = (unitName === 'Auto')
         ? 'Auto: ' + resolvedName
@@ -220,33 +221,43 @@
   // We attach the toolbar to the parent .contABlock/.contBBlock/etc. so it's
   // hidden when those rows hide. A single global toolbar would also work but
   // would float oddly when only one of containerA/B/C is visible.
+  function chartBlock(container) {
+    return container.closest('.chart-block') ||
+      container.closest('.contABlock, .contBBlock, .contCBlock, .contDBlock');
+  }
+
+  function chartShell(container) {
+    return container.closest('.chart-card') || container.closest('.card');
+  }
+
   function ensureToolbar(containerId) {
     var container = document.getElementById(containerId);
     if (!container) return;
-    var card = container.closest('.card');
-    if (!card) return;
+    var shell = chartShell(container);
+    var block = chartBlock(container);
+    if (!shell || !block) return;
 
-    var existing = card.parentNode.querySelector('.netUnitsToolbar');
+    var existing = block.querySelector('.netUnitsToolbar');
     if (existing) {
       existing.style.display = '';
+      var sel = existing.querySelector('select');
+      if (sel) sel.value = getUnit();
       return;
     }
 
     var bar = document.createElement('div');
-    bar.className = 'netUnitsToolbar d-flex align-items-center justify-content-end';
-    bar.style.cssText = 'gap:8px;padding:6px 12px 0 12px;font-size:12px;color:#232F3E;';
+    bar.className = 'netUnitsToolbar';
     bar.innerHTML =
-      '<span style="opacity:.75;">Display units:</span>' +
-      '<select class="form-select form-select-sm" ' +
-        'style="width:auto;min-width:140px;display:inline-block;">' +
+      '<span class="netUnitsToolbar-label">Display units:</span>' +
+      '<select class="netUnitsToolbar-select" aria-label="Network display units">' +
         ORDER.map(function (n) {
           return '<option value="' + n + '"' +
             (n === getUnit() ? ' selected' : '') + '>' + n + '</option>';
         }).join('') +
       '</select>' +
-      '<span id="netUnitsHint" style="opacity:.6;font-style:italic;min-width:80px;"></span>';
+      '<span class="netUnitsToolbar-hint"></span>';
 
-    card.parentNode.insertBefore(bar, card);
+    block.insertBefore(bar, shell);
 
     bar.querySelector('select').addEventListener('change', function (e) {
       setUnit(e.target.value);

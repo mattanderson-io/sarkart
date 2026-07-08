@@ -190,9 +190,9 @@
     panel.className = 'ai-summary-panel homeContBlock';
     panel.innerHTML =
       '<div class="ai-summary-header">' +
-        '<span class="ai-summary-icon"><i class="fas fa-flask fa-fw"></i></span>' +
+        '<span class="ai-summary-icon"><svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6l3 7-9 11L3 10z"/><path d="M12 3v18"/></svg></span>' +
         '<span class="ai-summary-title">Performance Summary</span>' +
-        '<button class="ai-summary-close" title="Dismiss">&times;</button>' +
+        '<button class="ai-summary-close" title="Dismiss" aria-label="Dismiss summary">&times;</button>' +
       '</div>' +
       '<div class="ai-summary-body">' +
         '<p class="ai-summary-text"></p>' +

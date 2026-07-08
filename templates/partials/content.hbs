@@ -1,411 +1,290 @@
- <div id="content" class="scrolling" style="overflow-y: scroll;">
+<div id="content" class="scrolling">
 
-        <section class="container-fluid">
-          <!-- Top bar: file info + action buttons. Fixed at top of content area. -->
-          <div class="top-bar" id="topBar">
-            <span class="custom-menu">
-              <button type="button" id="sidebarCollapse" class="sidebar-toggle collapse">
-                  <i class="fa fa-bars"></i>
-              </button>
-            </span>
-
-            <div class="top-bar-info" id="fileInfoBar">
-              <div class="file-info-group">
-                <span class="file-info-label"><i class="fa fa-desktop"></i> Host</span>
-                <span class="file-info-value" id="fileInfoHost">&mdash;</span>
-              </div>
-              <div class="file-info-group">
-                <span class="file-info-label"><i class="fa fa-hashtag"></i> OS</span>
-                <span class="file-info-value" id="fileInfoOS">&mdash;</span>
-              </div>
-              <div class="file-info-group">
-                <span class="file-info-label"><i class="fa fa-calendar"></i> Dates</span>
-                <span class="file-info-value" id="fileInfoDates">&mdash;</span>
-              </div>
-              <div class="file-info-group">
-                <span class="file-info-label"><i class="fa fa-file"></i> File</span>
-                <span class="file-info-value" id="fileInfoName" title="">&mdash;</span>
-              </div>
-            </div>
-
-            <div class="top-bar-actions">
-              <a href="#" class="top-bar-btn toolbar-post-upload" id="btnHelp" title="How To / FAQ"> <i class="fa fa-question-circle"></i> Help </a>
-              <a href="" class="top-bar-btn toolbar-post-upload" id="btnReset" title="Reload the page and clear all loaded data"> <i class="fa fa-sync-alt"></i> Reset </a>
-            </div>
-          </div>
-
-            <div class="row landing-hero-row">
-              <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 d-flex flex-nowrap align-items-center mx-auto text-center landing-hero">
-
-                <h1 id="logo-header" class="landing-brand">
-                  <img class="landing-brand-logo" src="/images/racing-penguin.webp" alt="SARkart logo">
-                  <span class="landing-brand-text"><b>SAR</b><span>kart</span></span>
-                  <span class="landing-brand-tagline">Unix SAR data, as charts</span>
-                </h1>
-
-              </div>
-            </div>
-
-          <!-- Date Range Filter -->
-          <div class="row mt-2 mb-2 hide" id="dateFilterBlock">
-            <div class="col-12">
-              <div style="background: rgba(0,0,0,0.3); border-radius: 10px; padding: 12px 20px; display: flex; align-items: center; gap: 15px; flex-wrap: wrap;">
-                <span style="color: #FF9900; font-weight: bold; font-size: 0.9em;"><i class="fa fa-calendar"></i> Date Range:</span>
-                <select id="dateFilterMode" style="background: #232F3E; color: #fff; border: 1px solid #FF9900; border-radius: 5px; padding: 4px 10px; font-size: 0.85em;">
-                  <option value="all">All Days</option>
-                  <option value="single">Single Day</option>
-                  <option value="range">Date Range</option>
-                </select>
-                <select id="dateFilterStart" style="background: #232F3E; color: #fff; border: 1px solid #555; border-radius: 5px; padding: 4px 10px; font-size: 0.85em; display:none;"></select>
-                <span id="dateFilterRangeSep" style="color:#aaa; display:none;">to</span>
-                <select id="dateFilterEnd" style="background: #232F3E; color: #fff; border: 1px solid #555; border-radius: 5px; padding: 4px 10px; font-size: 0.85em; display:none;"></select>
-                <button id="dateFilterApply" style="background: #FF9900; color: #232F3E; border: none; border-radius: 5px; padding: 5px 14px; font-weight: bold; font-size: 0.85em; cursor: pointer; display:none;">Apply</button>
-                <span id="dateFilterInfo" style="color: #aaa; font-size: 0.8em; margin-left: auto;"></span>
-              </div>
-            </div>
-          </div>
-
-          <div class="row mt-3 remove animate__animated animate__slideInRight animate__delay-1s" id="peakBlock">
-            <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 col-xs-12 pb-3 homeContBlock">
-              <div class="small-box bg-aqua contDash animate__animated animate__flipInX animate__delay-1s">
-                <div class="inner">
-                  <h3 class="shadow-white"><i class="fa fa-microchip shadow-black"></i> <span id=peakCPU>&nbsp;</span><sup class="shadow-white" style="font-size: 20px">%</sup></h3>
-                  <p class="shadow-white" style='font-weight: 1000;font-size:18px;'>Peak CPU</p>
-                </div>
-                <div class="icon">
-                  <div id="peakCPUChart" class="bg-aqua1" style="margin-top: 15px;width: 100px; height: 100px;"></div>
-                </div>
-                <a href="#" class="small-box-footer" id=btnCPUArrow title="View CPU chart"><span class=shadow-black>at</span> <span class=shadow-black id=peakCPUTime>&nbsp;</span> <i class="fa fa-arrow-circle-right shadow-black"></i></a>
-              </div>
-            </div>
-            <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 col-xs-12 pb-3 homeContBlock">
-              <div class="small-box bg-green contDash animate__animated animate__flipInX animate__delay-1s">
-                <div class="inner">
-                  <h3 class="shadow-white"><i class="fa fa-truck shadow-black"></i> <span id=peakLoad>&nbsp;</span><sup class="shadow-white" style="font-size: 20px">%</sup></h3>    
-                  <p class="shadow-white" style='font-weight: 1000;font-size:18px;'>Peak Load</p>
-                </div>
-                <div class="icon">
-                  <div id="peakLoadChart" class="bg-green1" style="margin-top: 15px;width: 100px; height: 100px; "></div>
-                </div>
-                <a href="#" class="small-box-footer" id=btnLoadArrow title="View Load chart"><span class=shadow-black>at</span> <span class=shadow-black id=peakLoadTime>&nbsp;</span> <i class="fa fa-arrow-circle-right shadow-black"></i></a>
-              </div>
-            </div>
-            <div class="col-xl-4 col-lg-4 col-md-6 col-sm-12 col-xs-12 pb-3 homeContBlock">
-              <div class="small-box bg-yellow contDash animate__animated animate__flipInX animate__delay-1s">
-                <div class="inner">
-                  <h3 class="shadow-white"><i class="fa fa-bolt shadow-black"></i> <span id=peakMemory></span><sup class="shadow-white" style="font-size: 20px">%</sup></h3>
-                  <p class="shadow-white" style='font-weight: 1000;font-size:18px;'>Peak Memory</p>
-                </div>
-                <div class="icon flex-grow-1">
-                  <div id="peakMemoryChart" class="bg-yellow1" style="margin-top: 15px;width: 100px; height: 100px; "></div>
-                </div>
-                <a href="#" class="small-box-footer" id=btnMemoryArrow title="View Memory chart"><span class=shadow-black>at</span> <span class=shadow-black id=peakMemoryTime>&nbsp;</span> <i class="fa fa-arrow-circle-right shadow-black"></i></a>
-              </div>
-            </div>
-
-          </div>
-
-
-
-
-          
-        <!-- Begin File Upload box -->
-        <div class="row mx-0 px-0 landing-hero">
-          <div class="col-xl-7 col-lg-7 col-md-12 col-sm-12 col-xs-12 homeContBlock">
-            <div class="upload-card">
-              <div id="start" class="form-container uploader sar-file-uploader">
-                <div class="upload-idle">
-                  <div class="upload-icon">
-                    <i class="fa-solid fa-flag-checkered fa-beat" aria-hidden="true"></i>
-                  </div>
-                  <h3 class="upload-headline">Drop a SAR file to begin</h3>
-                  <p class="upload-sub">or use the button below. Plain-text SAR output from <code>sar -A</code>.</p>
-                  <span class="button-wrapper">
-                    <span id="file-upload-btn" class="btn uploadBtn">
-                      <i class="fa fa-folder-open" aria-hidden="true"></i> Browse and upload
-                    </span>
-                  </span>
-                  <div class="upload-filename-wrap">
-                    <span class="fileinput-filename"></span>
-                  </div>
-                </div>
-
-                <!-- Progress / process-data panel. Shares the dropzone's
-                     footprint: shown while the app toggles #spinner from
-                     d-none to d-block during the upload flow. -->
-                <div class="d-none hide" id="spinner">
-                  <div id="progressContainer">
-                    <div id="progressStep">Preparing...</div>
-                    <div class="upload-progress-track">
-                      <div id="progressBar"></div>
-                    </div>
-                    <div id="spinnerVal">0%</div>
-                    <button id="btnProcessData" style="display:none;">&#9654; Process Data</button>
-                  </div>
-                </div>
-              </div>
-              <div class="output"></div>
-            </div>
-          </div>
-
-          <div class="col-xl-5 col-lg-5 col-md-12 col-sm-12 col-xs-12 homeContBlock">
-            <div class="landing-side">
-              <div class="landing-side-header">
-                <h2 class="landing-side-title">View Unix SAR data as interactive charts</h2>
-                <p class="landing-side-lead">A local-only dashboard for peak CPU, memory, and load, with drill-downs per device and interface. Supports Linux, AIX, and Solaris.</p>
-              </div>
-
-              <ul class="landing-highlights">
-                <li>
-                  <i class="fa fa-bolt"></i>
-                  <div>
-                    <strong>Up to 20&times; faster than sarchart</strong>
-                    <span>A 313&nbsp;MB RHEL&nbsp;9 SAR file loads in ~2 seconds.</span>
-                  </div>
-                </li>
-                <li>
-                  <i class="fa fa-lock"></i>
-                  <div>
-                    <strong>Client-side only</strong>
-                    <span>Your file never leaves the browser. PDF export also runs locally.</span>
-                  </div>
-                </li>
-              </ul>
-
-              <div class="landing-side-footer">
-                <a href="#" id="landingHowToLink" class="landing-side-link">How to generate a SAR file &rarr;</a>
-                <a href="#" id="btnTrySample" class="landing-side-link" style="margin-left: auto;">Try with sample data &rarr;</a>
-              </div>
-            </div>
-          </div>
+  <section class="container-fluid">
+    <!-- Top bar -->
+    <div class="top-bar" id="topBar">
+      <div class="top-bar-info" id="fileInfoBar">
+        <div class="file-info-group">
+          <span class="file-info-label">Host</span>
+          <span class="file-info-value num" id="fileInfoHost">&mdash;</span>
         </div>
-
-
-
-      <div class="row py-0 my-0 mx-1 contABlock section-header homeContBlock">
-        <div class="col-lg-12 text-center my-0 py-0">
-          <h4 class="my-0 py-0 boxed"><span id="pageTitle"></span></h4>
+        <div class="file-info-group">
+          <span class="file-info-label">OS</span>
+          <span class="file-info-value num" id="fileInfoOS">&mdash;</span>
+        </div>
+        <div class="file-info-group">
+          <span class="file-info-label">Dates</span>
+          <span class="file-info-value num" id="fileInfoDates">&mdash;</span>
+        </div>
+        <div class="file-info-group">
+          <span class="file-info-label">File</span>
+          <span class="file-info-value num" id="fileInfoName" title="">&mdash;</span>
         </div>
       </div>
 
-
-        <div class="row equal py-0 mt-2 mx-1 section-header homeContBlock landing-extra clouds">
-          <div class="col-lg-12 text-center my-0 py-0">
-            <h4 class="my-0 py-0 boxed" id="_howto"><span>HOW TO</span></h4>
+      <div class="top-bar-actions">
+        <button type="button" class="top-bar-btn" id="btnThemeToggle" title="Toggle theme" aria-label="Toggle theme">
+          <svg class="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+          <svg class="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+        </button>
+        <a href="#" class="top-bar-btn toolbar-post-upload" id="btnCmdk" title="Command palette (⌘K)">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+          <kbd>⌘K</kbd>
+        </a>
+        <div class="top-bar-menu toolbar-post-upload">
+          <button type="button" class="top-bar-btn top-bar-menu-btn" id="btnTopMenu" aria-haspopup="menu" aria-expanded="false" aria-controls="topBarMenuPanel" title="Menu">
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/></svg>
+          </button>
+          <div class="top-bar-menu-panel" id="topBarMenuPanel" role="menu" hidden>
+            <a href="#" class="top-bar-menu-item" id="btnOpenAnother" role="menuitem" title="Open another SAR file">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              Open file
+            </a>
+            <a href="" class="top-bar-menu-item" id="btnReset" role="menuitem" title="Reload and clear all data">
+              <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 3v6h6"/></svg>
+              Reset
+            </a>
           </div>
         </div>
-
-
-
-        <div class="row mt-3 py-3 mx-0 landing-extra">
-          <div class="col-lg-6 col-md-12 col-sm-12 col-xs-12 homeContBlock">
-            <div class="card card-blur card-block contDash1 roundborder">
-              <div class="card-header with-border">
-                <i class="fa fa-download"></i>
-                <h3 class="card-title" id="_howto">HOW TO GENERATE SAR FROM SERVER</h3>
-              </div>
-              <div class="card-body">
-                <div class="paragraph text-left" style="text-align:left;">
-                  <span>Login as root (or with sudo) access run the following commands to fetch the sar output for a
-                    specific date or multiple dates.</span><br><br>
-                  <font color="#ccc" size="3">Example:</font><span>
-                  </span><br>
-
-                  <!-- Nav tabs -->
-                <ul class="nav nav-tabs" role="tablist">
-                  <li class="nav-item">
-                    <a class="nav-link active" data-bs-toggle="tab" href="#_linux">LINUX</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="tab" href="#_aix">AIX</a>
-                  </li>
-                  <li class="nav-item">
-                    <a class="nav-link" data-bs-toggle="tab" href="#_solaris">SOLARIS</a>
-                  </li>
-                </ul>
-
-                <!-- Tab panes -->
-                <div class="tab-content"><br>
-                  <div id="_linux" class="container1 tab-pane active">
-                    <font size="3">For single day file:</font>
-                    <div class="code-block">                      
-                      <span>sar -A -f /var/log/sa/sa<span class="tdate"></span> &gt; /tmp/sa<span
-                          class="tdate"></span>_$(uname -n).txt</span>
-                    </div>
-                    <font size="3">For multiple days files:</font><br>
-                    <div class="code-block">
-                        ls /var/log/sa/sa?? | xargs -i sar -A -f {} &nbsp;&gt;&nbsp; /tmp/sar_$(uname -n).txt</font> <br>
-                    </div>
-
-                  </div>
-                  <div id="_aix" class="container1 tab-pane fade">
-                    <font size="3">For single day file:</font>
-                    <div class="code-block">
-                      <span>sar -A -f /var/adm/sa/sa<span class="tdate"></span> &gt; /tmp/sa<span
-                          class="tdate"></span>_$(uname -n).txt</span></div>
-                    <font size="3">For multiple days files:</font><br>
-                    <div class="code-block">
-                        ls /var/adm/sa/sa?? | xargs -i sar -A -f {} &nbsp;&gt;&nbsp; /tmp/sar_$(uname -n).txt</font> <br>
-                    </div>
-                  </div>
-                  <div id="_solaris" class="container1 tab-pane fade">
-                    <font size="3">For single day file:</font>
-                    <div class="code-block">
-                      <span>sar -A -f /var/log/sysstat/sa<span class="tdate"></span> &gt; /tmp/sa<span
-                          class="tdate"></span>_$(uname -n).txt</span></div>
-                    <font size="3">For multiple days files:</font><br>
-                    <div class="code-block">
-                        ls /var/log/sysstat/sa/sa?? | xargs -i sar -A -f {} &nbsp;&gt;&nbsp; /tmp/sar_$(uname -n).txt</font> <br>
-                    </div>
-                  </div>
-                </div>
-
-                </div>     
-
-              </div>
-            </div>
-          </div>
-          
-          <!-- Begin Server Info box -->
-          <div class="col-fluid col-lg-6 col-md-12 col-sm-12 col-xs-12 homeContBlock">
-            <div class="card card-blur card-block contDash1 roundborder-inv">
-              <div class="card-header card-header-inv with-border">
-                <i class="fa fa-download"></i>
-                <h3 class="card-title">DOWNLOAD SAR FILE TO DESKTOP</h3>
-              </div>
-              <div class="card-body">
-                <div class="paragraph" style="text-align:left;">
-                  <span>Use any SCP software like Winscp/Filezilla/pscp/psftp to download the file from the server. Many prefer to use&nbsp;<a href="http://www.chiark.greenend.org.uk/~sgtatham/putty/download.html" style="color:pink">pscp</a> command to download the files from Unix server to the desktop.</span><br><br>
-                  <div class="code-block"> pscp userid@hostname:/tmp/sa<span class="tdate"></span>_hostname.txt .</div><br><br><br></div>
-              </div>
-            </div>  
-          </div>
-        </div>
-
-           
-        <!-- Containers -->
-        <div class="row px-0">
-          <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 contABlock pr-4 py-3">
-            <div class="card card-primary with-no-border roundborder" style="border-radius: 20px;">
-              <div class="card-body-chart">
-                <div class="" id="containerA" style="padding:20px; margin:-10px 15px;"></div>
-                <p id="containerANotes" class="card-footer container-notes"></p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="row">
-          <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 contBBlock pr-4 py-3">
-            <div class="card card-primary with-no-border roundborder" style="border-radius: 20px;">
-              <div class="card-body-chart roundborder align-items-center" style="background-color: white; border-radius: 20px;">
-                <div class="" id="containerB" style="padding:20px; margin:-10px 15px; height:auto;"></div>
-                <p id="containerBNotes" class="card-footer container-notes"></p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="row">
-          <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 contCBlock pr-4 py-3">
-            <div class="card card-primary with-no-border roundborder20">
-              <div class="card-body-chart align-items-center">
-                <div class="" id="containerC" style="padding:20px; margin:-10px 15px; height:auto;"></div>                
-                <p id="containerCNotes" class="card-footer container-notes"></p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div class="row">
-          <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 contDBlock pr-4 py-3">
-            <div class="card card-primary with-no-border roundborder20">
-              <div class="card-body-chart align-items-center">
-                <div class="" id="containerD" style="padding:20px; margin:-10px 15px; height:auto;"></div>
-                <p id="containerDNotes" class="card-footer container-notes"></p>
-              </div>
-              
-            </div>
-          </div>
-        </div>
-        
-        <div class="row">
-          <div class="col-lg-12 col-md-12 col-sm-12 col-xs-12 contMBlock pr-4 py-3">
-            <div class="card card-primary with-no-border roundborder20">
-              <div class="card-body-chart">
-                <h5 class="container-title text-center mx-auto border-bottom py-2" id="containerMTitle" style="background-color: rgba(12, 43, 49, .95); color: #eee;
-                text-shadow: #416e7e 1px 1px 0;border-width:0px;border-top-left-radius: 18px; border-top-right-radius: 18px;">&nbsp;</h5>
-                <div class="" id="containerM" style="color: white;padding:20px; margin:-10px 15px; height:auto;"></div>
-                <p id="containerMNotes" class="card-footer container-notes"></p>
-              </div>
-            </div>
-          </div>
-        </div>    
-
-
-            
-        </section>
-
-
-        <div class="row equal py-0 mt-2 mx-3 px-1 section-header homeContBlock landing-extra">
-          <div class="col-lg-12 text-center my-0 py-0">
-            <h4 class="my-0 py-0 boxed" id="_faq"><span>FAQ</span></h4>
-          </div>
-        </div>
-
-
-        <div class="row equal py-3 mx-0 landing-extra">
-          <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 col-xs-12 pb-3 homeContBlock">
-            <div class="faq-wrapper">
-
-              <ul class="faq-questions" role="tablist">
-                <li><button type="button" class="faq-q active" role="tab" aria-selected="true"  data-faq="1">What are the Operating Systems (OS) that are supported by the tool?</button></li>
-                <li><button type="button" class="faq-q"        role="tab" aria-selected="false" data-faq="2">How to use the tool?</button></li>
-                <li><button type="button" class="faq-q"        role="tab" aria-selected="false" data-faq="3">Will the tool support multiple days of input SAR data?</button></li>
-                <li><button type="button" class="faq-q"        role="tab" aria-selected="false" data-faq="4">Can I contribute to this tool to enhance the feature or report a bug?</button></li>
-                <li><button type="button" class="faq-q"        role="tab" aria-selected="false" data-faq="5">How do I give feedback or report an issue?</button></li>
-              </ul>
-
-              <div class="faq-panel" role="tabpanel">
-                <div class="faq-a" data-faq="1">
-                  <p>Currently this tool supports the following OS:</p>
-                  <ul>
-                    <li>Linux — RHEL / SuSE / Ubuntu</li>
-                    <li>Solaris</li>
-                    <li>AIX</li>
-                  </ul>
-                </div>
-                <div class="faq-a" data-faq="2" hidden>
-                  <ul>
-                    <li>Create a SAR output as a text file from the Unix server.</li>
-                    <li>Download the SAR text file to the desktop.</li>
-                    <li>Upload the SAR text file to this site.</li>
-                    <li>The site will create all the charts.</li>
-                  </ul>
-                </div>
-                <div class="faq-a" data-faq="3" hidden>
-                  <p>Yes.</p>
-                </div>
-                <div class="faq-a" data-faq="4" hidden>
-                  <p>You can reach out to the maintainer of this fork via the GitHub page
-                    <a href="https://github.com/mattanderson-io/sarkart">mattanderson-io/sarkart</a> — please create an issue.
-                    Original tool by Suresh Raju is at
-                    <a href="https://github.com/sargraph/sargraph.github.io">sargraph/sargraph.github.io</a>.</p>
-                  <p>Note: when reporting a bug, please mention the version of the tool, which can be found at the bottom of the page above the footer.</p>
-                </div>
-                <div class="faq-a" data-faq="5" hidden>
-                  <p>There are many ways you can reach the author/developer of the tool:</p>
-                  <ul>
-                    <li><a href="https://github.com/mattanderson-io/sarkart/issues">Report an issue on GitHub</a></li>
-                    <li><a href="https://github.com/mattanderson-io/sarkart">Star the GitHub page</a></li>
-                    <li>Original tool: <a href="https://github.com/sargraph/sargraph.github.io">sargraph/sargraph.github.io</a> by Suresh Raju</li>
-                  </ul>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        </div>
-
-        {{>footer}}
+      </div>
     </div>
+
+    <!-- Landing hero -->
+    <div class="landing-hero-row">
+      <h1 id="logo-header" class="landing-brand">
+        <span class="landing-brand-lockup">
+          <img class="landing-brand-logo" src="/images/racing-penguin.webp" alt="SARkart logo">
+          <span class="landing-brand-text"><b>SAR</b><span>kart</span></span>
+        </span>
+        <span class="landing-brand-tagline">Unix SAR data, as charts</span>
+      </h1>
+    </div>
+
+    <!-- Date range filter -->
+    <div class="hide" id="dateFilterBlock">
+      <div class="date-filter-card">
+        <span class="date-filter-label">
+          <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+          Date range
+        </span>
+        <select id="dateFilterMode" class="select-control">
+          <option value="all">All days</option>
+          <option value="single">Single day</option>
+          <option value="range">Date range</option>
+        </select>
+        <select id="dateFilterStart" class="select-control" hidden></select>
+        <span id="dateFilterRangeSep" hidden>to</span>
+        <select id="dateFilterEnd" class="select-control" hidden></select>
+        <button id="dateFilterApply" type="button" hidden>Apply</button>
+        <span id="dateFilterInfo" class="num"></span>
+      </div>
+    </div>
+
+    <!-- KPI cards -->
+    <div class="remove" id="peakBlock">
+      <div class="kpi-card contDash" data-kpi="cpu">
+        <div class="kpi-top">
+          <div>
+            <div class="kpi-label">
+              <svg class="icon" aria-hidden="true"><use href="#i-cpu"/></svg>
+              Peak CPU
+            </div>
+            <div class="kpi-value"><span id="peakCPU">&nbsp;</span><sup>%</sup></div>
+          </div>
+          <div id="peakCPUChart"></div>
+        </div>
+        <div class="kpi-meta">
+          <a href="#" class="small-box-footer" id="btnCPUArrow" title="View CPU chart">
+            <span>at</span> <span id="peakCPUTime">&nbsp;</span>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="kpi-card contDash" data-kpi="load">
+        <div class="kpi-top">
+          <div>
+            <div class="kpi-label">
+              <svg class="icon" aria-hidden="true"><use href="#i-gauge"/></svg>
+              Peak Load
+            </div>
+            <div class="kpi-value"><span id="peakLoad">&nbsp;</span></div>
+          </div>
+          <div id="peakLoadChart"></div>
+        </div>
+        <div class="kpi-meta">
+          <a href="#" class="small-box-footer" id="btnLoadArrow" title="View Load chart">
+            <span>at</span> <span id="peakLoadTime">&nbsp;</span>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+      </div>
+
+      <div class="kpi-card contDash" data-kpi="memory">
+        <div class="kpi-top">
+          <div>
+            <div class="kpi-label">
+              <svg class="icon" aria-hidden="true"><use href="#i-memory"/></svg>
+              Peak Memory
+            </div>
+            <div class="kpi-value"><span id="peakMemory"></span><sup>%</sup></div>
+          </div>
+          <div id="peakMemoryChart"></div>
+        </div>
+        <div class="kpi-meta">
+          <a href="#" class="small-box-footer" id="btnMemoryArrow" title="View Memory chart">
+            <span>at</span> <span id="peakMemoryTime">&nbsp;</span>
+            <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <!-- Landing upload -->
+    <div class="landing-grid landing-hero">
+      <div class="homeContBlock">
+        <div class="upload-card">
+          <div id="start" class="form-container uploader sar-file-uploader">
+            <div class="upload-idle">
+              <div class="upload-icon">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              </div>
+              <h3 class="upload-headline">Drop a SAR file to begin</h3>
+              <p class="upload-sub">or use the button below. Plain-text SAR output from <code>sar -A</code>.</p>
+              <span class="button-wrapper">
+                <span id="file-upload-btn" class="btn uploadBtn">
+                  <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                  Browse and upload
+                </span>
+              </span>
+              <p class="upload-privacy">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                Your file never leaves this machine
+              </p>
+              <div class="upload-filename-wrap">
+                <span class="fileinput-filename"></span>
+              </div>
+            </div>
+
+            <div class="d-none hide" id="spinner">
+              <div id="progressContainer">
+                <div class="progress-stages" aria-hidden="true">
+                  <span class="progress-stage is-active" data-stage="reading">Reading</span>
+                  <span class="progress-stage-sep"></span>
+                  <span class="progress-stage" data-stage="parsing">Parsing</span>
+                  <span class="progress-stage-sep"></span>
+                  <span class="progress-stage" data-stage="rendering">Rendering</span>
+                </div>
+                <div id="progressStep">Preparing…</div>
+                <div class="upload-progress-track">
+                  <div id="progressBar"></div>
+                </div>
+                <div id="spinnerVal" class="num">0%</div>
+                <div id="progressRate" class="progress-rate num"></div>
+                <button id="btnProcessData" type="button" hidden>Process data</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="homeContBlock">
+        <div class="landing-side">
+          <div class="landing-side-header">
+            <h2 class="landing-side-title">View Unix SAR data as interactive charts</h2>
+            <p class="landing-side-lead">A local-only dashboard for peak CPU, memory, and load, with drill-downs per device and interface. Supports Linux, AIX, and Solaris.</p>
+          </div>
+
+          <ul class="landing-highlights">
+            <li>
+              <span class="hl-icon">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              </span>
+              <div>
+                <strong>Up to 20&times; faster than sarchart</strong>
+                <span>A 313&nbsp;MB RHEL&nbsp;9 SAR file loads in ~2 seconds.</span>
+              </div>
+            </li>
+            <li>
+              <span class="hl-icon">
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+              </span>
+              <div>
+                <strong>Client-side only</strong>
+                <span>Your file never leaves the browser. PDF export also runs locally.</span>
+              </div>
+            </li>
+          </ul>
+
+          <div class="landing-side-footer">
+            <a href="#" id="btnTrySample" class="landing-side-link">Try with sample data &rarr;</a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Page title -->
+    <div class="page-title-row contABlock section-header homeContBlock title-empty">
+      <h2 class="boxed" id="pageTitle"></h2>
+    </div>
+
+    <!-- Chart containers -->
+    <div class="chart-block contABlock homeContBlock">
+      <div class="chart-card">
+        <div class="chart-head is-empty">
+          <h3 class="chart-heading"></h3>
+          <p class="chart-subtitle"></p>
+        </div>
+        <div class="chart-body"><div id="containerA"></div></div>
+        <p id="containerANotes" class="container-notes"></p>
+      </div>
+    </div>
+
+    <div class="chart-block contBBlock homeContBlock">
+      <div class="chart-card">
+        <div class="chart-head is-empty">
+          <h3 class="chart-heading"></h3>
+          <p class="chart-subtitle"></p>
+        </div>
+        <div class="chart-body"><div id="containerB"></div></div>
+        <p id="containerBNotes" class="container-notes"></p>
+      </div>
+    </div>
+
+    <div class="chart-block contCBlock homeContBlock">
+      <div class="chart-card">
+        <div class="chart-head is-empty">
+          <h3 class="chart-heading"></h3>
+          <p class="chart-subtitle"></p>
+        </div>
+        <div class="chart-body"><div id="containerC"></div></div>
+        <p id="containerCNotes" class="container-notes"></p>
+      </div>
+    </div>
+
+    <div class="chart-block contDBlock homeContBlock">
+      <div class="chart-card">
+        <div class="chart-head is-empty">
+          <h3 class="chart-heading"></h3>
+          <p class="chart-subtitle"></p>
+        </div>
+        <div class="chart-body"><div id="containerD"></div></div>
+        <p id="containerDNotes" class="container-notes"></p>
+      </div>
+    </div>
+
+    <div class="chart-block contMBlock homeContBlock">
+      <div class="chart-card">
+        <h5 class="container-title" id="containerMTitle">&nbsp;</h5>
+        <div class="chart-body"><div id="containerM"></div></div>
+        <p id="containerMNotes" class="container-notes"></p>
+      </div>
+    </div>
+
+  </section>
+
+  {{>footer}}
+</div>
+
+<!-- Hidden file input anchor for export-pdf.js -->
+<div class="container1" hidden aria-hidden="true"></div>

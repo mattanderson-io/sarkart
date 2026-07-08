@@ -1,132 +1,150 @@
 
-    <nav id="sidebar" class="collapse scrolling animate__animated animate__bounceInDown animate__delay-1s">
+    <nav id="sidebar" class="collapse scrolling">
         <div class="sidebar-header">
             <h3>
                 <img class="sar-logo" src="/images/racing-penguin.webp" alt="SARkart logo">
-                SARkart
+                <span class="brand-text"><span class="brand-sar">SAR</span>kart</span>
             </h3>
             <strong><span class="logo-mini"><img class="sar-logo" src="/images/racing-penguin.webp" alt="SARkart logo"></span></strong>
         </div>
 
         <ul class="list-unstyled components hide sidebar-nav">
 
-            <li class="active nav-item-primary">
+            <li class="active nav-item-primary nav-sec-primary">
                 <a href="#" id="btnSAR">
-                    <i class="fas fa-gauge-high fa-fw" style="color: #00c7f7" aria-hidden="true"></i>Dashboard
+                    <svg class="icon" aria-hidden="true"><use href="#i-layout-dashboard"/></svg>
+                    Dashboard
                 </a>
             </li>
 
-            <li class="sidebar-section-label" aria-hidden="true"><span>Compute</span></li>
+            <li class="sidebar-section-label sec-compute"><span>Compute</span></li>
 
-            <li>
-                <a href="#ulCPU" id="btnCPUs" data-bs-toggle="collapse" aria-expanded="false" class="dropdown hide1">
-                    <i class="fas fa-microchip fa-fw" style="color: #ff77a9" aria-hidden="true"></i>CPU
+            <li class="nav-sec-compute">
+                {{!-- Per-CPU navigation renders as a chip bar in the main window
+                     (see wireCpuChips in sarkart-ui.js); #ulCPU stays as the
+                     hidden link list the engine injects into. --}}
+                <a href="#" id="btnCPUs">
+                    <svg class="icon" aria-hidden="true"><use href="#i-cpu"/></svg>
+                    CPU
                 </a>
                 <ul class="collapse list-unstyled" id="ulCPU" data-bs-parent="#sidebar"></ul>
             </li>
 
-            <li>
-                <a href="#" id="btnCPU" class="hide1">
-                    <i class="fas fa-microchip fa-fw" style="color: #6A55C2" aria-hidden="true"></i>CPU Summary
+            <li class="nav-sec-compute">
+                <a href="#" id="btnCPU">
+                    <svg class="icon" aria-hidden="true"><use href="#i-chart-column"/></svg>
+                    CPU Summary
                 </a>
             </li>
 
-            <li>
-                <a href="#" id="btnLoad" class="hide1">
-                    <i class="fas fa-weight-hanging fa-fw" style="color: #FF715B" aria-hidden="true"></i>Load
+            <li class="nav-sec-compute">
+                <a href="#" id="btnLoad">
+                    <svg class="icon" aria-hidden="true"><use href="#i-gauge"/></svg>
+                    Load
                 </a>
             </li>
 
-            <li class="sidebar-section-label" aria-hidden="true"><span>Memory</span></li>
+            <li class="sidebar-section-label sec-memory"><span>Memory</span></li>
 
-            <li>
-                <a href="#memorySubmenu" id="btnMem" data-bs-toggle="collapse" aria-expanded="false" class="dropdown hide1">
-                    <i class="fas fa-memory fa-fw" style="color: #17c671" aria-hidden="true"></i>Memory
+            <li class="nav-sec-memory">
+                <a href="#memorySubmenu" id="btnMem" data-bs-toggle="collapse" aria-expanded="false" class="dropdown">
+                    <svg class="icon" aria-hidden="true"><use href="#i-memory"/></svg>
+                    Memory
                 </a>
                 <ul class="collapse list-unstyled" id="memorySubmenu" data-bs-parent="#sidebar">
-                    <li> <a href="#" id="btnMemUsg"><i class="fas fa-memory fa-fw" style="color: #17c671" aria-hidden="true"></i>Memory Used</a> </li>
-                    <li> <a href="#" id="btnMemFree"><i class="fas fa-memory fa-fw" style="color: #17c671" aria-hidden="true"></i>Memory Free</a> </li>
-                    <li> <a href="#" id="btnMemAlloc"><i class="fas fa-memory fa-fw" style="color: #17c671" aria-hidden="true"></i>Memory Allocation</a> </li>
-                    <li> <a href="#" id="btnSwapUsg"><i class="fas fa-arrow-right-arrow-left fa-fw" style="color: #17c671" aria-hidden="true"></i>Swap Usage</a> </li>
+                    <li> <a href="#" id="btnMemUsg">Memory Used</a> </li>
+                    <li> <a href="#" id="btnMemFree">Memory Free</a> </li>
+                    <li> <a href="#" id="btnMemAlloc">Memory Allocation</a> </li>
+                    <li> <a href="#" id="btnSwapUsg">Swap Usage</a> </li>
                 </ul>
             </li>
 
-            <li>
-                <a href="#processesSubmenu" id="btnProcesses" data-bs-toggle="collapse" aria-expanded="false" class="dropdown hide1">
-                    <i class="fas fa-sitemap fa-fw" style="color: #00c7f7" aria-hidden="true"></i>Processes
+            <li class="nav-sec-memory">
+                <a href="#processesSubmenu" id="btnProcesses" data-bs-toggle="collapse" aria-expanded="false" class="dropdown">
+                    <svg class="icon" aria-hidden="true"><use href="#i-processes"/></svg>
+                    Processes
                 </a>
                 <ul class="collapse list-unstyled" id="processesSubmenu" data-bs-parent="#sidebar">
-                    <li> <a href="#" id="btnProcs"><i class="fas fa-sitemap fa-fw" style="color: #00c7f7" aria-hidden="true"></i>Processes</a> </li>
-                    <li> <a href="#" id="btnSwap"><i class="fas fa-arrow-right-arrow-left fa-fw" style="color: #00c7f7" aria-hidden="true"></i>Swapping</a> </li>
-                    <li> <a href="#" id="btnPaging"><i class="fas fa-file-import fa-fw" style="color: #00c7f7" aria-hidden="true"></i>Paging Activity</a> </li>
-                    <li> <a href="#" id="btnPage"><i class="fas fa-file-import fa-fw" style="color: #00c7f7" aria-hidden="true"></i>Page</a> </li>
+                    <li> <a href="#" id="btnProcs">Processes</a> </li>
+                    <li> <a href="#" id="btnSwap">Swapping</a> </li>
+                    <li> <a href="#" id="btnPaging">Paging Activity</a> </li>
+                    <li> <a href="#" id="btnPage">Page</a> </li>
                 </ul>
             </li>
 
-            <li class="sidebar-section-label" aria-hidden="true"><span>Storage &amp; I/O</span></li>
+            <li class="sidebar-section-label sec-storage"><span>Storage &amp; I/O</span></li>
 
-            <li>
-                <a href="#" id="btnIO" class="hide1">
-                    <i class="fas fa-hard-drive fa-fw" style="color: #ECFFB0" aria-hidden="true"></i>I/O
+            <li class="nav-sec-storage">
+                <a href="#" id="btnIO">
+                    <svg class="icon" aria-hidden="true"><use href="#i-harddrive"/></svg>
+                    I/O
                 </a>
             </li>
 
-            <li>
-                <a href="#ulDev" id="btnDevices" data-bs-toggle="collapse" aria-expanded="false" class="dropdown hide1">
-                    <i class="fas fa-database fa-fw" style="color: #FF9900" aria-hidden="true"></i>Devices
+            <li class="nav-sec-storage">
+                <a href="#ulDev" id="btnDevices" data-bs-toggle="collapse" aria-expanded="false" class="dropdown">
+                    <svg class="icon" aria-hidden="true"><use href="#i-database"/></svg>
+                    Devices
                 </a>
                 <ul class="collapse list-unstyled" id="ulDev" data-bs-parent="#sidebar"></ul>
             </li>
 
-            <li>
-                <a href="#" id="btnFile" class="hide1">
-                    <i class="fas fa-file fa-fw" style="color: #17c671" aria-hidden="true"></i>File
+            <li class="nav-sec-storage">
+                <a href="#" id="btnFile">
+                    <svg class="icon" aria-hidden="true"><use href="#i-file"/></svg>
+                    File
                 </a>
             </li>
 
-            <li class="sidebar-section-label" aria-hidden="true"><span>Network</span></li>
+            <li class="sidebar-section-label sec-network"><span>Network</span></li>
 
-            <li>
-                <a href="#ulInterfaceTraffic" id="btnInterfaceTraffics" data-bs-toggle="collapse" aria-expanded="false" class="dropdown hide1">
-                    <i class="fas fa-network-wired fa-fw" style="color: #C5EBC3" aria-hidden="true"></i>Interface Traffic
+            <li class="nav-sec-network">
+                <a href="#ulInterfaceTraffic" id="btnInterfaceTraffics" data-bs-toggle="collapse" aria-expanded="false" class="dropdown">
+                    <svg class="icon" aria-hidden="true"><use href="#i-arrow-left-right"/></svg>
+                    Interface Traffic
                 </a>
                 <ul class="collapse list-unstyled" id="ulInterfaceTraffic" data-bs-parent="#sidebar"></ul>
             </li>
 
-            <li>
-                <a href="#ulInterfaceErrors" id="btnInterfaceErrors" data-bs-toggle="collapse" aria-expanded="false" class="dropdown hide1">
-                    <i class="fas fa-triangle-exclamation fa-fw" style="color: #A23B72" aria-hidden="true"></i>Interface Errors
+            <li class="nav-sec-network">
+                <a href="#ulInterfaceErrors" id="btnInterfaceErrors" data-bs-toggle="collapse" aria-expanded="false" class="dropdown">
+                    <svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg>
+                    Interface Errors
                 </a>
                 <ul class="collapse list-unstyled" id="ulInterfaceErrors" data-bs-parent="#sidebar"></ul>
             </li>
 
-            <li>
-                <a href="#ulNFS" id="btnNFS" data-bs-toggle="collapse" aria-expanded="false" class="dropdown hide1">
-                    <i class="fas fa-server fa-fw" style="color: #42E2B8" aria-hidden="true"></i>NFS
+            <li class="nav-sec-network">
+                <a href="#ulNFS" id="btnNFS" data-bs-toggle="collapse" aria-expanded="false" class="dropdown">
+                    <svg class="icon" aria-hidden="true"><use href="#i-server"/></svg>
+                    NFS
                 </a>
                 <ul class="collapse list-unstyled" id="ulNFS" data-bs-parent="#sidebar">
-                    <li> <a href="#" id="btnNFSClient"><i class="fas fa-server fa-fw" style="color: #42E2B8" aria-hidden="true"></i>NFS Client</a> </li>
-                    <li> <a href="#" id="btnNFSServer"><i class="fas fa-server fa-fw" style="color: #42E2B8" aria-hidden="true"></i>NFS Server</a> </li>
+                    <li> <a href="#" id="btnNFSClient">NFS Client</a> </li>
+                    <li> <a href="#" id="btnNFSServer">NFS Server</a> </li>
                 </ul>
             </li>
 
-            <li>
-                <a href="#" id="btnSockets" class="hide1">
-                    <i class="fas fa-plug fa-fw" style="color: #FF9900" aria-hidden="true"></i>Sockets
+            <li class="nav-sec-network">
+                <a href="#" id="btnSockets">
+                    <svg class="icon" aria-hidden="true"><use href="#i-plug"/></svg>
+                    Sockets
                 </a>
             </li>
 
-            <li class="sidebar-section-label sidebar-section-system" aria-hidden="true"><span>System</span></li>
+            <li class="sidebar-section-label sec-system sidebar-section-system"><span>System</span></li>
 
-            <li>
-                <a href="#" id="btnSysCalls" class="hide1">
-                    <i class="fas fa-terminal fa-fw" style="color: #00c7f7" aria-hidden="true"></i>System Calls
+            <li class="nav-sec-system">
+                <a href="#" id="btnSysCalls">
+                    <svg class="icon" aria-hidden="true"><use href="#i-terminal"/></svg>
+                    System Calls
                 </a>
             </li>
 
-            <li>
-                <a href="#" id="btnTTY" class="hide1">
-                    <i class="fas fa-keyboard fa-fw" style="color: #c4183c" aria-hidden="true"></i>TTY
+            <li class="nav-sec-system">
+                <a href="#" id="btnTTY">
+                    <svg class="icon" aria-hidden="true"><use href="#i-keyboard"/></svg>
+                    TTY
                 </a>
             </li>
 

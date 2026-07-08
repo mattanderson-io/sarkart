@@ -2,13 +2,10 @@
  * Landing-page UX helpers for sarkart-plotly.
  *
  * Responsibilities:
- *   1. Reveal the landing-extras blocks (FEATURES / DESCRIPTION / HOW TO /
- *      FAQ) when the user clicks About / How To / FAQ in the toolbar.
- *   2. Mark <body class="data-loaded"> once a SAR file has been parsed, so
- *      CSS can show the file-info bar and reveal the landing extras without
- *      needing an explicit user action.
- *   3. Populate the file-info bar (host / OS / dates / file name).
- *   4. Wire the "Open another file" toolbar button to the existing upload
+ *   1. Mark <body class="data-loaded"> once a SAR file has been parsed, so
+ *      CSS can show the file-info bar.
+ *   2. Populate the file-info bar (host / OS / dates / file name).
+ *   3. Wire the "Open another file" toolbar button to the existing upload
  *      input without triggering a full page reload (that's what Reset does).
  *
  * Load order: this script must come AFTER sarkart-v1.0.0.min.js and
@@ -17,15 +14,7 @@
 (function () {
   'use strict';
 
-  // ---------- Toolbar -> landing extras reveal ----------
-  function openLandingExtras() {
-    document.body.classList.add('landing-extras-open');
-  }
-
-  function closeLandingExtras() {
-    document.body.classList.remove('landing-extras-open');
-  }
-
+  // ---------- Process Data click isolation ----------
   // The "Process Data" button lives inside the dropzone, which has a
   // click listener that re-opens the file picker. Attach a bubble-phase
   // listener directly on the button that stops propagation — the button's
@@ -43,35 +32,6 @@
   } else {
     wireProcessDataStopPropagation();
   }
-
-  document.addEventListener('click', function (e) {
-    var t = e.target.closest && e.target.closest('#landingHowToLink, #landingFAQLink');
-    if (!t) return;
-    openLandingExtras();
-    var targetId = null;
-    if (t.id === 'landingHowToLink')      targetId = '_howto';
-    else if (t.id === 'landingFAQLink')   targetId = '_faq';
-    if (targetId) {
-      e.preventDefault();
-      setTimeout(function () {
-        var el = document.getElementById(targetId);
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 20);
-    }
-  });
-
-  // Clicking Dashboard or any sidebar chart entry should hide the landing
-  // extras so they don't bleed into a chart view. Match any link inside the
-  // sidebar — not just ones with id^="btn" — because per-core CPU links,
-  // device links, and interface links use data-sns attributes instead of ids.
-  document.addEventListener('click', function (e) {
-    var hit =
-      e.target.closest && (
-        e.target.closest('#btnSAR') ||
-        e.target.closest('#sidebar ul a')
-      );
-    if (hit) closeLandingExtras();
-  });
 
   // ---------- Open another file ----------
   // Simpler than a full reset: hide the dashboard and re-show the upload
@@ -277,42 +237,6 @@
   } else {
     startTitleObserver();
   }
-})();
-
-// ---------- Help button -> show HOW TO / FAQ sections ------------------------
-// If the user is on a chart view, return to dashboard first so the extras
-// don't render inside the chart layout. Then reveal and scroll. Hide the
-// dashboard content (peak boxes) so only the help sections are visible.
-(function () {
-  document.addEventListener('click', function (e) {
-    var btn = e.target.closest && e.target.closest('#btnHelp');
-    if (!btn) return;
-    e.preventDefault();
-
-    // Return to dashboard/home view first (clears chart containers).
-    if (typeof homePage === 'function') homePage();
-    // Also click the sidebar Dashboard to reset sidebar active state.
-    var dashBtn = document.getElementById('btnSAR');
-    if (dashBtn) dashBtn.click();
-
-    // Mark help as open — CSS will hide peak boxes and other dashboard chrome.
-    document.body.classList.add('help-open');
-
-    // Reveal the extras and scroll after a short delay so the DOM settles.
-    setTimeout(function () {
-      document.body.classList.add('landing-extras-open');
-      setTimeout(function () {
-        var el = document.getElementById('_howto');
-        if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 50);
-    }, 100);
-  });
-
-  // Clear help-open when navigating away (any sidebar click).
-  document.addEventListener('click', function (e) {
-    var hit = e.target.closest && e.target.closest('#sidebar ul a, #btnSAR');
-    if (hit) document.body.classList.remove('help-open');
-  });
 })();
 
 

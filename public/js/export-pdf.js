@@ -8,17 +8,10 @@
   // Wait for DOM ready
   $(function() {
     // Add Export PDF button to the toolbar
-    var exportBtn = $('<a href="#" class="animate__animated animate__flipInX animate__delay-1s btn btn-app export d-flex flex-column dash-btn hide" id="btnExportPDF">' +
-      '<i class="fa fa-file-pdf"></i>Export PDF</a>');
+    var exportBtn = $('<a href="#" class="top-bar-btn hide" id="btnExportPDF">' +
+      '<svg class="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg> Export PDF</a>');
     
     $('.container1').append(exportBtn);
-
-    // Show the button when charts are available
-    var origChartPage = window.chartPage;
-    if (typeof chartPage === 'function') {
-      // Override to show export button when charts are visible
-      var _origShow = show;
-    }
 
     // Make export button visible when sidebar shows (data loaded)
     var observer = new MutationObserver(function() {
@@ -238,18 +231,23 @@
       }
     }
 
+    function captureBgColor() {
+      var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+      if (theme === 'light') return '#ffffff';
+      var surface = getComputedStyle(document.documentElement).getPropertyValue('--surface-1');
+      return (surface && surface.trim()) || '#0f1419';
+    }
+
     function captureCharts(sectionName) {
-      // Find visible chart containers
+      // Capture the full chart card (heading + plot) when available.
       var containers = [];
       ['#containerA', '#containerB', '#containerC', '#containerD'].forEach(function(id) {
         var el = $(id);
-        // A Plotly chart is rendered when the container has a .js-plotly-plot
-        // descendant (Plotly adds this class on newPlot). We also check the
-        // element itself in case Plotly was called with the container as root.
-        var hasPlot = el.find('.js-plotly-plot').length > 0 || el.hasClass('js-plotly-plot');
-        if (el.is(':visible') && el.html().trim() && hasPlot) {
-          containers.push(el[0]);
-        }
+        // Plotly 3.x puts js-plotly-plot on the host element itself.
+        var hasPlot = el.hasClass('js-plotly-plot') || el.find('.plot-container.plotly').length > 0;
+        if (!el.is(':visible') || !el.html().trim() || !hasPlot) return;
+        var card = el.closest('.chart-card');
+        containers.push((card.length ? card : el)[0]);
       });
 
       if (containers.length === 0) {
@@ -263,7 +261,7 @@
 
       containers.forEach(function(container, idx) {
         html2canvas(container, {
-          backgroundColor: '#ffffff',
+          backgroundColor: captureBgColor(),
           scale: 2,
           logging: false,
           useCORS: true

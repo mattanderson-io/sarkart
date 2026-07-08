@@ -20,23 +20,30 @@
 (function () {
   'use strict';
 
-  // -- Theme ------------------------------------------------------------------
-  var ORANGE     = '#FF9900';
-  var INK        = '#232F3E';
-  var PAPER_BG   = 'rgba(0,0,0,0)';
-  var PLOT_BG    = '#ffffff';
-  var GRID_COLOR = '#e5e5e5';
-  var TEXT_COLOR = '#232F3E';
+  // -- Theme (reads CSS custom properties from sarkart-v2.css) ----------------
+  function cssVar(name, fallback) {
+    var v = getComputedStyle(document.documentElement).getPropertyValue(name);
+    return (v && v.trim()) || fallback;
+  }
+
+  function themeColors() {
+    return {
+      accent: cssVar('--accent', '#ffa02e'),
+      ink: cssVar('--text-1', '#e8ecf4'),
+      paper: 'rgba(0,0,0,0)',
+      plot: cssVar('--chart-plot-bg', '#10151d'),
+      grid: cssVar('--chart-grid', '#1d2532'),
+      text: cssVar('--chart-axis', '#67728a'),
+      hoverBg: cssVar('--chart-hover-bg', '#1b2230'),
+      hoverBorder: cssVar('--chart-hover-border', '#2e394c'),
+      hoverText: cssVar('--chart-hover-text', '#e8ecf4'),
+      font: cssVar('--font-ui', 'Inter var, sans-serif')
+    };
+  }
 
   var MULTI_PALETTE = [
-    '#FF9900', // orange
-    '#1B9AAA', // teal
-    '#55BF3B', // green
-    '#DF5353', // red
-    '#527bad', // bluish purple
-    '#8d4654', // dark brown
-    '#cc6699', // light burgundy
-    '#e67e22'  // darker orange
+    '#ffa02e', '#6cb2ff', '#4ade80', '#f87171',
+    '#a78bfa', '#f472b6', '#22d3ee', '#fbbf24'
   ];
 
   var CHART_HEIGHT         = 400;   // px, forced on chart containers
@@ -118,12 +125,13 @@
   // Time x-axis. Let Plotly pick its own ticks; SAR-derived timestamps span
   // from minutes to months and Plotly auto-picks far better than we can.
   function timeAxis() {
+    var t = themeColors();
     return {
       type: 'date',
-      gridcolor: GRID_COLOR,
+      gridcolor: t.grid,
       gridwidth: 0.5,
-      linecolor: '#cccccc',
-      tickfont: { color: TEXT_COLOR, size: 10 },
+      linecolor: t.grid,
+      tickfont: { color: t.text, size: 10, family: t.font },
       automargin: true
     };
   }
@@ -157,16 +165,17 @@
   // tick selection is correct for the value ranges SAR metrics cover.
   // We only apply explicit range bounds when BOTH yMin and yMax are numbers.
   function valueAxis(title, yMin, yMax) {
+    var t = themeColors();
     var ax = {
       title: {
         text: wrapAxisTitle(title, 40),
-        font: { color: TEXT_COLOR, size: 11 },
+        font: { color: t.text, size: 11, family: t.font },
         standoff: 8
       },
-      gridcolor: GRID_COLOR,
+      gridcolor: t.grid,
       gridwidth: 0.5,
-      linecolor: '#cccccc',
-      tickfont: { color: TEXT_COLOR, size: 10 },
+      linecolor: t.grid,
+      tickfont: { color: t.text, size: 10, family: t.font },
       zeroline: false,
       automargin: true,
       nticks: 8  // soft target; Plotly treats this as a hint, unlike dtick
@@ -179,70 +188,75 @@
     return ax;
   }
 
-  // Layout shell. The chart title is rendered as a centered annotation-pill
-  // (not as Plotly's built-in `layout.title`) because the built-in title does
-  // not support a background color. Using a paper-referenced annotation lets
-  // us paint it on a solid pill that matches the chart's color, with white
-  // text for contrast.
-  //
-  // Hostname subtitle goes into the top-right as a second annotation.
-  function baseLayout(title, subtitleColor) {
-    var pillColor = subtitleColor || ORANGE;
+  // Layout shell. Titles render in the HTML .chart-head above each Plotly host;
+  // the plot area only carries axes and data.
+  function baseLayout() {
+    var t = themeColors();
 
-    var layout = {
-      paper_bgcolor: PAPER_BG,
-      plot_bgcolor: PLOT_BG,
+    return {
+      paper_bgcolor: t.paper,
+      plot_bgcolor: t.plot,
       height: CHART_HEIGHT,
-      // Extra top margin so the pill title doesn't overlap the plot area.
-      margin: { l: 70, r: 20, t: 54, b: 70 },
+      margin: { l: 70, r: 20, t: 24, b: 70 },
       dragmode: 'zoom',
-      font: { color: TEXT_COLOR, size: 11 },
+      font: { color: t.text, size: 11, family: t.font },
       showlegend: false,
-      transition: { duration: 0 },  // disable animated transitions
-      // Opaque hover tooltip. Default unified-hover background is a
-      // semi-transparent white which looks washed out on the white plot area
-      // of single-line charts. Force solid white + ink border + dark text so
-      // the tooltip reads the same whether the chart has one line or many.
+      transition: { duration: 0 },
       hoverlabel: {
-        bgcolor: '#ffffff',
-        bordercolor: INK,
-        font: { color: INK, size: 11, family: 'Metrophobic, sans-serif' },
+        bgcolor: t.hoverBg,
+        bordercolor: t.hoverBorder,
+        font: { color: t.hoverText, size: 11, family: t.font },
         namelength: -1
       }
     };
+  }
 
-    var annotations = [];
-    if (title) {
-      annotations.push({
-        text: '<b>' + title + '</b>',
-        xref: 'paper', yref: 'paper',
-        x: 0.5, y: 1.12,
-        xanchor: 'center', yanchor: 'middle',
-        showarrow: false,
-        font: { color: '#ffffff', size: 13, family: 'Metrophobic, sans-serif' },
-        align: 'center',
-        // Pill styling — Plotly annotations support these directly.
-        bgcolor: pillColor,
-        bordercolor: pillColor,
-        borderwidth: 1,
-        borderpad: 6
-      });
-    }
+  // Chart card headings show the metric name only; units belong on the y-axis.
+  function chartHeadTitle(raw) {
+    if (!raw) return '';
+    var s = String(raw).trim();
+    var unitLike = /(?:\/s|%|Mbps|Gbps|KB\/s|MB\/s|tps|byte|kilobyte|usr|nice|sys|iowait|idle|memused|memfree|swpused|runq|plist)/i;
 
+    s = s.replace(/^Percentage of\s+/i, '');
+    s = s.replace(/\s+at the user level\b/i, ' (user)');
+    s = s.replace(/\s+at the system level\b/i, ' (system)');
+    s = s.replace(/\s*\[(?:application|system|idle|iowait|nice|sys|usr|soft|irq|steal|guest|gnice)\]\s*/gi, ' ');
+
+    s = s.replace(/\s*\(([^)]*)\)\s*/g, function (match, inner) {
+      return unitLike.test(inner) ? ' ' : match;
+    });
+
+    s = s.replace(/\s*\|\s*[^|]*(?:\/s|%|Mbps|Gbps|KB|MB)[^|]*(?:\s*\|\s*[^|]*)*\s*$/gi, '');
+    s = s.replace(/^Total number of (?:kilobytes|packets)\s+/i, '');
+    return s.replace(/\s+/g, ' ').trim();
+  }
+
+  function syncChartHead(containerId, title, accentColor) {
+    var el = document.getElementById(containerId);
+    if (!el) return;
+    var head = el.closest('.chart-card') && el.closest('.chart-card').querySelector('.chart-head');
+    if (!head) return;
+
+    var heading = head.querySelector('.chart-heading');
+    var subtitle = head.querySelector('.chart-subtitle');
+    var color = accentColor || themeColors().accent;
     var hostname = (typeof getHostname === 'function' ? getHostname() || '' : '');
-    if (hostname) {
-      annotations.push({
-        text: hostname,
-        xref: 'paper', yref: 'paper',
-        x: 1, y: 1.02,
-        xanchor: 'right', yanchor: 'bottom',
-        showarrow: false,
-        font: { color: pillColor, size: 10, weight: 700 }
-      });
-    }
+    var headText = chartHeadTitle(title);
 
-    if (annotations.length) layout.annotations = annotations;
-    return layout;
+    head.style.setProperty('--chart-accent', color);
+    head.classList.toggle('is-empty', !headText);
+
+    if (heading) heading.textContent = headText;
+    if (subtitle) {
+      subtitle.textContent = hostname;
+      subtitle.hidden = !hostname;
+    }
+  }
+
+  function hideChartHead(containerId) {
+    var el = document.getElementById(containerId);
+    var head = el && el.closest('.chart-card') && el.closest('.chart-card').querySelector('.chart-head');
+    if (head) head.classList.add('is-empty');
   }
 
   // Config deliberately avoids `responsive: true` (the ResizeObserver it
@@ -267,40 +281,99 @@
   function prepContainer(id) {
     var el = document.getElementById(id);
     if (!el) return null;
+    el.classList.remove('is-heatmap-host');
+    el.style.width = '100%';
     el.style.height = CHART_HEIGHT + 'px';
     return el;
   }
 
-  // Plotly freezes the SVG width at whatever the container measures at
-  // newPlot() time. If that happens before the surrounding layout has
-  // settled (sidebar still collapsing, parent card just un-hidden, etc.),
-  // the chart renders narrow and looks clipped on the right. Two safeguards:
-  //
-  //   1. Resize on the next two animation frames after newPlot — by then
-  //      the current layout pass has committed.
-  //   2. Install a ResizeObserver (once per element) so any later size
-  //      change to the container triggers a debounced resize.
-  function settleAndObserve(el) {
-    if (!el || typeof window.Plotly === 'undefined') return;
+  function horizontalPadding(node) {
+    if (!node) return 0;
+    var cs = getComputedStyle(node);
+    return (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.paddingRight) || 0);
+  }
 
-    function safeResize() {
-      if (el.data && el.layout) {
-        try { window.Plotly.Plots.resize(el); } catch (e) {}
-      }
+  // Plotly freezes SVG width at whatever the container measures during
+  // newPlot(). If the surrounding layout has not committed yet, the chart
+  // renders narrow and a follow-up resize looks like a left-to-right bounce.
+  // Resolve the target width up front and pass it in layout.width instead.
+  function resolveChartWidth(el) {
+    if (!el) return 0;
+
+    var chartBody = el.closest('.chart-body');
+    if (chartBody) {
+      void chartBody.offsetWidth;
+      var bodyInner = chartBody.clientWidth - horizontalPadding(chartBody);
+      if (bodyInner >= 80) return Math.round(bodyInner);
     }
 
-    requestAnimationFrame(function () {
-      safeResize();
-      requestAnimationFrame(safeResize);
-    });
+    // Chart blocks start hidden; derive width from the visible section shell
+    // and subtract the chart card/body padding we cannot measure yet.
+    var section = el.closest('section') || document.querySelector('#content > section');
+    if (section) {
+      void section.offsetWidth;
+      var sectionInner = section.clientWidth - horizontalPadding(section);
+      var inset = chartBody ? horizontalPadding(chartBody) : 24;
+      var derived = sectionInner - inset;
+      if (derived >= 80) return Math.round(derived);
+    }
 
+    var content = document.getElementById('content');
+    if (content) {
+      void content.offsetWidth;
+      var contentInner = content.clientWidth;
+      if (section) {
+        contentInner = Math.min(contentInner, section.clientWidth - horizontalPadding(section));
+      }
+      contentInner -= chartBody ? horizontalPadding(chartBody) : 24;
+      if (contentInner >= 80) return Math.round(contentInner);
+    }
+
+    return 0;
+  }
+
+  function applyChartDimensions(el, layout) {
+    layout.height = CHART_HEIGHT;
+    el.style.height = CHART_HEIGHT + 'px';
+    el.style.width = '100%';
+    el.style.maxWidth = '100%';
+
+    var w = resolveChartWidth(el);
+    if (w > 0) {
+      var host = el.closest('.chart-body');
+      if (host && host.clientWidth >= 80) {
+        w = Math.min(w, Math.round(host.clientWidth - horizontalPadding(host)));
+      }
+      layout.width = w;
+      el._sarkartPlotWidth = w;
+    }
+    return layout;
+  }
+
+  // Watch for real container resizes (window, sidebar toggle). Skip the
+  // post-newPlot animation-frame resize — that caused the visible bounce.
+  function observeChartResize(el) {
+    if (!el || typeof window.Plotly === 'undefined') return;
     if (el._sarkartRO || typeof ResizeObserver === 'undefined') return;
-    var t = null;
+
+    var host = el.closest('.chart-body') || el;
+    var timer = null;
+    var lastW = el._sarkartPlotWidth || 0;
+
     el._sarkartRO = new ResizeObserver(function () {
-      if (t) clearTimeout(t);
-      t = setTimeout(safeResize, 100);
+      if (timer) clearTimeout(timer);
+      timer = setTimeout(function () {
+        if (!el.data || !el.layout) return;
+        var w = resolveChartWidth(el);
+        if (w < 80 || Math.abs(w - lastW) < 2) return;
+        lastW = w;
+        el._sarkartPlotWidth = w;
+        try {
+          window.Plotly.relayout(el, { width: w, height: CHART_HEIGHT });
+        } catch (e) {}
+      }, 150);
     });
-    el._sarkartRO.observe(el);
+    el._sarkartRO.observe(host);
   }
 
   // -- printChart (single line) ----------------------------------------------
@@ -320,8 +393,8 @@
     if (!el) return;
 
     var xy = splitXY(plotData);
-    var seriesColor = color || ORANGE;
-    var displayTitle = (yAxisTitle || '').split('(')[0].trim();
+    var seriesColor = color || themeColors().accent;
+    var displayTitle = chartHeadTitle(yAxisTitle);
 
     var trace = {
       type: 'scatter',
@@ -334,7 +407,7 @@
       hovertemplate: '<b>%{y}</b><extra>' + displayTitle + '</extra>'
     };
 
-    var layout = baseLayout(displayTitle, seriesColor);
+    var layout = baseLayout();
     layout.xaxis = timeAxis();
     layout.yaxis = valueAxis(yAxisTitle, yMin, yMax);
     // Use unified hover mode (same as multi-chart) so a single-line chart's
@@ -342,8 +415,10 @@
     // with the series name and value.
     layout.hovermode = 'x unified';
 
+    syncChartHead(containerId, displayTitle, seriesColor);
+    applyChartDimensions(el, layout);
     window.Plotly.newPlot(el, [trace], layout, BASE_CONFIG);
-    settleAndObserve(el);
+    observeChartResize(el);
   }
 
   // -- printMultiChart (multi-series line, shared y) -------------------------
@@ -384,8 +459,8 @@
       });
     }
 
-    // Pill color comes from the actual first trace, not a parallel calculation.
-    var layout = baseLayout(title, firstLineColor || MULTI_PALETTE[0]);
+    // Header accent comes from the actual first trace color.
+    var layout = baseLayout();
     layout.xaxis = timeAxis();
     layout.yaxis = valueAxis(yAxisTitle, 0, null);
     layout.hovermode = 'x unified';
@@ -394,12 +469,14 @@
       orientation: 'h',
       x: 0, y: -0.18,
       xanchor: 'left', yanchor: 'top',
-      font: { size: 10, color: TEXT_COLOR }
+      font: { size: 10, color: themeColors().text, family: themeColors().font }
     };
     layout.margin.b = 120;
 
+    syncChartHead(containerId, title, firstLineColor || MULTI_PALETTE[0]);
+    applyChartDimensions(el, layout);
     window.Plotly.newPlot(el, traces, layout, BASE_CONFIG);
-    settleAndObserve(el);
+    observeChartResize(el);
   }
 
   // -- printPieChart (tiny donut gauge) --------------------------------------
@@ -409,13 +486,13 @@
     if (!el) return;
 
     var v = Math.max(0, Math.min(100, Number(value) || 0));
-    var fill = color || ORANGE;
+    var fill = color || themeColors().accent;
 
     var trace = {
       type: 'pie',
       values: [v, 100 - v],
       marker: {
-        colors: [fill, 'rgba(255,255,255,0.15)'],
+        colors: [fill, cssVar('--surface-3', 'rgba(255,255,255,0.15)')],
         line: { width: 0 }
       },
       hole: 0.6,
@@ -427,19 +504,87 @@
       showlegend: false
     };
 
+    var t = themeColors();
     var layout = {
-      paper_bgcolor: PAPER_BG,
-      plot_bgcolor: PAPER_BG,
-      margin: { l: 0, r: 0, t: 0, b: 0 },
+      paper_bgcolor: t.paper,
+      plot_bgcolor: t.paper,
+      margin: { l: 2, r: 2, t: 2, b: 2 },
       showlegend: false,
-      height: 100,
-      width: 100,
+      height: 56,
+      width: 56,
       transition: { duration: 0 }
     };
 
     var cfg = { displayModeBar: false, staticPlot: true };
 
     window.Plotly.newPlot(el, [trace], layout, cfg);
+  }
+
+  function axisThemePatch(layout) {
+    var t = themeColors();
+    var patch = {};
+    if (!layout) return patch;
+
+    Object.keys(layout).forEach(function (key) {
+      if (key !== 'xaxis' && key !== 'yaxis' && !/^xaxis[2-9]\d*$/.test(key) && !/^yaxis[2-9]\d*$/.test(key)) return;
+      var ax = layout[key];
+      if (!ax || typeof ax !== 'object') return;
+      patch[key + '.gridcolor'] = t.grid;
+      patch[key + '.linecolor'] = t.grid;
+      patch[key + '.tickfont.color'] = t.text;
+      patch[key + '.tickfont.family'] = t.font;
+      if (ax.title) {
+        patch[key + '.title.font.color'] = t.text;
+        patch[key + '.title.font.family'] = t.font;
+      }
+    });
+
+    return patch;
+  }
+
+  function applyThemeToPlot(el) {
+    if (!el || !el.data || !el.layout || typeof window.Plotly === 'undefined') return;
+
+    var t = themeColors();
+
+    // KPI mini donut charts
+    if (el.layout.width === 56 && el.layout.height === 56) {
+      var fill = (el.data[0] && el.data[0].marker && el.data[0].marker.colors && el.data[0].marker.colors[0]) || t.accent;
+      try {
+        window.Plotly.relayout(el, {
+          paper_bgcolor: t.paper,
+          plot_bgcolor: t.paper
+        });
+        window.Plotly.restyle(el, {
+          'marker.colors': [[fill, cssVar('--surface-3', 'rgba(255,255,255,0.15)')]]
+        });
+      } catch (e) {}
+      return;
+    }
+
+    var patch = Object.assign({
+      paper_bgcolor: t.paper,
+      plot_bgcolor: t.plot,
+      'font.color': t.text,
+      'font.family': t.font,
+      'hoverlabel.bgcolor': t.hoverBg,
+      'hoverlabel.bordercolor': t.hoverBorder,
+      'hoverlabel.font.color': t.hoverText,
+      'hoverlabel.font.family': t.font
+    }, axisThemePatch(el.layout));
+
+    try {
+      window.Plotly.relayout(el, patch);
+    } catch (e) {}
+  }
+
+  function applyThemeToAllPlots() {
+    ['containerA', 'containerB', 'containerC', 'containerD', 'peakCPUChart', 'peakLoadChart', 'peakMemoryChart'].forEach(function (id) {
+      applyThemeToPlot(document.getElementById(id));
+    });
+    if (typeof window.sarkartRefreshHeatmaps === 'function') {
+      window.sarkartRefreshHeatmaps();
+    }
   }
 
   // -- Install overrides ------------------------------------------------------
@@ -451,6 +596,8 @@
     window.printChart      = printChartPlotly;
     window.printMultiChart = printMultiChartPlotly;
     window.printPieChart   = printPieChartPlotly;
+    window.sarkartSyncChartHead = syncChartHead;
+    window.sarkartHideChartHead = hideChartHead;
     console.log('[sarkart] Plotly chart overrides installed');
   }
 
@@ -459,6 +606,8 @@
   } else {
     install();
   }
+
+  window.addEventListener('sarkart-theme-change', applyThemeToAllPlots);
 
   // Debounced window resize handler for the four main chart containers.
   var resizeTimer = null;
@@ -469,7 +618,12 @@
       ['containerA', 'containerB', 'containerC', 'containerD'].forEach(function (id) {
         var el = document.getElementById(id);
         if (el && el.data && el.layout) {
-          try { window.Plotly.Plots.resize(el); } catch (e) {}
+          var w = resolveChartWidth(el);
+          if (w < 80) {
+            try { window.Plotly.Plots.resize(el); } catch (e) {}
+            return;
+          }
+          try { window.Plotly.relayout(el, { width: w, height: CHART_HEIGHT }); } catch (e) {}
         }
       });
     }, 150);
