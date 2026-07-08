@@ -26,6 +26,17 @@ export function App() {
       if (link.id === 'btnHeatmap') {
         event.preventDefault();
         window.chartPage?.();
+        // A previously-opened chart category renders its Plotly chart
+        // imperatively into #containerA, which Preact doesn't track. Mounting
+        // the heatmap without clearing it leaves that stale chart lingering
+        // above the heatmap. Clear it first — but only when the heatmap isn't
+        // already mounted here, so re-clicking Heatmap doesn't wipe Preact's
+        // own `.heatmap-grid` (we detect via the DOM rather than the click
+        // handler's stale `heatmapVisible` closure).
+        const containerA = document.getElementById('containerA');
+        if (containerA && !containerA.querySelector('.heatmap-grid')) {
+          window.hideBlock?.('A');
+        }
         window.showBlock?.('A');
         ['B', 'C', 'D'].forEach((id) => window.hideBlock?.(id));
         const title = document.getElementById('pageTitle');
