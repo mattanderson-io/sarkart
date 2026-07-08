@@ -2,8 +2,10 @@ export {};
 
 declare global {
   interface Window {
-    __sarkartPreactTopUi?: boolean;
     __displayTitleWrapped?: boolean;
     __sarkartPreactDateFilter?: boolean;
+    __updateProgressWrapped?: boolean;
+    __chartPageWrapped?: boolean;
+    DEBUG?: number;
   }
 }

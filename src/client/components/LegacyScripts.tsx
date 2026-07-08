@@ -4,8 +4,7 @@ const legacyScripts = [
   '/js/plotly-cartesian-3.5.1.min.js',
   '/js/plotly-charts.js?v=26',
   '/js/html2canvas.min.js',
-  '/js/jspdf.umd.min.js',
-  '/js/sarkart-ui.js?v=11'
+  '/js/jspdf.umd.min.js'
 ];
 
 function loadScript(src: string) {
@@ -27,7 +26,6 @@ function loadScript(src: string) {
 export function LegacyScripts() {
   useEffect(() => {
     let cancelled = false;
-    window.__sarkartPreactTopUi = true;
 
     legacyScripts.reduce((chain, src) => {
       return chain.then(() => {

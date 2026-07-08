@@ -12,6 +12,7 @@ import { PdfExportBridge } from './PdfExportBridge';
 import { SarDataBridge } from './SarDataBridge';
 import { Sidebar } from './Sidebar';
 import { SidebarCollapse } from './SidebarCollapse';
+import { UiBridge } from './UiBridge';
 
 export function App() {
   const [heatmapVisible, setHeatmapVisible] = useState(false);
@@ -62,6 +63,7 @@ export function App() {
       </div>
       <CommandPalette />
       <CoreEngineBridge />
+      <UiBridge />
       <SidebarCollapse />
       <ChartRouterBridge />
       <FileUploadBridge />

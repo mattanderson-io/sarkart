@@ -45,7 +45,7 @@ link in the document head.
 | Preact `SidebarCollapse` | Sidebar submenu accordion (toggle `.show` + `aria-expanded`) — replaces `bootstrap.bundle.min.js` |
 | `plotly-charts.js` | Plotly replacements for `printChart` / `printMultiChart` / `printPieChart` |
 | Preact `NetworkUnitBridge` | Interface traffic unit selector (KB/s, Mbps, Gbps, % of link speed) |
-| `sarkart-ui.js` | Remaining legacy bridge: progress, CPU chips, sidebar, dashboard state |
+| Preact `UiBridge` + `legacyUi` | Progress stage/rate, `chartPage` fast path, keyboard shortcuts, sidebar collapse toggle, empty-section-label hiding, CPU chip bar, `is-dashboard` state — replaces `sarkart-ui.js` |
 | Preact `LandingBridge` | Upload lifecycle, sample data, loaded state, file info, title helpers |
 | Preact `HeatmapDashboard` | Heatmap dashboard (7 panels) |
 | Preact `PdfExportBridge` | Multi-page PDF report |
@@ -74,6 +74,7 @@ These remain on disk but are **not linked** from `index.hbs` after the v2 overha
 | `public/js/sarkart-v1.0.0.min.js` | **Deleted** — legacy engine fully ported to Preact bridges |
 | `public/js/highcharts-shim.js` | **Deleted** — Plotly load-order stub no longer needed |
 | `public/js/bootstrap.bundle.min.js` | **Deleted** — sidebar collapse ported to the Preact `SidebarCollapse` component (`bootstrap.min.css` retained) |
+| `public/js/sarkart-ui.js` | **Deleted** — remaining UI behaviors ported to the Preact `UiBridge` / `legacyUi` |
 
 ## Security audit
 
