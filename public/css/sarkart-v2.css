@@ -1414,7 +1414,7 @@ body.data-loaded .landing-grid { display: none !important; }
 .js-plotly-plot .plotly .cursor-crosshair,
 .js-plotly-plot .plotly .cursor-pointer { cursor: crosshair; }
 
-/* Network units toolbar (injected by network-units.js) */
+/* Network units toolbar (injected by the Preact NetworkUnitBridge) */
 .netUnitsToolbar {
   display: flex;
   align-items: center;

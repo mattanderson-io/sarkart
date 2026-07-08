@@ -76,6 +76,7 @@ These remain on disk but are **not linked** from the Preact app shell:
 | `public/js/sarkart-ui.js` | **Deleted** — remaining UI behaviors ported to the Preact `UiBridge` / `legacyUi` |
 | `public/js/jquery-4.0.0.min.js` | **Deleted** — the Handlebars `index.hbs` fallback that referenced it was retired |
 | `templates/views/index.hbs` + `partials/{icons,sidebar,content,footer}.hbs` | **Deleted** — Handlebars app shell retired; `dist/index.html` (Preact) is the only entry point |
+| `public/js/{network-units,sar-chunked-parser,export-pdf,landing,ai-summary,heatmap}.js` | **Deleted** — orphaned once `index.hbs` was retired; superseded by the Preact `NetworkUnitBridge` / `sarParser` / `PdfExportBridge` / `LandingBridge` / `AiSummary` / `HeatmapDashboard` |
 
 ## Security audit
 
