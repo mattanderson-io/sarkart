@@ -13,8 +13,6 @@ Requires **Node 18+** for Vite / Playwright benchmarks; **Node 24 LTS** recommen
 | vite | 8.1.3 | Frontend build/dev server | ✅ Current |
 | @preact/preset-vite | 2.10.5 | Preact/Vite integration | ✅ Current |
 | typescript | 6.0.3 | TSX type checking / source language | ✅ Current |
-| hbs | 4.2.1 | `404.hbs` view engine only | ✅ Latest |
-| handlebars | 4.7.9 | Template compiler (transitive) | ✅ Latest |
 | ansi-regex | 6.0.1 | Transitive security override | ✅ |
 | nodemon | 3.1.14 | Dev auto-restart | ✅ Latest |
 | playwright | 1.59.1 | Dev browser benchmarks / UI shots | ✅ Latest |
@@ -23,13 +21,12 @@ Production Docker image installs dev dependencies, builds the Preact bundle, the
 
 ## Browser libraries (`public/`)
 
-Script libraries are loaded by the Preact shell after mount
-(`src/client/components/LegacyScripts.tsx`); `bootstrap.min.css` is a stylesheet
-link in the document head.
+Script libraries loaded by the Preact shell after mount
+(`src/client/components/LegacyScripts.tsx`). The only stylesheet is the
+first-party `sarkart-v2.css` — no CSS framework.
 
 | Library | File | Version | Notes |
 |---------|------|---------|-------|
-| Bootstrap (CSS only) | `bootstrap.min.css` | 5.3.6 | Utility classes + `.collapse` display rule; layout is `sarkart-v2.css`. JS bundle removed — collapse is Preact-owned (`SidebarCollapse`) |
 | Plotly.js (cartesian) | `plotly-cartesian-3.5.1.min.js` | 3.5.1 | All line/pie/heatmap charts |
 | html2canvas | `html2canvas.min.js` | 1.4.1 | PDF export screenshots |
 | jsPDF | `jspdf.umd.min.js` | 2.5.2 | PDF export |
@@ -65,8 +62,6 @@ These remain on disk but are **not linked** from the Preact app shell:
 
 | File | Notes |
 |------|-------|
-| `public/css/all.min.css` | Font Awesome 5 — still referenced by `404.hbs` only |
-| `public/css/animate.min.css` | Unused; safe to delete |
 | `public/css/sarkart-v1.0.0.min.css` | Removed in v2 |
 | `public/css/theme-override.css` | Removed in v2 |
 | `public/js/faq.js` | Removed in v2 |
@@ -77,6 +72,9 @@ These remain on disk but are **not linked** from the Preact app shell:
 | `public/js/jquery-4.0.0.min.js` | **Deleted** — the Handlebars `index.hbs` fallback that referenced it was retired |
 | `templates/views/index.hbs` + `partials/{icons,sidebar,content,footer}.hbs` | **Deleted** — Handlebars app shell retired; `dist/index.html` (Preact) is the only entry point |
 | `public/js/{network-units,sar-chunked-parser,export-pdf,landing,ai-summary,heatmap}.js` | **Deleted** — orphaned once `index.hbs` was retired; superseded by the Preact `NetworkUnitBridge` / `sarParser` / `PdfExportBridge` / `LandingBridge` / `AiSummary` / `HeatmapDashboard` |
+| `public/css/bootstrap.min.css` | **Deleted** — the used rules (border-box reset, `.collapse`/`.list-unstyled`/`.d-none`/`.d-block`, Reboot typography) are ported into `sarkart-v2.css` |
+| `public/css/all.min.css` (Font Awesome) + `public/css/animate.min.css` | **Deleted** — only the retired `404.hbs` referenced them; `404.html` is self-contained |
+| `templates/views/404.hbs` | **Deleted** — replaced by static `public/404.html` served via `sendFile`; the `hbs` view engine and `hbs`/`handlebars` deps are removed |
 
 ## Testing
 
@@ -101,8 +99,8 @@ Browser-side libraries are vendored minified files — audit separately when upg
 
 ## Upgrade notes
 
-- **Bootstrap 5**: JS bundle (`bootstrap.bundle.min.js`) removed — the sidebar collapse accordion is now handled by the Preact `SidebarCollapse` component. `bootstrap.min.css` (5.3.x) is retained for the `.collapse` display rule and utility classes; the `data-bs-toggle="collapse"` markup is kept as the hook `SidebarCollapse` listens on.
+- **Bootstrap**: Fully removed (JS bundle and `bootstrap.min.css`). The handful of rules the app used — the global `box-sizing:border-box`, `.collapse`/`.list-unstyled`/`.d-none`/`.d-block`, and Reboot's typography baseline — are ported into `sarkart-v2.css`'s base section. `data-bs-toggle="collapse"` markup is kept purely as the hook the Preact `SidebarCollapse` listens on.
 - **jQuery**: Fully removed — no longer loaded and `jquery-4.0.0.min.js` is deleted.
-- **Handlebars app shell**: Retired. Express serves `dist/index.html` (the Vite/Preact build); if `dist/` is missing it returns a 503 asking you to run `npm run build`. Handlebars (`hbs`) now backs only `404.hbs`.
+- **Handlebars**: Fully retired — `hbs`/`handlebars` deps removed and no view engine is configured. Express serves `dist/index.html` (the Vite/Preact build), returns a 503 if `dist/` is missing, and serves the static `public/404.html` for unmatched routes.
+- **Font Awesome / animate.css**: Removed — `all.min.css`/`animate.min.css` deleted (only the retired 404 view referenced them). The `public/webfonts/` FA font files are now unused and can be deleted too.
 - **Plotly**: Pin filename includes version; the Vite build hashes `dist/assets`, so update the vendored `public/js/plotly-cartesian-*.js` filename (and the `LegacyScripts.tsx` reference) when upgrading.
-- **Font Awesome / animate.css**: Remove from `404.hbs` and delete files when the 404 page is restyled.

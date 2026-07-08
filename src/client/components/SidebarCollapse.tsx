@@ -10,10 +10,10 @@ import { useEffect } from 'preact/hooks';
  * whose `data-bs-parent="#sidebar"` makes the group behave as an accordion:
  * opening one closes its siblings.
  *
- * Bootstrap's CSS (`bootstrap.min.css`, still shipped) provides the actual
- * `.collapse:not(.show){display:none}` rule and the caret/`aria-expanded`
- * styling, so this port only has to toggle the `.show` class and keep
- * `aria-expanded` in sync — no JS collapse library required. The per-CPU
+ * `sarkart-v2.css` provides the actual `.collapse:not(.show){display:none}`
+ * rule (ported from Bootstrap when the framework was dropped) and the caret/
+ * `aria-expanded` styling, so this port only has to toggle the `.show` class
+ * and keep `aria-expanded` in sync — no JS collapse library required. The per-CPU
  * `#ulCPU` list is force-hidden in CSS (chips render instead) and has no
  * toggler, so it is intentionally out of scope here.
  *

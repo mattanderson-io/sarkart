@@ -1,55 +1,12 @@
 const path = require('path')
+const fs = require('fs')
 const express = require('express')
-const hbs = require('hbs')
-
-// console.log(__dirname) 
-// console.log(path.join(__dirname, '../public')) 
 
 const app = express()
 
 // Define Paths for Express config
 const publicDirPath = path.join(__dirname, '../public')
 const distDirPath = path.join(__dirname, '../dist')
-const viewsPath = path.join(__dirname, '../templates/views')
-const partialsPath = path.join(__dirname, '../templates/partials')
-
-//Setup handlebars engine and views location
-app.set('view engine', 'hbs')
-app.set('views', viewsPath)
-app.set('view cache', false)
-
-// Register partials synchronously before exporting. The app shell is served
-// from the Preact build (dist/index.html); Handlebars now only backs 404.hbs,
-// which uses no partials, so the partials dir may be absent.
-const fs = require('fs')
-function registerPartials() {
-  if (!fs.existsSync(partialsPath)) return
-  const partialFiles = fs.readdirSync(partialsPath)
-  partialFiles.forEach(function(file) {
-    if (file.endsWith('.hbs')) {
-      const name = file.replace('.hbs', '')
-      const content = fs.readFileSync(path.join(partialsPath, file), 'utf8')
-      hbs.registerPartial(name, content)
-    }
-  })
-}
-registerPartials()
-
-// Re-read partials on each request unless explicitly in production.
-if (process.env.NODE_ENV !== 'production') {
-  app.use(function (req, res, next) {
-    registerPartials()
-    next()
-  })
-} else {
-  // Still allow hot partial reload locally when NODE_ENV is unset/mis-set.
-  app.use(function (req, res, next) {
-    if (req.hostname === 'localhost' || req.hostname === '127.0.0.1') {
-      registerPartials()
-    }
-    next()
-  })
-}
 
 // Immutable cache for versioned assets
 app.use('/js/plotly-cartesian-3.5.1.min.js', express.static(path.join(publicDirPath, 'js/plotly-cartesian-3.5.1.min.js'), {
@@ -71,8 +28,8 @@ app.get('', (req, res) => {
     res.sendFile(indexPath)
     return
   }
-  // The Preact build is the only app shell now (the legacy Handlebars fallback
-  // was retired). If dist/ is missing the server was started without building.
+  // The Preact build (dist/index.html) is the only app shell. If it's missing
+  // the server was started without building.
   res
     .status(503)
     .type('text/plain')

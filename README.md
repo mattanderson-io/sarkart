@@ -78,15 +78,16 @@ Upload the resulting `.txt` file to SARkart.
 ```bash
 npm run dev        # Vite dev server for the Preact app
 npm run build      # production Preact bundle in ./dist
-npm run dev:server # Express server (serves ./dist; renders 404.hbs for misses)
+npm run dev:server # Express server (serves ./dist; static public/404.html for misses)
 npm test           # fixture-based regression tests (Node's built-in runner)
 ```
 
 The app is Preact/Vite/TypeScript end to end. Express serves the built
 `dist/index.html`; only vendored libraries load at runtime (Plotly, html2canvas,
-jsPDF) plus `bootstrap.min.css` for a few utility classes. `npm test` runs the
-data-layer regression suite in `test/` (parses the bundled sample SAR file and
-asserts the parsed metrics) — no test dependencies required.
+jsPDF) and the sole stylesheet is the first-party `sarkart-v2.css` — no CSS
+framework. `npm test` runs the data-layer regression suite in `test/` (parses
+the bundled sample SAR file and asserts the parsed metrics) — no test
+dependencies required.
 
 ### Benchmarks & smoke tests
 
@@ -111,12 +112,11 @@ node bench/ui-shot.js docs
 | App shell | Preact | 10.29.6 |
 | Build tool | Vite | 8.1.3 |
 | Language | TypeScript / TSX | 6.0.3 |
-| 404 page | Handlebars (hbs) | 4.2.1 |
 | Charts | Plotly.js (cartesian) | 3.5.1 |
 | UI | Custom design system (`sarkart-v2.css`) | v2.0.0 |
 | Icons | Inline SVG sprite | — |
 | Fonts | Inter, JetBrains Mono | — |
-| CSS utilities | Bootstrap (CSS only) | 5.3.6 |
+| 404 page | Static `public/404.html` | — |
 
 ## Credits
 
