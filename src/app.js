@@ -9,7 +9,7 @@ const publicDirPath = path.join(__dirname, '../public')
 const distDirPath = path.join(__dirname, '../dist')
 
 // Immutable cache for versioned assets
-app.use('/js/plotly-cartesian-3.5.1.min.js', express.static(path.join(publicDirPath, 'js/plotly-cartesian-3.5.1.min.js'), {
+app.use('/js/plotly-cartesian-3.7.0.min.js', express.static(path.join(publicDirPath, 'js/plotly-cartesian-3.7.0.min.js'), {
   maxAge: '1y',
   immutable: true
 }))

@@ -27,7 +27,7 @@ first-party `sarkart-v2.css` — no CSS framework.
 
 | Library | File | Version | Notes |
 |---------|------|---------|-------|
-| Plotly.js (cartesian) | `plotly-cartesian-3.5.1.min.js` | 3.5.1 | All line/pie/heatmap charts |
+| Plotly.js (cartesian) | `plotly-cartesian-3.7.0.min.js` | 3.7.0 | All line/pie/heatmap charts |
 | html2canvas | `html2canvas.min.js` | 1.4.1 | PDF export screenshots |
 | jsPDF | `jspdf.umd.min.js` | 2.5.2 | PDF export |
 
