@@ -1,5 +1,4 @@
 import { useEffect } from 'preact/hooks';
-import type { ComponentChildren } from 'preact';
 import { AiSummary } from './AiSummary';
 import { Footer } from './Footer';
 import { HeatmapDashboard } from './HeatmapDashboard';
@@ -51,7 +50,7 @@ function KpiCard({ metric, label, valueId, chartId, arrowId, timeId, iconId, uni
   );
 }
 
-function ChartBlock({ blockClass, containerId, titleId, notesId, head = true, hostClass = '', children }: { blockClass: string; containerId: string; titleId?: string; notesId: string; head?: boolean; hostClass?: string; children?: ComponentChildren }) {
+function ChartBlock({ blockClass, containerId, titleId, notesId, head = true }: { blockClass: string; containerId: string; titleId?: string; notesId: string; head?: boolean }) {
   return (
     <div className={`chart-block ${blockClass} homeContBlock`}>
       <div className="chart-card">
@@ -63,7 +62,7 @@ function ChartBlock({ blockClass, containerId, titleId, notesId, head = true, ho
         ) : (
           <h5 className="container-title" id={titleId}>&nbsp;</h5>
         )}
-        <div className="chart-body"><div id={containerId} className={hostClass}>{children}</div></div>
+        <div className="chart-body"><div id={containerId} /></div>
         <p id={notesId} className="container-notes" />
       </div>
     </div>
@@ -295,13 +294,24 @@ export function Content({ heatmapVisible }: { heatmapVisible: boolean }) {
 
           <LandingUpload />
 
-          <div className="page-title-row contABlock section-header homeContBlock title-empty">
+          <div className="page-title-row section-header homeContBlock title-empty">
             <h2 className="boxed" id="pageTitle" />
           </div>
 
-          <ChartBlock blockClass="contABlock" containerId="containerA" notesId="containerANotes" hostClass={heatmapVisible ? 'is-heatmap-host' : ''}>
-            {heatmapVisible ? <HeatmapDashboard /> : null}
-          </ChartBlock>
+          {/* The heatmap lives in its own Preact-owned block so it never shares
+              #containerA with the imperatively-rendered Plotly category charts —
+              that shared container was what left a stale chart above the heatmap. */}
+          {heatmapVisible ? (
+            <div className="chart-block homeContBlock add" id="heatmapBlock">
+              <div className="chart-card">
+                <div className="chart-body">
+                  <div className="is-heatmap-host"><HeatmapDashboard /></div>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
+          <ChartBlock blockClass="contABlock" containerId="containerA" notesId="containerANotes" />
           <ChartBlock blockClass="contBBlock" containerId="containerB" notesId="containerBNotes" />
           <ChartBlock blockClass="contCBlock" containerId="containerC" notesId="containerCNotes" />
           <ChartBlock blockClass="contDBlock" containerId="containerD" notesId="containerDNotes" />

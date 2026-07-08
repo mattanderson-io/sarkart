@@ -42,7 +42,7 @@ function stripHostSuffix(value: string) {
 
 function updateTitleVisibility() {
   const title = document.getElementById('pageTitle');
-  const row = title?.closest?.('.contABlock.section-header');
+  const row = title?.closest?.('.page-title-row');
   if (!title || !row) return;
   row.classList.toggle('title-empty', !(title.textContent || '').trim());
 }

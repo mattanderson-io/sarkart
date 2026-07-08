@@ -1399,12 +1399,14 @@ body.data-loaded .landing-grid { display: none !important; }
   box-sizing: border-box;
 }
 
-/* Heatmap dashboard needs the full grid height; line charts pin containerA to 400px. */
-#containerA.is-heatmap-host {
+/* The heatmap dashboard renders into its own #heatmapBlock (see Content.tsx)
+   via a `.is-heatmap-host` wrapper; it needs the full grid height and visible
+   overflow rather than the fixed-height chart-body used by line charts. */
+.is-heatmap-host {
   height: auto !important;
   min-height: 0;
 }
-.chart-card:has(#containerA.is-heatmap-host) {
+.chart-card:has(.is-heatmap-host) {
   overflow: visible;
 }
 

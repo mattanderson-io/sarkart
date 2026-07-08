@@ -44,7 +44,6 @@ declare global {
     };
     sarkartGeneratePDFReport?: () => Promise<void>;
     sarkartProcessPendingData?: () => Promise<void>;
-    sarkartHideChartHead?: (containerId: string) => void;
     getHostname?: () => string;
     getOS?: () => string;
     getServerInfo?: () => void;

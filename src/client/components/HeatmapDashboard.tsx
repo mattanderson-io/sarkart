@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'preact/hooks';
+import { useMemo } from 'preact/hooks';
 import { PlotlyHeatmap } from './PlotlyHeatmap';
 import { cpuAll, diskHeatmap, hourGrid, memoryHeatmap, networkHeatmap, findKey } from '../lib/sarData';
 import { convertKBs } from '../lib/networkUnits';
@@ -26,10 +26,6 @@ export function HeatmapDashboard() {
       network: networkHeatmap(convertKBs),
       disk: diskHeatmap()
     };
-  }, []);
-
-  useEffect(() => {
-    window.sarkartHideChartHead?.('containerA');
   }, []);
 
   return (
