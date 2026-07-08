@@ -6,8 +6,6 @@ SARkart is a fast, browser-based viewer for Linux and Unix SAR (sysstat) files. 
 
 ![SARkart Dashboard](docs/screenshot-dashboard.png)
 
-> **Note:** The UI was overhauled in v2.0.0 (design system, dark/light themes, command palette). The screenshots above reflect the previous v1 UI — new screenshots are needed.
-
 <details>
 <summary>More screenshots</summary>
 
@@ -94,8 +92,8 @@ node bench/parse-bench.js
 # End-to-end browser benchmark (requires Playwright + Node 18+)
 node bench/browser-bench.js
 
-# Visual smoke screenshots (dev server must be running on :3000)
-node bench/ui-shot.js /tmp/sarkart-shots
+# Regenerate README screenshots (dev server on :3000)
+node bench/ui-shot.js docs
 ```
 
 ## Tech Stack

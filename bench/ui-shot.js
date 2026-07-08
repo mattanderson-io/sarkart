@@ -1,12 +1,21 @@
-// Dev helper: capture screenshots of the running app for visual review.
-// Usage: node bench/ui-shot.js <outdir> [theme]
+// Dev helper: capture screenshots of the running app for visual review / README.
+// Usage:
+//   node bench/ui-shot.js [outdir] [theme]
+//   node bench/ui-shot.js docs          # writes README filenames into docs/
+//   node bench/ui-shot.js /tmp/shots dark
 const { chromium } = require('playwright');
 const path = require('path');
 const fs = require('fs');
 
-const outDir = process.argv[2] || '/tmp/sarkart-shots';
+const outArg = process.argv[2] || '/tmp/sarkart-shots';
 const theme = process.argv[3] || 'dark';
+const docsMode = outArg === 'docs';
+const outDir = docsMode ? path.join(__dirname, '..', 'docs') : outArg;
 fs.mkdirSync(outDir, { recursive: true });
+
+function shotName(base, docsKey) {
+  return docsMode ? docsKey : base;
+}
 
 (async () => {
   const browser = await chromium.launch();
@@ -16,65 +25,54 @@ fs.mkdirSync(outDir, { recursive: true });
 
   await page.goto('http://localhost:3000', { waitUntil: 'networkidle' });
   if (theme === 'light') {
-    await page.evaluate(() => {
-      localStorage.setItem('sarkart-theme', 'light');
-    });
+    await page.evaluate(() => localStorage.setItem('sarkart-theme', 'light'));
     await page.reload({ waitUntil: 'networkidle' });
   }
-  await page.waitForTimeout(1500);
-  await page.screenshot({ path: path.join(outDir, '01-landing.png') });
+  await page.waitForTimeout(1200);
+  await page.screenshot({ path: path.join(outDir, shotName('01-landing.png', 'screenshot-landing.png')) });
 
-  // Load sample data
   const sampleLink = page.locator('#btnTrySample, a:has-text("sample data")').first();
-  if (await sampleLink.count()) {
-    await sampleLink.click();
-    await page.waitForTimeout(6000);
-    await page.screenshot({ path: path.join(outDir, '02-dashboard.png') });
+  if (!(await sampleLink.count())) {
+    await browser.close();
+    throw new Error('Sample data link not found — is the dev server running on :3000?');
+  }
 
-    async function clickIfVisible(sel) {
-      const el = page.locator(sel).first();
-      if (await el.count() && await el.isVisible()) { await el.click(); return true; }
-      return false;
-    }
+  await sampleLink.click();
+  await page.waitForFunction(() => {
+    const peak = document.getElementById('peakCPU');
+    return peak && /\d/.test((peak.textContent || '').trim());
+  }, null, { timeout: 60000 });
+  await page.waitForTimeout(1500);
+  await page.screenshot({ path: path.join(outDir, shotName('02-dashboard.png', 'screenshot-dashboard.png')) });
 
-    // CPU chart (dropdown -> first per-CPU entry, else summary button)
-    if (await clickIfVisible('#btnCPUs')) {
-      await page.waitForTimeout(600);
-      await clickIfVisible('#ulCPU li a');
-      await page.waitForTimeout(2500);
-      await page.screenshot({ path: path.join(outDir, '03-cpu-chart.png') });
-    } else if (await clickIfVisible('#btnCPU')) {
-      await page.waitForTimeout(2500);
-      await page.screenshot({ path: path.join(outDir, '03-cpu-chart.png') });
+  async function clickIfVisible(sel) {
+    const el = page.locator(sel).first();
+    if (await el.count() && await el.isVisible()) {
+      await el.click();
+      return true;
     }
+    return false;
+  }
 
-    // Memory used
-    if (await clickIfVisible('#btnMem')) {
-      await page.waitForTimeout(600);
-      if (await clickIfVisible('#btnMemUsg')) {
-        await page.waitForTimeout(2000);
-        await page.screenshot({ path: path.join(outDir, '04-memory-chart.png') });
-      }
-    }
+  // CPU chart with chip bar (#ulCPU links are hidden; proxy-click via JS)
+  const cpuClicked = await page.evaluate(() => {
+    var link = document.querySelector('#ulCPU a');
+    if (!link) return false;
+    link.click();
+    return true;
+  });
+  if (cpuClicked) {
+    await page.waitForFunction(() => document.querySelector('#containerA .plot-container, #containerA .js-plotly-plot'), null, { timeout: 15000 });
+    await page.waitForTimeout(1200);
+    await page.screenshot({ path: path.join(outDir, shotName('03-cpu-chart.png', 'screenshot-cpu-chart.png')) });
+  }
 
-    // Heatmaps
-    const btnHeat = page.locator('#btnHeatmap, a:has-text("Heatmaps")').first();
-    if (await btnHeat.count()) {
-      await btnHeat.click({ force: true });
-      await page.waitForTimeout(3000);
-      await page.screenshot({ path: path.join(outDir, '05-heatmaps.png'), fullPage: false });
-      await page.evaluate(() => { const c = document.getElementById('content'); if (c) c.scrollTop = 1200; });
-      await page.waitForTimeout(800);
-      await page.screenshot({ path: path.join(outDir, '06-heatmaps-scrolled.png') });
-    }
-
-    // Back to dashboard
-    const btnSAR = page.locator('#btnSAR');
-    if (await btnSAR.count()) {
-      await btnSAR.click({ force: true });
-      await page.waitForTimeout(2000);
-      await page.screenshot({ path: path.join(outDir, '07-dashboard-again.png') });
-    }
+  const btnHeat = page.locator('#btnHeatmap, a:has-text("Heatmaps")').first();
+  if (await btnHeat.count()) {
+    await btnHeat.click({ force: true });
+    await page.waitForFunction(() => document.querySelector('#containerA .heatmap-grid'), null, { timeout: 15000 });
+    await page.waitForTimeout(2000);
+    await page.screenshot({ path: path.join(outDir, shotName('05-heatmaps.png', 'screenshot-heatmaps.png')) });
   }
 
   await browser.close();
