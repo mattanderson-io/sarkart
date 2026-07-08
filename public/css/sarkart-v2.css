@@ -197,6 +197,29 @@
 .contABlock, .contBBlock, .contCBlock, .contDBlock, .contMBlock { display: none; }
 
 /* --- 4. Base ---------------------------------------------------------------- */
+/* Bootstrap-compat: previously supplied by bootstrap.min.css (Reboot's global
+   border-box plus a few utility classes), reproduced here so the framework can
+   be dropped entirely. box-sizing is the important one — the whole layout
+   assumes border-box. The utility classes are used by the sidebar submenu
+   collapse (.collapse/.show), the upload spinner (.d-none/.d-block) and the
+   sidebar lists (.list-unstyled). */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+.list-unstyled { padding-left: 0; list-style: none; }
+.collapse:not(.show) { display: none; }
+.d-none { display: none !important; }
+.d-block { display: block !important; }
+
+/* Reboot typography baseline (ported from bootstrap.min.css): the app's
+   class-styled headings/paragraphs override these, but a few bare elements
+   (the landing brand h1, inline <code>) relied on Reboot's margins/sizing.
+   Colors are intentionally left to the theme tokens. */
+h1, h2, h3, h4, h5, h6 { margin-top: 0; margin-bottom: 0.5rem; font-weight: 500; line-height: 1.2; }
+p { margin-top: 0; margin-bottom: 1rem; }
+code { font-size: 0.875em; }
+
 html { height: 100%; }
 
 body {
