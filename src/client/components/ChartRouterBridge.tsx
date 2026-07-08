@@ -199,7 +199,7 @@ function renderDeviceList(key: string) {
   if (!list) return;
 
   list.innerHTML = series.ids.map((id, index) => (
-    `<li><a href="#" data-sns="${index}"><i class="fa fa-database" style="color: orange" aria-hidden="true"><span class="icon-bg bg-orange"></span></i>${id}</a></li>`
+    `<li><a href="#" data-sns="${index}"><i class="submenu-dot" aria-hidden="true"></i>${id}</a></li>`
   )).join('');
 
   if (list.dataset.sarkartRouted === 'true') return;
@@ -379,7 +379,7 @@ function renderInterfaceTrafficList(key: string) {
   if (!list) return;
 
   list.innerHTML = series.ids.map((id, index) => (
-    `<li><a href="#" data-sns="${index}"><i class="fa fa-road" style="color: #337ab7"> <span class="icon-bg bg-dodger"></span></i>${id}</a></li>`
+    `<li><a href="#" data-sns="${index}"><i class="submenu-dot" aria-hidden="true"></i>${id}</a></li>`
   )).join('');
 
   if (list.dataset.sarkartRouted === 'true') return;
@@ -428,7 +428,7 @@ function renderInterfaceErrorList(key: string) {
   if (!list) return;
 
   list.innerHTML = series.ids.map((id, index) => (
-    `<li><a href="#" data-sns="${index}"><i class="fa fa-unlink" style="color: #c4183c" aria-hidden="true"><span class="icon-bg bg-red"></span></i> ${id}</a></li>`
+    `<li><a href="#" data-sns="${index}"><i class="submenu-dot" aria-hidden="true"></i>${id}</a></li>`
   )).join('');
 
   if (list.dataset.sarkartRouted === 'true') return;

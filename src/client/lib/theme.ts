@@ -3,20 +3,20 @@ export type Theme = 'dark' | 'light';
 const themeKey = 'sarkart-theme';
 const themeCookieMaxAge = 60 * 60 * 24 * 365;
 
-export function readThemeCookie(): Theme | null {
+function readThemeCookie(): Theme | null {
   const match = document.cookie.match(/(?:^|;\s*)sarkart-theme=(light|dark)(?:;|$)/);
   return match ? (match[1] as Theme) : null;
 }
 
-export function writeThemeCookie(theme: Theme) {
+function writeThemeCookie(theme: Theme) {
   document.cookie = `${themeKey}=${theme}; path=/; max-age=${themeCookieMaxAge}; SameSite=Lax`;
 }
 
-export function getTheme(): Theme {
+function getTheme(): Theme {
   return document.documentElement.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
 }
 
-export function setTheme(theme: Theme) {
+function setTheme(theme: Theme) {
   document.documentElement.setAttribute('data-theme', theme);
   writeThemeCookie(theme);
   try {

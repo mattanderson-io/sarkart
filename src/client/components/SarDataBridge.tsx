@@ -241,7 +241,7 @@ function renderCpuList(cpuIds: string[]) {
   const list = document.getElementById('ulCPU');
   if (!list) return;
   list.innerHTML = cpuIds.map((id, index) => (
-    `<li><a href="#" data-sns="${index}"><i class="fa fa-microchip" style="color: #6A55C2" aria-hidden="true"><span class="icon-bg bg-violet"></span></i>${id}</a></li>`
+    `<li><a href="#" data-sns="${index}"><i class="submenu-dot" aria-hidden="true"></i>${id}</a></li>`
   )).join('');
 
   if (list.dataset.sarkartRouted !== 'true') {

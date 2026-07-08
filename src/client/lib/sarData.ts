@@ -423,14 +423,14 @@ export function findKey(prefix: string) {
   return Object.keys(window._idx || {}).find((key) => key.startsWith(prefix)) || null;
 }
 
-export function columnIndex(headerPrefix: string, columnName: string, fallback: number) {
+function columnIndex(headerPrefix: string, columnName: string, fallback: number) {
   const header = (window.headers || []).find((item) => item.includes(headerPrefix));
   if (!header) return fallback;
   const index = header.split(',').indexOf(columnName);
   return index >= 0 ? index + 2 : fallback;
 }
 
-export function dateSort(a: string, b: string) {
+function dateSort(a: string, b: string) {
   const ak = dateKey(a);
   const bk = dateKey(b);
   return ak - bk;
@@ -452,7 +452,7 @@ function dateHour(row: SarRow) {
   return { date, hour };
 }
 
-export function numericValues(key: string, colIndex: number, filter?: (row: SarRow) => boolean) {
+function numericValues(key: string, colIndex: number, filter?: (row: SarRow) => boolean) {
   const values: number[] = [];
   rows(key).forEach((row) => {
     if (filter && !filter(row)) return;

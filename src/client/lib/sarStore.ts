@@ -42,7 +42,7 @@ export function filterSarDataByDates(dates: string[] | null) {
   mirrorToLegacyGlobals();
 }
 
-export function mirrorToLegacyGlobals() {
+function mirrorToLegacyGlobals() {
   if (!state.parsed) return;
   window._firstLine = state.parsed.firstLine;
   window.headers = state.parsed.headers;

@@ -1,4 +1,4 @@
-export function cssVar(name: string, fallback: string) {
+function cssVar(name: string, fallback: string) {
   const value = getComputedStyle(document.documentElement).getPropertyValue(name);
   return (value && value.trim()) || fallback;
 }

@@ -517,10 +517,9 @@ svg.icon :is(path, line, rect, circle, polyline, ellipse) {
   color: var(--text-1);
 }
 
-/* The engine injects <i class="fa ..."> into submenu items. Font Awesome is
-   gone — render them as small monochrome dots instead. */
-#sidebar ul.sidebar-nav ul i.fa,
-#sidebar ul.sidebar-nav ul i.fas {
+/* Device/interface/NFS submenu items get a small section-colored dot marker
+   (SarDataBridge / ChartRouterBridge inject `<i class="submenu-dot">`). */
+#sidebar ul.sidebar-nav ul .submenu-dot {
   display: inline-block;
   flex: none;
   width: 5px;
@@ -528,9 +527,7 @@ svg.icon :is(path, line, rect, circle, polyline, ellipse) {
   border-radius: var(--r-full);
   background: color-mix(in srgb, var(--sec-color, var(--text-3)) 70%, var(--text-3));
 }
-#sidebar ul.sidebar-nav ul a:hover i.fa,
-#sidebar ul.sidebar-nav ul a:hover i.fas { background: var(--sec-color, var(--accent)); }
-#sidebar .icon-bg { display: none; }
+#sidebar ul.sidebar-nav ul a:hover .submenu-dot { background: var(--sec-color, var(--accent)); }
 
 /* Collapsed sidebar */
 #sidebar.active {
