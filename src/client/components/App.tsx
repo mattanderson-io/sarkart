@@ -40,6 +40,20 @@ export function App() {
         return;
       }
 
+      if (link.id === 'btnSAR') {
+        // Dashboard = KPI cards + summary only. Category chart blocks are shown
+        // imperatively (showBlock) when a page is opened and nothing hid them
+        // on the way back, so they lingered under the dashboard. Hide + clear
+        // all of them and drop the stale page title so this matches the clean
+        // initial dashboard (KPIs, no leftover charts, no heading).
+        ['A', 'B', 'C', 'D', 'M'].forEach((id) => window.hideBlock?.(id));
+        const title = document.getElementById('pageTitle');
+        if (title) title.textContent = '';
+        document.querySelector('.page-title-row')?.classList.add('title-empty');
+        setHeatmapVisible(false);
+        return;
+      }
+
       if (!link.hasAttribute('data-bs-toggle')) {
         setHeatmapVisible(false);
       }

@@ -120,11 +120,10 @@ export function LandingBridge() {
       }
 
       if (target?.closest?.('#btnSAR')) {
-        window.setTimeout(() => {
-          const title = document.getElementById('pageTitle');
-          if (title && !(title.textContent || '').trim()) title.textContent = 'Dashboard';
-          updateTitleVisibility();
-        }, 100);
+        // App.tsx's nav handler clears the page title and hides the chart
+        // blocks for the dashboard; re-sync title-row visibility afterwards so
+        // the (now empty) heading stays hidden, matching the initial dashboard.
+        window.setTimeout(updateTitleVisibility, 100);
         return;
       }
 
