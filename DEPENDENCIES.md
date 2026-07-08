@@ -9,6 +9,7 @@ Requires **Node 18+** for Vite / Playwright benchmarks; **Node 24 LTS** recommen
 | Package | Installed | Role | Status |
 |---------|-----------|------|--------|
 | express | 5.2.1 | HTTP server | ✅ Current |
+| helmet | 8.x | Security headers + Content-Security-Policy | ✅ Latest |
 | preact | 10.29.6 | Main app shell | ✅ Current |
 | vite | 8.1.3 | Frontend build/dev server | ✅ Current |
 | @preact/preset-vite | 2.10.5 | Preact/Vite integration | ✅ Current |
@@ -16,6 +17,20 @@ Requires **Node 18+** for Vite / Playwright benchmarks; **Node 24 LTS** recommen
 | ansi-regex | 6.0.1 | Transitive security override | ✅ |
 | nodemon | 3.1.14 | Dev auto-restart | ✅ Latest |
 | playwright | 1.59.1 | Dev browser benchmarks / UI shots | ✅ Latest |
+| eslint | 9.x | Linter (`npm run lint`) | ✅ Latest |
+| typescript-eslint | 8.x | Type-aware lint rules for `src/client` | ✅ Latest |
+| eslint-plugin-react-hooks | 5.x | Rules of hooks (Preact) | ✅ Latest |
+
+### CI gates (`npm run <script>`)
+
+| Script | Command | Purpose |
+|--------|---------|---------|
+| `typecheck` | `tsc --noEmit` | Full type-check of `src/client` (the build only transpiles) |
+| `lint` | `eslint .` | Flat config (`eslint.config.mjs`); type-aware on `src/client` |
+| `test` | `node --test test/*.test.ts` | Fixture regression + unit suite (no deps) |
+| `build` | `vite build` | Production Preact bundle |
+
+`.github/workflows/ci.yml` runs typecheck → lint → test → build on every push/PR.
 
 Production Docker image installs dev dependencies, builds the Preact bundle, then prunes to production dependencies on Node 22 Alpine (`Dockerfile`).
 
@@ -97,7 +112,18 @@ As of July 2026 (`npm audit`):
 
 - **1 moderate** — transitive `qs` DoS advisory ([GHSA-q8mj-m7cp-5q26](https://github.com/advisories/GHSA-q8mj-m7cp-5q26)); fix with `npm audit fix` when convenient.
 
-Browser-side libraries are vendored minified files — audit separately when upgrading.
+Browser-side libraries are vendored minified files, pinned with `sha384`
+Subresource Integrity hashes in `LegacyScripts.tsx` (regenerate on upgrade with
+`openssl dgst -sha384 -binary <file> | openssl base64 -A`).
+
+### Runtime headers (helmet)
+
+`app.js` sends a strict Content-Security-Policy (all resources `'self'`;
+`connect-src 'self'` enforces the no-upload privacy claim; `style-src` allows
+inline styles for Plotly + the static 404) plus `nosniff`, `Referrer-Policy:
+no-referrer`, `X-Frame-Options`, HSTS, COOP/CORP, and `Origin-Agent-Cluster`.
+No inline `<script>` is used (theme setter is `public/js/theme-init.js`), so
+`script-src` stays `'self'` with no hash/nonce/`unsafe-inline`.
 
 ## Upgrade notes
 

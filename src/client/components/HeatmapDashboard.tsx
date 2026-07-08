@@ -1,6 +1,6 @@
 import { useMemo } from 'preact/hooks';
 import { PlotlyHeatmap } from './PlotlyHeatmap';
-import { cpuAll, diskHeatmap, hourGrid, memoryHeatmap, networkHeatmap, findKey } from '../lib/sarData';
+import { cpuAll, diskHeatmap, findKey, hourGrid, memoryHeatmap, networkHeatmap } from '../lib/sarStats';
 import { convertKBs } from '../lib/networkUnits';
 
 const scales = {

@@ -4,19 +4,21 @@ type SarDataState = {
   parsed: SarParseResult | null;
   activeIndex: Record<string, string[]>;
   selectedDates: string[] | null;
+  cpuByCore: Record<string, string[]>;
 };
 
 const state: SarDataState = {
   parsed: null,
   activeIndex: {},
-  selectedDates: null
+  selectedDates: null,
+  cpuByCore: {}
 };
 
 export function setSarData(parsed: SarParseResult) {
   state.parsed = parsed;
   state.activeIndex = parsed.index;
   state.selectedDates = null;
-  mirrorToLegacyGlobals();
+  state.cpuByCore = {};
 }
 
 export function filterSarDataByDates(dates: string[] | null) {
@@ -38,16 +40,51 @@ export function filterSarDataByDates(dates: string[] | null) {
     });
     state.activeIndex = filtered;
   }
-
-  mirrorToLegacyGlobals();
 }
 
-function mirrorToLegacyGlobals() {
-  if (!state.parsed) return;
-  window._firstLine = state.parsed.firstLine;
-  window.headers = state.parsed.headers;
-  window._idx = state.activeIndex;
-  window._fullIdx = state.parsed.fullIndex;
-  window._allDatesArr = state.parsed.dates;
+// -- Accessors (single source of truth; formerly mirrored onto window.*) ------
+
+/** Whether a SAR file has been parsed and stored. */
+export function hasData() {
+  return state.parsed !== null;
 }
 
+/** The active (date-filtered) section index. */
+export function getActiveIndex() {
+  return state.activeIndex;
+}
+
+/** Rows for a single section key from the active index. */
+export function getRows(key: string) {
+  return state.activeIndex[key] || [];
+}
+
+/** The unfiltered section index. */
+export function getFullIndex() {
+  return state.parsed?.fullIndex || {};
+}
+
+/** Parsed section header lines. */
+export function getHeaders() {
+  return state.parsed?.headers || [];
+}
+
+/** The SAR file's first (server-identity) line. */
+export function getFirstLine() {
+  return state.parsed?.firstLine || '';
+}
+
+/** All dates present in the file, chronologically sorted. */
+export function getDates() {
+  return state.parsed?.dates || [];
+}
+
+/** The derived per-core CPU row index that `getCPU` reads. */
+export function getCpuByCore() {
+  return state.cpuByCore;
+}
+
+/** Publish a rebuilt per-core CPU index (see cpuIndex.buildCpuByCore). */
+export function setCpuByCore(byCore: Record<string, string[]>) {
+  state.cpuByCore = byCore;
+}

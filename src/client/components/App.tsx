@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
+import { hideBlock } from '../lib/sarEngine';
 import { ChartRouterBridge } from './ChartRouterBridge';
 import { CommandPalette } from './CommandPalette';
 import { CoreEngineBridge } from './CoreEngineBridge';
@@ -29,7 +30,7 @@ export function App() {
         // hide + clear all four category chart blocks — this leaves no stale
         // imperative Plotly chart around the heatmap, in either direction.
         window.chartPage?.();
-        ['A', 'B', 'C', 'D'].forEach((id) => window.hideBlock?.(id));
+        ['A', 'B', 'C', 'D'].forEach((id) => hideBlock(id));
         const title = document.getElementById('pageTitle');
         if (title) title.textContent = 'Heatmap Dashboard';
         // The title row's visibility is driven by the `title-empty` class
@@ -46,7 +47,7 @@ export function App() {
         // on the way back, so they lingered under the dashboard. Hide + clear
         // all of them and drop the stale page title so this matches the clean
         // initial dashboard (KPIs, no leftover charts, no heading).
-        ['A', 'B', 'C', 'D', 'M'].forEach((id) => window.hideBlock?.(id));
+        ['A', 'B', 'C', 'D', 'M'].forEach((id) => hideBlock(id));
         const title = document.getElementById('pageTitle');
         if (title) title.textContent = '';
         document.querySelector('.page-title-row')?.classList.add('title-empty');

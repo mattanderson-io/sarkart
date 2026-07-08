@@ -1,8 +1,9 @@
 /**
  * Unit coverage for the server-identity helpers in `src/client/lib/sarEngine.ts`
- * — `getOS`, `getHostname`, `getKernel`, `grepHeaders`. These parse the SAR
- * first line differently per OS (Linux/AIX/SunOS), which is easy to break and
- * is otherwise only exercised for Linux via the fixture regression suite.
+ * — `getOS`, `getHostname`, `getKernel`, `grepHeaders`. SARkart is Linux-only:
+ * `getHostname`/`getKernel` read the Linux SAR header positions, and `getOS`
+ * still detects the OS token so a non-Linux file can be rejected with a clear
+ * notice (see SarDataBridge's `showUnsupportedOs`).
  *
  * Runs on Node's built-in test runner with native TypeScript type-stripping
  * (no extra dependencies): `npm test`. The helpers read `window._firstLine` /
@@ -21,9 +22,15 @@ const win: Record<string, unknown> = {};
 const { getOS, getHostname, getKernel, grepHeaders, resetOsCache } = await import(
   '../src/client/lib/sarEngine.ts'
 );
+const { setSarData } = await import('../src/client/lib/sarStore.ts');
+
+/** Store just enough parse result for the identity helpers to read. */
+function store(firstLine: string, headers: string[] = []) {
+  setSarData({ firstLine, headers, index: {}, fullIndex: {}, dates: [] });
+}
 
 function loadFirstLine(firstLine: string) {
-  win._firstLine = firstLine;
+  store(firstLine);
   resetOsCache();
 }
 
@@ -34,33 +41,22 @@ test('Linux first line: OS, hostname (parens stripped), kernel', () => {
   assert.equal(getKernel(), '5.14.0-570.62.1.el9_6.x86_64');
 });
 
-test('AIX first line: hostname from field 1, kernel from field 4', () => {
+test('non-Linux OS token is still detected (used to reject the file)', () => {
+  // getHostname/getKernel are Linux-only, but getOS must still surface the
+  // real OS token so SarDataBridge can show the "Linux only" notice.
   loadFirstLine('AIX,aixhost,2,7,00F8B2C34C00');
   assert.equal(getOS(), 'AIX');
-  assert.equal(getHostname(), 'aixhost');
-  assert.equal(getKernel(), '00F8B2C34C00');
-});
 
-test('SunOS first line: hostname from field 1, kernel from field 3', () => {
   loadFirstLine('SunOS,sunhost,5.11,11.4,sun4v');
   assert.equal(getOS(), 'SUNOS');
-  assert.equal(getHostname(), 'sunhost');
-  assert.equal(getKernel(), '11.4');
-});
-
-test('unknown OS: empty hostname, "Unknown" kernel', () => {
-  loadFirstLine('Weird,foo,bar');
-  assert.equal(getOS(), 'WEIRD');
-  assert.equal(getHostname(), '');
-  assert.equal(getKernel(), 'Unknown');
 });
 
 test('getOS caches until resetOsCache is called', () => {
   loadFirstLine('Linux,k,(host),04/01/26');
   assert.equal(getOS(), 'LINUX');
 
-  // Swap the first line WITHOUT resetting: the cached value stands.
-  win._firstLine = 'AIX,aixhost,2,7,krn';
+  // Swap the stored first line WITHOUT resetting: the cached value stands.
+  store('AIX,aixhost,2,7,krn');
   assert.equal(getOS(), 'LINUX', 'stale until reset');
 
   // Reset picks up the new first line (mirrors a fresh file load).
@@ -69,7 +65,7 @@ test('getOS caches until resetOsCache is called', () => {
 });
 
 test('grepHeaders: first matching header, else -1 (not null)', () => {
-  win.headers = ['runq-sz,plist-sz,ldavg-1', 'kbmemfree,kbavail,%memused'];
+  store('Linux,k,(host),04/01/26', ['runq-sz,plist-sz,ldavg-1', 'kbmemfree,kbavail,%memused']);
   assert.equal(grepHeaders('plist-sz'), 'runq-sz,plist-sz,ldavg-1');
   assert.equal(grepHeaders('kbavail'), 'kbmemfree,kbavail,%memused');
   assert.equal(grepHeaders('missing'), -1);

@@ -33,7 +33,7 @@ SARkart is a fast, browser-based viewer for Linux and Unix SAR (sysstat) files. 
 - **Client-side only** — all parsing happens in your browser. Files never leave your machine.
 - **PDF export** — generate a multi-page report locally
 - **Date range filtering** — view a single day or custom range from multi-day SAR files
-- **Supports** Linux (RHEL, SuSE, Ubuntu), AIX, and Solaris
+- **Supports** Linux (RHEL, SuSE, Ubuntu)
 
 ## Quick Start
 

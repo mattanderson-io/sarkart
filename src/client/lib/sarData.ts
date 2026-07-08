@@ -1,9 +1,9 @@
-export type SarRow = string[];
+import { getCpuByCore, getHeaders, getRows } from './sarStore.ts';
 
 export type LegacyPointList = LegacyPoint[];
 
 function toRows(key: string) {
-  return window._idx?.[key] || [];
+  return getRows(key);
 }
 
 function convertTo24Hr(value: string) {
@@ -14,7 +14,7 @@ function convertTo24Hr(value: string) {
   const meridiemMatch = value.match(/:([^:]*)$/);
   let hour = Number(hourMatch?.[1]);
   const minute = Number(minuteMatch?.[1]);
-  let second = Number(secondMatch?.[2]);
+  const second = Number(secondMatch?.[2]);
   const meridiem = meridiemMatch?.[1];
   if (meridiem === 'PM' && hour < 12) hour += 12;
   if (meridiem === 'AM' && hour === 12) hour -= 12;
@@ -46,23 +46,27 @@ function toTimestamp(dateStr: string, timeStr: string) {
   return timestamp;
 }
 
+export type SeriesWithPeak = {
+  points: LegacyPointList;
+  /** Max value across the series (0 for an empty/all-negative series). */
+  peakValue: number;
+  /** "MM/DD/YY HH:MM:SS" of the peak sample, or '' when there is none. */
+  peakTime: string;
+};
+
 /**
- * Port of the legacy `getGenericData(key, column, table, target)`.
- * Extracts a single numeric series from an indexed SAR section, skipping
- * "Average:" summary rows and the sar startup line (00:00:01 / 00:00:00).
- * When `target` is provided, mirrors the legacy side-effect of writing the
- * peak value + peak time into that DOM element (used for the peak KPI cards).
+ * Extracts a single numeric series from an indexed SAR section plus its peak,
+ * skipping "Average:" summary rows and the sar startup line (00:00:01 /
+ * 00:00:00). Pure — the peak KPI DOM write lives in the caller (see
+ * SarDataBridge.writePeak), so this stays a side-effect-free transform.
  */
-export function getGenericData(key: string, column: number, target?: string | null): LegacyPointList {
+export function getSeriesWithPeak(key: string, column: number): SeriesWithPeak {
   const rows = toRows(key);
   const points: LegacyPointList = [];
-  // Matches the legacy tracker's initial bounds exactly (max starts at 0,
-  // min starts effectively at +Infinity) so peak/trough detection behaves
-  // identically for edge cases like all-zero or all-negative series.
+  // Peak starts at 0 to match the legacy tracker's initial bound, so peak
+  // detection behaves identically for edge cases like all-zero series.
   let peakValue = 0;
   let peakTime = '';
-  let minValue = Infinity;
-  let minTime = '';
 
   for (let i = 0; i < rows.length; i += 1) {
     const row = rows[i];
@@ -81,19 +85,18 @@ export function getGenericData(key: string, column: number, target?: string | nu
     points.push([timestamp, value]);
 
     if (value > peakValue) { peakValue = value; peakTime = `${date} ${time}`; }
-    if (value < minValue) { minValue = value; minTime = `${date} ${time}`; }
-  }
-
-  if (target) {
-    const isSunosMemory = window.getOS?.() === 'SUNOS' && target === '#peakMemory';
-    const valueEl = document.getElementById(target.replace(/^#/, ''));
-    const timeEl = document.getElementById(`${target.replace(/^#/, '')}Time`);
-    if (valueEl) valueEl.textContent = String(parseInt(String(isSunosMemory ? minValue : peakValue), 10));
-    if (timeEl) timeEl.textContent = isSunosMemory ? minTime : peakTime;
   }
 
   points.sort((a, b) => a[0] - b[0]);
-  return points;
+  return { points, peakValue, peakTime };
+}
+
+/**
+ * Port of the legacy `getGenericData(key, column)`. Returns just the series;
+ * for the peak value/time (KPI cards) use `getSeriesWithPeak`.
+ */
+export function getGenericData(key: string, column: number): LegacyPointList {
+  return getSeriesWithPeak(key, column).points;
 }
 
 /**
@@ -127,11 +130,11 @@ export function getMemoryFreeData(key: string, column: number): LegacyPointList 
 
 /**
  * Port of the legacy `getCPU(coreId, column, table, target)`.
- * Reads from `window._cpuByCore` (built by SarDataBridge's buildCpuList),
- * matching rows for a single CPU core id (e.g. "all", "0", "1", ...).
+ * Reads from the per-core index (`sarStore.getCpuByCore()`, built by
+ * SarDataBridge's buildCpuList), matching a single core id ("all", "0", …).
  */
 export function getCPU(coreId: string, column: number): LegacyPointList {
-  const rows = window._cpuByCore?.[coreId] || [];
+  const rows = getCpuByCore()[coreId] || [];
   const points: LegacyPointList = [];
 
   for (let i = 0; i < rows.length; i += 1) {
@@ -154,10 +157,10 @@ export function getCPU(coreId: string, column: number): LegacyPointList {
 
 /**
  * Port of the legacy `getInterrupts(key, column, table, target)`.
- * Reads the "sum" rows from an INTR-style section indexed by `window._idx`.
+ * Reads the "sum" rows from an INTR-style section in the active index.
  */
 export function getInterrupts(key: string, column: number): LegacyPointList {
-  const rows = (window._idx?.[key] || []).filter((row) => row.split(',')[2] === 'sum');
+  const rows = getRows(key).filter((row) => row.split(',')[2] === 'sum');
   const points: LegacyPointList = [];
 
   for (let i = 0; i < rows.length; i += 1) {
@@ -374,8 +377,7 @@ export function getInterfaceErrorSeries(key: string): InterfaceErrorSeries {
  * containing `pattern`, or null (legacy used -1; null is the typed equivalent).
  */
 export function grepHeader(pattern: string): string | null {
-  const headers = window.headers || [];
-  const match = headers.find((header) => header.includes(pattern));
+  const match = getHeaders().find((header) => header.includes(pattern));
   return match ?? null;
 }
 
@@ -392,178 +394,4 @@ export function headerSectionKey(header: string) {
 
 export function headerColumnIndex(header: string, columnName: string) {
   return header.split(',').indexOf(columnName) + 1;
-}
-
-export type MetricStats = {
-  mean: number;
-  max: number;
-  min: number;
-  p95: number;
-  p50: number;
-  count: number;
-  highCount: number;
-};
-
-export type HeatmapGrid = {
-  z: number[][];
-  x: string[];
-  y: string[];
-  unitLabel?: string;
-};
-
-export function lines(key: string) {
-  return window._idx?.[key] || [];
-}
-
-export function rows(key: string) {
-  return lines(key).map((line) => line.split(','));
-}
-
-export function findKey(prefix: string) {
-  return Object.keys(window._idx || {}).find((key) => key.startsWith(prefix)) || null;
-}
-
-function columnIndex(headerPrefix: string, columnName: string, fallback: number) {
-  const header = (window.headers || []).find((item) => item.includes(headerPrefix));
-  if (!header) return fallback;
-  const index = header.split(',').indexOf(columnName);
-  return index >= 0 ? index + 2 : fallback;
-}
-
-function dateSort(a: string, b: string) {
-  const ak = dateKey(a);
-  const bk = dateKey(b);
-  return ak - bk;
-}
-
-function dateKey(value: string) {
-  const parts = value.split('/');
-  if (parts.length !== 3) return 0;
-  return Number(parts[2]) * 10000 + Number(parts[0]) * 100 + Number(parts[1]);
-}
-
-function dateHour(row: SarRow) {
-  const dateTime = (row[1] || '').split('|');
-  const date = dateTime[0];
-  const time = dateTime[1];
-  if (!date || !time) return null;
-  const hour = parseInt(time.split(':')[0], 10);
-  if (!Number.isFinite(hour)) return null;
-  return { date, hour };
-}
-
-function numericValues(key: string, colIndex: number, filter?: (row: SarRow) => boolean) {
-  const values: number[] = [];
-  rows(key).forEach((row) => {
-    if (filter && !filter(row)) return;
-    const value = parseFloat(row[colIndex]);
-    if (Number.isFinite(value)) values.push(value);
-  });
-  return values;
-}
-
-export function metricStats(key: string, colIndex: number, options: { threshold?: number; filter?: (row: SarRow) => boolean } = {}): MetricStats | null {
-  const values = numericValues(key, colIndex, options.filter);
-  if (!values.length) return null;
-
-  values.sort((a, b) => a - b);
-  const sum = values.reduce((total, value) => total + value, 0);
-  const threshold = options.threshold ?? 80;
-  return {
-    mean: sum / values.length,
-    max: values[values.length - 1],
-    min: values[0],
-    p95: values[Math.floor(values.length * 0.95)],
-    p50: values[Math.floor(values.length * 0.5)],
-    count: values.length,
-    highCount: values.filter((value) => value >= threshold).length
-  };
-}
-
-export function hourGrid(
-  key: string,
-  colIndex: number,
-  options: {
-    filter?: (row: SarRow) => boolean;
-    reducer?: 'max' | 'sum';
-    value?: (row: SarRow) => number;
-  } = {}
-): HeatmapGrid | null {
-  const grid: Record<string, Record<number, number>> = {};
-  const dates = new Set<string>();
-  const reducer = options.reducer || 'max';
-
-  rows(key).forEach((row) => {
-    if (options.filter && !options.filter(row)) return;
-    const point = dateHour(row);
-    if (!point) return;
-
-    const value = options.value ? options.value(row) : parseFloat(row[colIndex]);
-    if (!Number.isFinite(value)) return;
-
-    grid[point.date] ||= {};
-    if (reducer === 'sum') {
-      grid[point.date][point.hour] = (grid[point.date][point.hour] || 0) + value;
-    } else if (!grid[point.date][point.hour] || value > grid[point.date][point.hour]) {
-      grid[point.date][point.hour] = value;
-    }
-    dates.add(point.date);
-  });
-
-  const dateList = Array.from(dates).sort(dateSort);
-  if (!dateList.length) return null;
-
-  const z = Array.from({ length: 24 }, (_unused, hour) => {
-    return dateList.map((date) => grid[date]?.[hour] || 0);
-  });
-  const y = Array.from({ length: 24 }, (_unused, hour) => `${hour < 10 ? '0' : ''}${hour}:00`);
-  return { z, x: dateList, y };
-}
-
-export function cpuAll(row: SarRow) {
-  return row[2] === 'all';
-}
-
-export function hostInfo() {
-  let hostname = '';
-  let os = '';
-  try { hostname = window.getHostname?.() || ''; } catch (_error) {}
-  try { os = window.getOS?.() || ''; } catch (_error) {}
-  return { hostname, os, days: window._allDatesArr?.length || 0 };
-}
-
-export function cpuCount() {
-  return document.querySelectorAll('#ulCPU li').length || 1;
-}
-
-export function memoryHeatmap() {
-  const key = findKey('kbmemfree');
-  if (!key) return null;
-  return hourGrid(key, columnIndex('kbmemfree', '%memused', 5));
-}
-
-export function networkHeatmap(convertKBs?: (kbs: number) => { value: number; suffix: string }) {
-  const raw = hourGrid('IFACE-rxpck/s', 0, {
-    reducer: 'sum',
-    value: (row) => (parseFloat(row[5]) || 0) + (parseFloat(row[6]) || 0)
-  });
-  if (!raw) return null;
-  if (!convertKBs) return { ...raw, unitLabel: ' KB/s' };
-
-  let peak = 0;
-  raw.z.forEach((row) => row.forEach((value) => { if (value > peak) peak = value; }));
-  const convertedPeak = convertKBs(peak);
-  const factor = peak > 0 ? convertedPeak.value / peak : 1;
-  return {
-    ...raw,
-    z: raw.z.map((row) => row.map((value) => value * factor)),
-    unitLabel: ` ${convertedPeak.suffix}`
-  };
-}
-
-export function diskHeatmap() {
-  return hourGrid('DEV-tps', 0, {
-    reducer: 'sum',
-    value: (row) => parseFloat(row[3]) || 0
-  });
 }

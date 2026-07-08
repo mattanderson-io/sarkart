@@ -1,4 +1,6 @@
 import { useEffect } from 'preact/hooks';
+import { getDates } from '../lib/sarStore';
+import { getHostname, getKernel, getOS, progressBarReset, show } from '../lib/sarEngine';
 
 type JsPdfDocument = {
   internal: { pageSize: { getWidth: () => number; getHeight: () => number } };
@@ -115,11 +117,11 @@ async function generatePDFReport() {
   let hostname = 'Unknown';
   let osInfo = 'Unknown';
   let kernelInfo = '';
-  try { hostname = window.getHostname?.() || hostname; } catch (_error) {}
-  try { osInfo = window.getOS?.() || osInfo; } catch (_error) {}
-  try { kernelInfo = window.getKernel?.() || ''; } catch (_error) {}
+  try { hostname = getHostname() || hostname; } catch (_error) {}
+  try { osInfo = getOS() || osInfo; } catch (_error) {}
+  try { kernelInfo = getKernel() || ''; } catch (_error) {}
 
-  const dateInfo = text('dateFilterInfo', window._allDatesArr?.length ? `${window._allDatesArr.length} days` : '');
+  const dateInfo = text('dateFilterInfo', getDates().length ? `${getDates().length} days` : '');
   const reportDate = new Date().toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'long',
@@ -208,7 +210,7 @@ async function generatePDFReport() {
     { button: '#btnSockets', name: 'Sockets' }
   ];
 
-  window.show?.('#spinner');
+  show('#spinner');
   window.updateProgress?.(0, 'Generating PDF...');
   let pageNum = 1;
 
@@ -259,7 +261,7 @@ async function generatePDFReport() {
     addFooter(doc, pageWidth, pageHeight, margin, hostname, pageNum);
   }
 
-  window.progressBarReset?.();
+  progressBarReset();
   doc.save(`SAR_Report_${hostname}_${new Date().toISOString().slice(0, 10)}.pdf`);
   click('#btnSAR');
 }

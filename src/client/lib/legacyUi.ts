@@ -29,6 +29,8 @@
  * `App.tsx` guarantees.
  */
 
+import { showBlock } from './sarEngine';
+
 type Teardown = () => void;
 
 function cmdkIsOpen(): boolean {
@@ -107,10 +109,10 @@ function wrapChartPage() {
   window.chartPage = function () {
     if (chartBlocksActive() && window.file) {
       const debugOn = typeof window.DEBUG !== 'undefined' && window.DEBUG === 1;
-      if (debugOn && typeof window.showBlock === 'function') window.showBlock('M');
+      if (debugOn) showBlock('M');
       for (let t = 0; t < 4; t++) {
         const slot = String.fromCharCode(65 + t);
-        if (typeof window.showBlock === 'function') window.showBlock(slot);
+        showBlock(slot);
         const titleEl = document.getElementById(`container${slot}Title`);
         const notesEl = document.getElementById(`container${slot}Notes`);
         if (titleEl) titleEl.innerHTML = '';

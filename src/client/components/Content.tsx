@@ -131,7 +131,7 @@ function TopBar() {
       <div className="top-bar-actions">
         <button type="button" className="top-bar-btn" id="btnThemeToggle" title="Toggle theme" aria-label="Toggle theme" onClick={(event) => {
           event.preventDefault();
-          toggleTheme();
+          void toggleTheme();
         }}>
           <svg className="icon icon-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" /></svg>
           <svg className="icon icon-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5" /><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" /></svg>
@@ -142,7 +142,7 @@ function TopBar() {
         </a>
         <a href="#" className="top-bar-btn toolbar-post-upload" id="btnExportPDF" title="Export PDF report" onClick={(event) => {
           event.preventDefault();
-          window.sarkartGeneratePDFReport?.();
+          void window.sarkartGeneratePDFReport?.();
         }}>
           <svg className="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" /><path d="M14 2v6h6" /></svg>
           Export PDF
@@ -207,7 +207,7 @@ function LandingUpload() {
                 <div id="progressRate" className="progress-rate num" />
                 <button id="btnProcessData" type="button" hidden onClick={(event) => {
                   event.preventDefault();
-                  window.sarkartProcessPendingData?.();
+                  void window.sarkartProcessPendingData?.();
                 }}>Process data</button>
               </div>
             </div>
@@ -219,7 +219,7 @@ function LandingUpload() {
         <div className="landing-side">
           <div className="landing-side-header">
             <h2 className="landing-side-title">View Unix SAR data as interactive charts</h2>
-            <p className="landing-side-lead">A local-only dashboard for peak CPU, memory, and load, with drill-downs per device and interface. Supports Linux, AIX, and Solaris.</p>
+            <p className="landing-side-lead">A local-only dashboard for peak CPU, memory, and load, with drill-downs per device and interface. Supports Linux (RHEL, SuSE, Ubuntu).</p>
           </div>
 
           <ul className="landing-highlights">

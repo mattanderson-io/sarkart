@@ -1,5 +1,7 @@
 import { useEffect } from 'preact/hooks';
 import { waitForPeakData } from '../lib/dom';
+import { getDates } from '../lib/sarStore';
+import { getHostname, getOS, homePage } from '../lib/sarEngine';
 
 function setText(id: string, value: string) {
   const el = document.getElementById(id);
@@ -11,18 +13,20 @@ function setText(id: string, value: string) {
 function populateFileInfo() {
   let host = '';
   let os = '';
-  try { host = window.getHostname?.() || ''; } catch (_error) {}
-  try { os = window.getOS?.() || ''; } catch (_error) {}
+  try { host = getHostname() || ''; } catch (_error) {}
+  try { os = getOS() || ''; } catch (_error) {}
 
   const info = document.getElementById('dateFilterInfo');
   let dates = '-';
   if (info?.textContent && /\d/.test(info.textContent)) {
     dates = info.textContent.trim();
-  } else if (Array.isArray(window._allDatesArr) && window._allDatesArr.length) {
-    const parsedDates = window._allDatesArr;
-    dates = parsedDates.length === 1
-      ? parsedDates[0]
-      : `${parsedDates[0]} - ${parsedDates[parsedDates.length - 1]} (${parsedDates.length} days)`;
+  } else {
+    const parsedDates = getDates();
+    if (parsedDates.length) {
+      dates = parsedDates.length === 1
+        ? parsedDates[0]
+        : `${parsedDates[0]} - ${parsedDates[parsedDates.length - 1]} (${parsedDates.length} days)`;
+    }
   }
 
   const fileName = (document.querySelector('.fileinput-filename')?.textContent || '').trim() || '-';
@@ -34,7 +38,7 @@ function populateFileInfo() {
 
 function stripHostSuffix(value: string) {
   let host = '';
-  try { host = (window.getHostname?.() || '').trim(); } catch (_error) {}
+  try { host = (getHostname() || '').trim(); } catch (_error) {}
   if (!host) return value;
   const escaped = host.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   return value.replace(new RegExp(`\\s+for\\s+${escaped}\\s*$`, 'i'), '');
@@ -83,17 +87,6 @@ export function LandingBridge() {
       updateTitleVisibility();
     }
 
-    const systemInterval = window.setInterval(() => {
-      const label = document.querySelector<HTMLElement>('.sidebar-section-system');
-      if (!label) return;
-      const anyVisible = ['btnSysCalls', 'btnTTY', 'btnFile'].some((id) => {
-        const el = document.getElementById(id);
-        return !!el && (el.classList.contains('show') || (!!el.style.display && el.style.display !== 'none'));
-      });
-      label.style.display = anyVisible ? '' : 'none';
-    }, 1000);
-    const systemTimer = window.setTimeout(() => window.clearInterval(systemInterval), 30000);
-
     const onClick = (event: MouseEvent) => {
       const target = event.target as Element | null;
 
@@ -101,7 +94,7 @@ export function LandingBridge() {
       if (openAnother) {
         event.preventDefault();
         document.body.classList.remove('data-loaded');
-        window.homePage?.();
+        homePage();
         document.querySelector('.sar-file-uploader')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
       }
@@ -178,7 +171,7 @@ export function LandingBridge() {
               btn.style.display = '';
               window.setTimeout(() => {
                 if (window.sarkartProcessPendingData) {
-                  window.sarkartProcessPendingData();
+                  void window.sarkartProcessPendingData();
                 } else {
                   btn.click();
                 }
@@ -209,8 +202,6 @@ export function LandingBridge() {
       processBtn?.removeEventListener('click', stopProcessPropagation);
       if (typeof cleanupPeakWait === 'function') cleanupPeakWait();
       titleObserver?.disconnect();
-      window.clearInterval(systemInterval);
-      window.clearTimeout(systemTimer);
       document.removeEventListener('click', onClick);
       if (originalDisplayTitle && window.displayTitle !== originalDisplayTitle) {
         window.displayTitle = originalDisplayTitle;

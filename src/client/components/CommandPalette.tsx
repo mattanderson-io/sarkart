@@ -58,13 +58,13 @@ export function CommandPalette() {
       const button = target?.closest?.('#btnCmdk');
       if (!button) return;
       event.preventDefault();
-      open ? closePalette() : openPalette();
+      if (open) closePalette(); else openPalette();
     };
 
     const onKeyDown = (event: KeyboardEvent) => {
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
         event.preventDefault();
-        open ? closePalette() : openPalette();
+        if (open) closePalette(); else openPalette();
         return;
       }
 

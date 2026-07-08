@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import { cpuAll, cpuCount, hostInfo, metricStats } from '../lib/sarData';
+import { cpuAll, cpuCount, hostInfo, metricStats } from '../lib/sarStats';
 import { numericTextById, textById, waitForPeakData } from '../lib/dom';
 
 const thresholds = {
@@ -130,7 +130,7 @@ export function AiSummary() {
   useEffect(() => waitForPeakData(() => {
     setText(generateSummary());
     setVisible(true);
-    tryAISummary(buildStatsContext()).then((result) => {
+    void tryAISummary(buildStatsContext()).then((result) => {
       if (!result?.trim()) return;
       setText(result.trim());
       setBadge('Gemini Nano');

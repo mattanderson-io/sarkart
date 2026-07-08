@@ -36,7 +36,7 @@ const { parseSarTextChunked } = await import('../src/client/lib/sarParser.ts');
 const { uniqueIds, getGenericData, getDeviceSeries, getInterfaceTrafficSeries, grepHeader } = await import(
   '../src/client/lib/sarData.ts'
 );
-const { setSarData, filterSarDataByDates } = await import('../src/client/lib/sarStore.ts');
+const { setSarData, filterSarDataByDates, getRows } = await import('../src/client/lib/sarStore.ts');
 
 type Parsed = Awaited<ReturnType<typeof parseSarTextChunked>>;
 
@@ -46,7 +46,7 @@ let parsed: Parsed;
 
 /** Replicates SarDataBridge.updatePeakCpu: max %usr over CPU "all" rows. */
 function peakCpuAll(): number {
-  const rows = (win._idx as Record<string, string[]>)['CPU-%usr'] || [];
+  const rows = getRows('CPU-%usr');
   let peak = 0;
   rows.forEach((line) => {
     const parts = line.split(',');
@@ -178,18 +178,18 @@ test('representative chart series shape and values', () => {
 
 test('date filter narrows and restores the active index', () => {
   const key = 'CPU-%usr';
-  const fullCount = ((win._idx as Record<string, string[]>)[key] || []).length;
+  const fullCount = getRows(key).length;
   assert.ok(fullCount > 0, 'baseline rows present');
 
   // Filtering to the fixture's only date keeps every row.
   filterSarDataByDates(['04/01/26']);
-  assert.equal((win._idx as Record<string, string[]>)[key].length, fullCount);
+  assert.equal(getRows(key).length, fullCount);
 
   // Filtering to a date not in the fixture empties the section.
   filterSarDataByDates(['01/01/00']);
-  assert.equal((win._idx as Record<string, string[]>)[key].length, 0);
+  assert.equal(getRows(key).length, 0);
 
   // Clearing the filter restores the full index.
   filterSarDataByDates(null);
-  assert.equal((win._idx as Record<string, string[]>)[key].length, fullCount);
+  assert.equal(getRows(key).length, fullCount);
 });

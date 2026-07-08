@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'preact/hooks';
 import { chartTheme } from '../lib/chartTheme';
-import type { HeatmapGrid } from '../lib/sarData';
+import type { HeatmapGrid } from '../lib/sarStats';
 
 type PlotlyHeatmapProps = {
   data: HeatmapGrid | null;

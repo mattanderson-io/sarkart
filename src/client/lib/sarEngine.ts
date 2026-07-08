@@ -17,6 +17,8 @@
  * traces back to ordering, reintroduce a 0ms setTimeout wrapper.
  */
 
+import { getFirstLine, getHeaders } from './sarStore.ts';
+
 const BLOCK_IDS = ['A', 'B', 'C', 'D'] as const;
 
 function query(selector: string) {
@@ -91,7 +93,9 @@ export function chartPage() {
     showBlock('M');
     const containerM = document.getElementById('containerM');
     if (containerM) {
-      containerM.innerHTML = 'No data to display. Please upload a SAR file in <a href=# onclick="document.getElementById(\'btnSAR\').click()">Dashboard</a> Page.';
+      // Plain text (no inline onclick) to keep the app CSP-strict. This only
+      // appears with no file loaded, where the sidebar/Dashboard nav is hidden.
+      containerM.textContent = 'No data to display. Please upload a SAR file on the Dashboard page.';
     }
   }
 }
@@ -139,7 +143,7 @@ let osCache: string | null = null;
 /** Legacy `getOS()`. Cached like the original (cleared implicitly on reparse via resetOsCache). */
 export function getOS() {
   if (osCache !== null) return osCache;
-  osCache = (window._firstLine || '').split(',')[0].toUpperCase();
+  osCache = getFirstLine().split(',')[0].toUpperCase();
   return osCache;
 }
 
@@ -148,38 +152,23 @@ export function resetOsCache() {
   osCache = null;
 }
 
-/** Legacy `getHostname()`. */
+/** Hostname from the Linux SAR header line (e.g. `Linux 5.14 (hostname) 04/01/26 ...`). */
 export function getHostname(): string {
-  const firstLine = window._firstLine || '';
-  const parts = firstLine.split(',');
-  switch (getOS()) {
-    case 'LINUX':
-      return (parts[2] || '').replace(/\(/g, '').replace(/\)/g, '');
-    case 'AIX':
-    case 'SUNOS':
-      return (parts[1] || '').replace(/\(/g, '').replace(/\)/g, '');
-    default:
-      return '';
-  }
+  const parts = getFirstLine().split(',');
+  return (parts[2] || '').replace(/\(/g, '').replace(/\)/g, '');
 }
 
-/** Legacy `getKernel()`. */
+/** Kernel version from the Linux SAR header line. */
 export function getKernel(): string {
-  const firstLine = window._firstLine || '';
-  const parts = firstLine.split(',');
-  switch (getOS()) {
-    case 'LINUX': return parts[1] || '';
-    case 'AIX': return parts[4] || '';
-    case 'SUNOS': return parts[3] || '';
-    default: return 'Unknown';
-  }
+  const parts = getFirstLine().split(',');
+  return parts[1] || '';
 }
 
 /**
  * Legacy `getServerInfo()`. The legacy version wrote a summary into
  * `.homeContainer`, an element removed in the v2 template (file-info-bar +
  * LandingBridge's `populateFileInfo` replaced it). Kept as a no-op call
- * target so `window.getServerInfo?.()` call sites stay valid.
+ * target so `getServerInfo()` call sites stay valid.
  */
 export function getServerInfo() {
   // Intentionally empty — see doc comment above.
@@ -187,8 +176,7 @@ export function getServerInfo() {
 
 /** Legacy `grepHeaders(pattern)`. Returns -1 (not null) to match the original contract exactly. */
 export function grepHeaders(pattern: string): string | -1 {
-  const headers = window.headers || [];
-  const match = headers.find((header) => header.includes(pattern));
+  const match = getHeaders().find((header) => header.includes(pattern));
   return match ?? -1;
 }
 

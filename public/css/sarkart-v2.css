@@ -692,14 +692,14 @@ body:not(.is-dashboard) #aiSummaryPanel { display: none !important; }
 .sidebar-edge-toggle {
   position: absolute;
   top: 50%;
-  left: calc(var(--sidebar-w) - 12px);
+  left: calc(var(--sidebar-w) - 8px);
   transform: translateY(-50%);
   z-index: 30;
   display: flex !important;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 32px;
+  width: 16px;
+  height: 48px;
   padding: 0;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-sm);
@@ -721,7 +721,7 @@ body:not(.data-loaded) .sidebar-edge-toggle { display: none !important; }
   height: 12px;
   transition: transform var(--t-med);
 }
-body.sidebar-collapsed .sidebar-edge-toggle { left: calc(var(--sidebar-w-collapsed) - 12px); }
+body.sidebar-collapsed .sidebar-edge-toggle { left: calc(var(--sidebar-w-collapsed) - 8px); }
 body.sidebar-collapsed .sidebar-edge-toggle svg.icon { transform: rotate(180deg); }
 
 .top-bar-info {

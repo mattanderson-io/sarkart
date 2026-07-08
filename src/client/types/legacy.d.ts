@@ -2,12 +2,6 @@ export {};
 
 declare global {
   interface Window {
-    _idx?: Record<string, string[]>;
-    _firstLine?: string;
-    _fullIdx?: Record<string, string[]>;
-    _cpuByCore?: Record<string, string[]>;
-    headers?: string[];
-    _allDatesArr?: string[];
     Plotly?: {
       newPlot: (el: HTMLElement, data: unknown[], layout: Record<string, unknown>, config?: Record<string, unknown>) => void;
       purge?: (el: HTMLElement) => void;
@@ -23,17 +17,12 @@ declare global {
       convertKBs: (kbs: number) => { value: number; suffix: string };
       suffix: () => string;
     };
+    // Decorated in place (legacyUi wraps chartPage/updateProgress;
+    // LandingBridge wraps displayTitle), so these stay on window; every other
+    // former engine primitive is now a direct import from lib/sarEngine.
     chartPage?: () => void;
-    homePage?: () => void;
-    showBlock?: (id: string) => void;
-    hideBlock?: (id: string) => void;
-    show?: (selector: string) => void;
-    hide?: (selector: string) => void;
-    showNotes?: (id: string, text: string) => void;
     updateProgress?: (percent: number, message?: string) => void;
-    progressBarReset?: () => void;
     displayTitle?: (title: string) => unknown;
-    getKernel?: () => string;
     file?: unknown;
     _pendingResult?: { target: { result: string } };
     html2canvas?: (element: HTMLElement, options?: Record<string, unknown>) => Promise<HTMLCanvasElement>;
@@ -42,10 +31,6 @@ declare global {
     };
     sarkartGeneratePDFReport?: () => Promise<void>;
     sarkartProcessPendingData?: () => Promise<void>;
-    getHostname?: () => string;
-    getOS?: () => string;
-    getServerInfo?: () => void;
-    grepHeaders?: (pattern: string) => string | -1;
     getDevices?: (key: string, table: 'yes' | 'no', target: string | null) => void;
     getInterfaceTraffic?: (key: string, table: 'yes' | 'no', target: string | null) => void;
     getInterfaceErrors?: (key: string, table: 'yes' | 'no', target: string | null) => void;

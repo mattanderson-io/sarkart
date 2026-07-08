@@ -1,29 +1,52 @@
 {
-  "name": "sarkart-plotly",
-  "version": "0.1.0",
-  "description": "SARkart Plotly - experimental Plotly.js-based charts fork of SARkart",
-  "main": "index.js",
+  "name": "sarkart",
+  "version": "2.0.0",
+  "description": "Fast, browser-based viewer for Linux SAR (sysstat) files — interactive charts rendered entirely client-side.",
+  "main": "src/index.js",
+  "author": "Matt Anderson",
+  "license": "GPL-3.0",
+  "homepage": "https://github.com/mattanderson-io/sarkart#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mattanderson-io/sarkart.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mattanderson-io/sarkart/issues"
+  },
+  "keywords": [
+    "sar",
+    "sysstat",
+    "linux",
+    "performance",
+    "monitoring",
+    "charts",
+    "plotly"
+  ],
   "scripts": {
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "start": "node src/ensure-build.js && node src/index.js",
     "dev": "vite --host 0.0.0.0",
     "dev:server": "nodemon src/index.js -e js,hbs,html,tsx,ts",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test": "node --test --disable-warning=MODULE_TYPELESS_PACKAGE_JSON test/*.test.ts"
   },
-  "keywords": [],
-  "author": "",
-  "license": "GPL-3.0",
   "dependencies": {
     "ansi-regex": ">=5.0.1",
     "express": "^5.2.1",
+    "helmet": "^8.2.0",
     "preact": "^10.29.6"
   },
   "devDependencies": {
     "@preact/preset-vite": "^2.10.5",
+    "eslint": "^9.39.4",
+    "eslint-plugin-react-hooks": "^5.2.0",
     "nodemon": "^3.1.14",
     "playwright": "^1.59.1",
     "typescript": "^6.0.3",
+    "typescript-eslint": "^8.63.0",
     "vite": "^8.1.3"
   }
 }

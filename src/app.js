@@ -1,8 +1,35 @@
 const path = require('path')
 const fs = require('fs')
 const express = require('express')
+const helmet = require('helmet')
 
 const app = express()
+
+// Security headers + Content-Security-Policy. SARkart is a client-only app
+// (all parsing happens in the browser), so the policy locks every resource to
+// same-origin. `connect-src 'self'` in particular *enforces* the product's
+// privacy claim — the page cannot exfiltrate an uploaded SAR file anywhere.
+// `style-src` allows inline styles because Plotly injects a <style> block (and
+// the static 404 page uses an inline <style>); no inline SCRIPT is needed (the
+// theme setter is an external /js/theme-init.js and the vendored libs load with
+// SRI). helmet also sets nosniff, Referrer-Policy, X-Frame-Options, HSTS, etc.
+app.use(helmet({
+  contentSecurityPolicy: {
+    useDefaults: false,
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:'],
+      fontSrc: ["'self'"],
+      connectSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"]
+    }
+  }
+}))
 
 // Define Paths for Express config
 const publicDirPath = path.join(__dirname, '../public')

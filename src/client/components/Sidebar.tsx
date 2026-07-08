@@ -73,7 +73,6 @@ export function Sidebar() {
           <MenuLink id="btnCPUs" icon="i-cpu">CPU</MenuLink>
           <ul className="collapse list-unstyled" id="ulCPU" data-bs-parent="#sidebar" />
         </li>
-        <li className="nav-sec-compute"><MenuLink id="btnCPU" icon="i-chart-column">CPU Summary</MenuLink></li>
         <li className="nav-sec-compute"><MenuLink id="btnLoad" icon="i-gauge">Load</MenuLink></li>
 
         <li className="sidebar-section-label sec-memory"><span>Memory</span></li>
@@ -82,7 +81,6 @@ export function Sidebar() {
             <ul className="collapse list-unstyled" id="memorySubmenu" data-bs-parent="#sidebar">
               <li><a href="#" id="btnMemUsg">Memory Used</a></li>
               <li><a href="#" id="btnMemFree">Memory Free</a></li>
-              <li><a href="#" id="btnMemAlloc">Memory Allocation</a></li>
               <li><a href="#" id="btnSwapUsg">Swap Usage</a></li>
             </ul>
           </CollapseMenu>
@@ -105,7 +103,6 @@ export function Sidebar() {
             <ul className="collapse list-unstyled" id="ulDev" data-bs-parent="#sidebar" />
           </CollapseMenu>
         </li>
-        <li className="nav-sec-storage"><MenuLink id="btnFile" icon="i-file">File</MenuLink></li>
 
         <li className="sidebar-section-label sec-network"><span>Network</span></li>
         <li className="nav-sec-network">
@@ -127,10 +124,6 @@ export function Sidebar() {
           </CollapseMenu>
         </li>
         <li className="nav-sec-network"><MenuLink id="btnSockets" icon="i-plug">Sockets</MenuLink></li>
-
-        <li className="sidebar-section-label sec-system sidebar-section-system"><span>System</span></li>
-        <li className="nav-sec-system"><MenuLink id="btnSysCalls" icon="i-terminal">System Calls</MenuLink></li>
-        <li className="nav-sec-system"><MenuLink id="btnTTY" icon="i-keyboard">TTY</MenuLink></li>
       </ul>
     </nav>
   );
