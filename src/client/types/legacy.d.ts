@@ -5,8 +5,6 @@ declare global {
     _idx?: Record<string, string[]>;
     _firstLine?: string;
     _fullIdx?: Record<string, string[]>;
-    _filterByDates?: (dates: string[] | null) => void;
-    _dateFilterRefresh?: (dates: string[] | null, info: string) => void;
     _cpuByCore?: Record<string, string[]>;
     headers?: string[];
     _allDatesArr?: string[];
@@ -48,7 +46,6 @@ declare global {
     getOS?: () => string;
     getServerInfo?: () => void;
     grepHeaders?: (pattern: string) => string | -1;
-    getGenericData?: (key: string, column: number, table: 'yes' | 'no', target: string | null) => LegacyPoint[];
     getDevices?: (key: string, table: 'yes' | 'no', target: string | null) => void;
     getInterfaceTraffic?: (key: string, table: 'yes' | 'no', target: string | null) => void;
     getInterfaceErrors?: (key: string, table: 'yes' | 'no', target: string | null) => void;

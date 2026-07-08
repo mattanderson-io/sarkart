@@ -1,6 +1,6 @@
 import type { SarParseResult } from './sarParser';
 
-export type SarDataState = {
+type SarDataState = {
   parsed: SarParseResult | null;
   activeIndex: Record<string, string[]>;
   selectedDates: string[] | null;
@@ -12,34 +12,11 @@ const state: SarDataState = {
   selectedDates: null
 };
 
-const listeners = new Set<(state: SarDataState) => void>();
-
-function notify() {
-  const snapshot = getSarDataState();
-  listeners.forEach((listener) => listener(snapshot));
-  window.dispatchEvent(new CustomEvent('sarkart:data', { detail: snapshot }));
-}
-
-export function getSarDataState(): SarDataState {
-  return {
-    parsed: state.parsed,
-    activeIndex: state.activeIndex,
-    selectedDates: state.selectedDates ? state.selectedDates.slice() : null
-  };
-}
-
-export function subscribeSarData(listener: (state: SarDataState) => void) {
-  listeners.add(listener);
-  listener(getSarDataState());
-  return () => listeners.delete(listener);
-}
-
 export function setSarData(parsed: SarParseResult) {
   state.parsed = parsed;
   state.activeIndex = parsed.index;
   state.selectedDates = null;
   mirrorToLegacyGlobals();
-  notify();
 }
 
 export function filterSarDataByDates(dates: string[] | null) {
@@ -63,7 +40,6 @@ export function filterSarDataByDates(dates: string[] | null) {
   }
 
   mirrorToLegacyGlobals();
-  notify();
 }
 
 export function mirrorToLegacyGlobals() {
@@ -73,6 +49,5 @@ export function mirrorToLegacyGlobals() {
   window._idx = state.activeIndex;
   window._fullIdx = state.parsed.fullIndex;
   window._allDatesArr = state.parsed.dates;
-  window._filterByDates = filterSarDataByDates;
 }
 

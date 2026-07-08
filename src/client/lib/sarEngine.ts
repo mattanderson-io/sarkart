@@ -205,9 +205,5 @@ export function displayTitle(title: string) {
   (window.chartPage ?? chartPage)();
   const hostname = getHostname();
   const pageTitle = document.getElementById('pageTitle');
-  const pageName = document.getElementById('pageName');
-  const pageShortName = document.getElementById('pageShortName');
   if (pageTitle) pageTitle.textContent = `${title} for ${hostname}`;
-  if (pageName) pageName.textContent = hostname;
-  if (pageShortName) pageShortName.textContent = title;
 }

@@ -282,7 +282,7 @@ async function initializeDashboard() {
   if (os === 'LINUX') {
     document.getElementById('peakBlock')?.classList.add('add');
     hideIds(['btnCPU', 'btnFile', 'btnTTY', 'btnMemAlloc', 'btnSysCalls']);
-    showSelector('#nav-container, #btnSAR, #btnCPUs, #btnMem, #btnDevices, #btnProcesses, #btnSwap, #btnPaging, #btnPage, #btnIO, #btnLoad, #btnInterfaceTraffics, #btnInterfaceErrors, #btnNFS, #btnSockets, #btnReport, #btnContact');
+    showSelector('#btnSAR, #btnCPUs, #btnMem, #btnDevices, #btnProcesses, #btnSwap, #btnPaging, #btnPage, #btnIO, #btnLoad, #btnInterfaceTraffics, #btnInterfaceErrors, #btnNFS, #btnSockets');
 
     window.updateProgress?.(92, 'Calculating peak values...');
     updatePeakCpu();
@@ -308,11 +308,11 @@ async function initializeDashboard() {
     configureDateFilter();
   } else if (os === 'AIX') {
     hideIds(['btnCPUs', 'btnMemFree', 'btnMemAlloc', 'btnSwapUsg', 'btnSwap', 'btnPage', 'btnInterfaceTraffics', 'btnInterfaceErrors', 'btnNFS', 'btnSockets']);
-    showSelector('#nav-container, #btnSAR, #btnCPU, #btnMem, #btnDevices, #btnProcesses, #btnPaging, #btnIO, #btnLoad, #btnSysCalls, #btnFile, #btnTTY, #btnReport, #btnContact');
+    showSelector('#btnSAR, #btnCPU, #btnMem, #btnDevices, #btnProcesses, #btnPaging, #btnIO, #btnLoad, #btnSysCalls, #btnFile, #btnTTY');
   } else if (os === 'SUNOS') {
     document.getElementById('peakBlock')?.classList.add('add');
     hideIds(['btnCPUs', 'btnMemFree', 'btnSwapUsg', 'btnPage', 'btnInterfaceTraffics', 'btnInterfaceErrors', 'btnNFS', 'btnSockets']);
-    showSelector('#nav-container, #btnSAR, #btnCPU, #btnMem, #btnMemAlloc, #btnDevices, #btnProcesses, #btnSwap, #btnPaging, #btnIO, #btnLoad, #btnSysCalls, #btnFile, #btnTTY, #btnReport, #btnContact');
+    showSelector('#btnSAR, #btnCPU, #btnMem, #btnMemAlloc, #btnDevices, #btnProcesses, #btnSwap, #btnPaging, #btnIO, #btnLoad, #btnSysCalls, #btnFile, #btnTTY');
   }
 
   window.updateProgress?.(99, 'Almost ready...');
