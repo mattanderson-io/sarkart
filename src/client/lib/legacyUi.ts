@@ -53,20 +53,39 @@ function setProgressStage(stage: string) {
   });
 }
 
+/**
+ * Decide which stepper stage a progress update belongs to. Prefer the message,
+ * which unambiguously names the phase — the percent alone cannot, because the
+ * file-read phase reports its own 0-100% (of bytes) before processing starts
+ * its 25-100% pass. Judging by percent made the read's tail look like
+ * "rendering" and then the stepper visibly rewound to "reading" when parsing
+ * began. Falls back to percent only when no message is given (e.g. the reset
+ * to 0 that hides the spinner).
+ */
+function stageForProgress(pct: number, msg?: string): string {
+  const m = (msg || '').toLowerCase();
+  if (!m) return pct <= 5 ? 'reading' : pct < 85 ? 'parsing' : 'rendering';
+  if (m.includes('parsing')) return 'parsing';
+  // Note: match "reading" (not bare "read") and the full "ready to process"
+  // phrase, so the "rendering"-phase message "Almost ready…" is NOT caught here.
+  if (/reading|uploading|downloading|ready to process|loading sample|preparing|error|failed/.test(m)) {
+    return 'reading';
+  }
+  // Everything else that carries a message is the build/render phase:
+  // "Building data index", "Detecting server info", "Loading dashboard",
+  // "Calculating peak values", "Loading devices & interfaces", "Almost ready",
+  // "Done!", "Unsupported OS", PDF "Exporting…"/"Generating…".
+  return 'rendering';
+}
+
 function wrapUpdateProgress() {
   if (typeof window.updateProgress !== 'function' || window.__updateProgressWrapped) return;
   const orig = window.updateProgress;
   window.updateProgress = function (pct: number, msg?: string) {
     const p = Number(pct) || 0;
     if (p > 0 && !progressMeta.startMs) progressMeta.startMs = Date.now();
-    if (p <= 5) {
-      progressMeta.startMs = Date.now();
-      setProgressStage('reading');
-    } else if (p < 85) {
-      setProgressStage('parsing');
-    } else {
-      setProgressStage('rendering');
-    }
+    if (p <= 5) progressMeta.startMs = Date.now();
+    setProgressStage(stageForProgress(p, msg));
 
     const rateEl = document.getElementById('progressRate');
     if (rateEl && progressMeta.bytes && progressMeta.startMs) {

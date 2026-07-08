@@ -44,16 +44,35 @@ function readFileAsText(file: File) {
   reader.onprogress = (event) => {
     if (!event.lengthComputable) return;
     const percent = Math.round((event.loaded / event.total) * 100);
-    window.updateProgress?.(percent, 'Reading file...');
+    // Reading occupies only the first ~20% of the overall bar; parsing/render
+    // own the rest (SarDataBridge.processPendingResult starts at 25%). Scaling
+    // here keeps the bar moving forward instead of racing to 100% during the
+    // read and then snapping back to 25% when parsing begins.
+    window.updateProgress?.(Math.round(percent * 0.2), 'Reading file...');
   };
   reader.onload = (event) => {
     window.file = true;
     window._pendingResult = { target: { result: String(event.target?.result ?? '') } };
-    window.updateProgress?.(100, 'File loaded — ready to process');
+    // End of the read segment (~22%), just below where parsing takes over at
+    // 25% — keeps the bar monotonic into processPendingResult.
+    window.updateProgress?.(22, 'File loaded — ready to process');
     if (processButton) {
       processButton.hidden = false;
       processButton.style.display = '';
     }
+    // Auto-advance into parsing/render, mirroring the "Try with sample data"
+    // path in LandingBridge. Without this the upload path stalls at
+    // "File loaded — ready to process" (progress pinned at 100%, the stepper
+    // showing RENDERING) and only moves on if the user manually clicks
+    // "Process data" — which reads as "stuck on render". The button stays
+    // revealed as a fallback in case the processor hasn't mounted yet.
+    window.setTimeout(() => {
+      if (window.sarkartProcessPendingData) {
+        void window.sarkartProcessPendingData();
+      } else if (processButton) {
+        processButton.click();
+      }
+    }, 300);
   };
   reader.onerror = () => {
     console.error('[SARkart] Failed to read file');

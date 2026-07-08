@@ -164,7 +164,9 @@ export function LandingBridge() {
             if (fileName) fileName.textContent = 'sample-sar.txt (built-in sample)';
             window.file = true;
             window._pendingResult = { target: { result: text } };
-            window.updateProgress?.(100, 'File loaded - ready to process');
+            // ~22%, just below where parsing takes over at 25%, so the bar
+            // stays monotonic into processing (see FileUploadBridge).
+            window.updateProgress?.(22, 'File loaded - ready to process');
             const btn = document.getElementById('btnProcessData');
             if (btn) {
               btn.hidden = false;
