@@ -1,7 +1,6 @@
 import { useEffect } from 'preact/hooks';
 
 const legacyScripts = [
-  '/js/bootstrap.bundle.min.js',
   '/js/plotly-cartesian-3.5.1.min.js',
   '/js/plotly-charts.js?v=26',
   '/js/html2canvas.min.js',

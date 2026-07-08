@@ -23,11 +23,13 @@ Production Docker image installs dev dependencies, builds the Preact bundle, the
 
 ## Browser libraries (`public/`)
 
-Loaded by the Preact shell after mount (`src/client/components/LegacyScripts.tsx`):
+Script libraries are loaded by the Preact shell after mount
+(`src/client/components/LegacyScripts.tsx`); `bootstrap.min.css` is a stylesheet
+link in the document head.
 
 | Library | File | Version | Notes |
 |---------|------|---------|-------|
-| Bootstrap | `bootstrap.min.css`, `bootstrap.bundle.min.js` | 5.3.6 | Collapse/sidebar only; layout is `sarkart-v2.css` |
+| Bootstrap (CSS only) | `bootstrap.min.css` | 5.3.6 | Utility classes + `.collapse` display rule; layout is `sarkart-v2.css`. JS bundle removed — collapse is Preact-owned (`SidebarCollapse`) |
 | Plotly.js (cartesian) | `plotly-cartesian-3.5.1.min.js` | 3.5.1 | All line/pie/heatmap charts |
 | html2canvas | `html2canvas.min.js` | 1.4.1 | PDF export screenshots |
 | jsPDF | `jspdf.umd.min.js` | 2.5.2 | PDF export |
@@ -40,6 +42,7 @@ Loaded by the Preact shell after mount (`src/client/components/LegacyScripts.tsx
 | Preact `SarDataBridge` + `sarParser` / `sarStore` | Chunked parser, typed SAR data store, legacy global mirror, dashboard bootstrap |
 | Preact `ChartRouterBridge` + `sarData` | Chart category routing + typed chart data helpers — replaces the legacy engine's chart plumbing |
 | Preact `FileUploadBridge` | Drag-and-drop + browse upload pipeline — replaces the legacy `makeDroppable` / `getAsText` |
+| Preact `SidebarCollapse` | Sidebar submenu accordion (toggle `.show` + `aria-expanded`) — replaces `bootstrap.bundle.min.js` |
 | `plotly-charts.js` | Plotly replacements for `printChart` / `printMultiChart` / `printPieChart` |
 | Preact `NetworkUnitBridge` | Interface traffic unit selector (KB/s, Mbps, Gbps, % of link speed) |
 | `sarkart-ui.js` | Remaining legacy bridge: progress, CPU chips, sidebar, dashboard state |
@@ -70,6 +73,7 @@ These remain on disk but are **not linked** from `index.hbs` after the v2 overha
 | `public/js/faq.js` | Removed in v2 |
 | `public/js/sarkart-v1.0.0.min.js` | **Deleted** — legacy engine fully ported to Preact bridges |
 | `public/js/highcharts-shim.js` | **Deleted** — Plotly load-order stub no longer needed |
+| `public/js/bootstrap.bundle.min.js` | **Deleted** — sidebar collapse ported to the Preact `SidebarCollapse` component (`bootstrap.min.css` retained) |
 
 ## Security audit
 
@@ -81,7 +85,7 @@ Browser-side libraries are vendored minified files — audit separately when upg
 
 ## Upgrade notes
 
-- **Bootstrap 5**: Already on 5.3.x; sidebar uses `data-bs-toggle` collapse.
+- **Bootstrap 5**: JS bundle (`bootstrap.bundle.min.js`) removed — the sidebar collapse accordion is now handled by the Preact `SidebarCollapse` component. `bootstrap.min.css` (5.3.x) is retained for the `.collapse` display rule and utility classes; the `data-bs-toggle="collapse"` markup is kept as the hook `SidebarCollapse` listens on.
 - **jQuery**: No longer loaded by the Preact app. `jquery-4.0.0.min.js` remains on disk only because the Handlebars `index.hbs` fallback still references it; it can be deleted once that fallback is retired.
 - **Plotly**: Pin filename includes version; update both file and `index.hbs` cache-bust if upgrading.
 - **Font Awesome / animate.css**: Remove from `404.hbs` and delete files when the 404 page is restyled.

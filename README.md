@@ -113,8 +113,7 @@ node bench/ui-shot.js docs
 | UI | Custom design system (`sarkart-v2.css`) | v2.0.0 |
 | Icons | Inline SVG sprite | — |
 | Fonts | Inter, JetBrains Mono | — |
-| Legacy DOM helpers | jQuery | 4.0.0 |
-| Layout primitives | Bootstrap | 5.3.6 |
+| CSS utilities | Bootstrap (CSS only) | 5.3.6 |
 
 ## Credits
 
