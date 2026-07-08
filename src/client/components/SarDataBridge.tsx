@@ -234,7 +234,7 @@ async function initializeDashboard() {
   window.updateProgress?.(99, 'Almost ready...');
   await delay(10);
   document.getElementById('sidebar')?.classList.remove('active');
-  document.querySelectorAll<HTMLElement>('.contDash').forEach((el) => { el.style.display = ''; });
+  document.querySelectorAll<HTMLElement>('.contDash').forEach((el) => { el.style.display = 'flex'; });
   window.updateProgress?.(100, 'Done!');
   window.setTimeout(() => window.progressBarReset?.(), 1000);
   setVisible('sidebar', true);
