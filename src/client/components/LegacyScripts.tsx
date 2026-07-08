@@ -36,7 +36,18 @@ export function LegacyScripts() {
     legacyScripts.reduce((chain, src) => {
       return chain.then(() => {
         if (cancelled) return undefined;
-        return loadScript(src);
+        return loadScript(src).then(() => {
+          // `sarkart-v1.0.0.min.js` defines showBlock/getOS/displayTitle/etc.
+          // as plain global `function` statements, which silently clobber
+          // any window.* overrides CoreEngineBridge/ChartRouterBridge
+          // installed at mount time. Fire a signal the instant it finishes
+          // loading (and before sarkart-ui.js loads and wraps
+          // window.updateProgress/chartPage) so those bridges can
+          // re-install their versions on top, exactly once.
+          if (src === '/js/sarkart-v1.0.0.min.js') {
+            window.dispatchEvent(new Event('sarkart:legacy-engine-loaded'));
+          }
+        });
       });
     }, Promise.resolve()).catch((error) => {
       console.error('[SARkart] Legacy script load failed:', error);

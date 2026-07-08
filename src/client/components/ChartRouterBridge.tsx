@@ -953,30 +953,48 @@ function renderNfsServer() {
   }
 }
 
+function install() {
+  window.getCPUchart = renderCpuChart;
+  window.getDevices = (key: string) => renderDeviceList(key);
+  window.getInterfaceTraffic = (key: string) => renderInterfaceTrafficList(key);
+  window.getInterfaceErrors = (key: string) => renderInterfaceErrorList(key);
+
+  takeOverClick('btnCPU', renderCpuSummary);
+  takeOverClick('btnLoad', renderLoad);
+  takeOverClick('btnMemFree', renderMemoryFree);
+  takeOverClick('btnMemUsg', renderMemoryUsage);
+  takeOverClick('btnMemAlloc', renderMemoryAllocation);
+  takeOverClick('btnSwapUsg', renderSwapUsage);
+  takeOverClick('btnProcs', renderProcesses);
+  takeOverClick('btnSwap', renderSwapping);
+  takeOverClick('btnPaging', renderPaging);
+  takeOverClick('btnPage', renderPage);
+  takeOverClick('btnIO', renderIO);
+  takeOverClick('btnFile', renderFile);
+  takeOverClick('btnTTY', renderTTY);
+  takeOverClick('btnSysCalls', renderSysCalls);
+  takeOverClick('btnSockets', renderSockets);
+  takeOverClick('btnNFSClient', renderNfsClient);
+  takeOverClick('btnNFSServer', renderNfsServer);
+}
+
 export function ChartRouterBridge() {
   useEffect(() => {
-    window.getCPUchart = renderCpuChart;
-    window.getDevices = (key: string) => renderDeviceList(key);
-    window.getInterfaceTraffic = (key: string) => renderInterfaceTrafficList(key);
-    window.getInterfaceErrors = (key: string) => renderInterfaceErrorList(key);
-
-    takeOverClick('btnCPU', renderCpuSummary);
-    takeOverClick('btnLoad', renderLoad);
-    takeOverClick('btnMemFree', renderMemoryFree);
-    takeOverClick('btnMemUsg', renderMemoryUsage);
-    takeOverClick('btnMemAlloc', renderMemoryAllocation);
-    takeOverClick('btnSwapUsg', renderSwapUsage);
-    takeOverClick('btnProcs', renderProcesses);
-    takeOverClick('btnSwap', renderSwapping);
-    takeOverClick('btnPaging', renderPaging);
-    takeOverClick('btnPage', renderPage);
-    takeOverClick('btnIO', renderIO);
-    takeOverClick('btnFile', renderFile);
-    takeOverClick('btnTTY', renderTTY);
-    takeOverClick('btnSysCalls', renderSysCalls);
-    takeOverClick('btnSockets', renderSockets);
-    takeOverClick('btnNFSClient', renderNfsClient);
-    takeOverClick('btnNFSServer', renderNfsServer);
+    // `takeOverClick` clones each nav link to drop any previously bound
+    // jQuery click handler. sarkart-v1.0.0.min.js binds its own
+    // `$("#btnCPU").click(...)` handlers (and defines window.getCPUchart /
+    // getDevices / getInterfaceTraffic / getInterfaceErrors) when IT loads,
+    // which happens asynchronously via LegacyScripts, after this effect
+    // would otherwise run. Running `install()` before that point means our
+    // clone-and-replace happens too early: the legacy script's ready
+    // handler would then bind a *second* click listener onto our already-
+    // cloned element, and its plain-function overrides would clobber ours
+    // moments after mount. Deferring to `sarkart:legacy-engine-loaded`
+    // (dispatched by LegacyScripts right after sarkart-v1.0.0.min.js
+    // resolves) guarantees we take over strictly after the legacy engine
+    // has finished binding, so only our handlers remain active.
+    window.addEventListener('sarkart:legacy-engine-loaded', install);
+    return () => window.removeEventListener('sarkart:legacy-engine-loaded', install);
   }, []);
 
   return null;

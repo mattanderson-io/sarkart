@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'preact/hooks';
 import { ChartRouterBridge } from './ChartRouterBridge';
 import { CommandPalette } from './CommandPalette';
+import { CoreEngineBridge } from './CoreEngineBridge';
 import { Content } from './Content';
 import { IconSprite } from './IconSprite';
 import { LandingBridge } from './LandingBridge';
@@ -58,6 +59,8 @@ export function App() {
         <Content heatmapVisible={heatmapVisible} />
       </div>
       <CommandPalette />
+      <CoreEngineBridge />
+      <ChartRouterBridge />
       <LandingBridge />
       <NetworkUnitBridge />
       <PdfExportBridge />

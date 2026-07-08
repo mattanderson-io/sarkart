@@ -30,6 +30,8 @@ declare global {
     showBlock?: (id: string) => void;
     hideBlock?: (id: string) => void;
     show?: (selector: string) => void;
+    hide?: (selector: string) => void;
+    showNotes?: (id: string, text: string) => void;
     updateProgress?: (percent: number, message?: string) => void;
     progressBarReset?: () => void;
     displayTitle?: (title: string) => unknown;
