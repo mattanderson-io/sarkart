@@ -109,7 +109,7 @@ export function CommandPalette() {
             type="text"
             placeholder="Jump to chart, device, or interface…"
             autoComplete="off"
-            spellCheck={false}
+            spellcheck={false}
             value={query}
             onInput={(event) => {
               setQuery(event.currentTarget.value);

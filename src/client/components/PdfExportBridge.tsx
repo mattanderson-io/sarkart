@@ -104,7 +104,9 @@ async function generatePDFReport() {
     return;
   }
 
-  const doc: JsPdfDocument = new JsPDF('landscape', 'mm', 'a4');
+  // window.jspdf.jsPDF is typed as `new (...) => unknown` (see legacy.d.ts),
+  // so narrow the constructed instance to the local JsPdfDocument shape.
+  const doc = new JsPDF('landscape', 'mm', 'a4') as JsPdfDocument;
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
   const margin = 15;
