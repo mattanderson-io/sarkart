@@ -2,30 +2,47 @@
 
 Last reviewed: July 2026 (v2 UI).
 
-## Node.js (server)
+## Node.js / app shell
 
-Requires **Node 18+** for Playwright benchmarks; **Node 24 LTS** recommended (see `.nvmrc`).
+Requires **Node 18+** for Vite / Playwright benchmarks; **Node 24 LTS** recommended (see `.nvmrc`).
 
 | Package | Installed | Role | Status |
 |---------|-----------|------|--------|
 | express | 5.2.1 | HTTP server | ✅ Current |
-| hbs | 4.2.1 | Handlebars view engine | ✅ Latest |
-| handlebars | 4.7.9 | Template compiler (transitive) | ✅ Latest |
+| helmet | 8.x | Security headers + Content-Security-Policy | ✅ Latest |
+| preact | 10.29.6 | Main app shell | ✅ Current |
+| vite | 8.1.3 | Frontend build/dev server | ✅ Current |
+| @preact/preset-vite | 2.10.5 | Preact/Vite integration | ✅ Current |
+| typescript | 6.0.3 | TSX type checking / source language | ✅ Current |
 | ansi-regex | 6.0.1 | Transitive security override | ✅ |
 | nodemon | 3.1.14 | Dev auto-restart | ✅ Latest |
 | playwright | 1.59.1 | Dev browser benchmarks / UI shots | ✅ Latest |
+| eslint | 9.x | Linter (`npm run lint`) | ✅ Latest |
+| typescript-eslint | 8.x | Type-aware lint rules for `src/client` | ✅ Latest |
+| eslint-plugin-react-hooks | 5.x | Rules of hooks (Preact) | ✅ Latest |
 
-Production Docker image uses `npm ci --omit=dev` on Node 22 Alpine (`Dockerfile`).
+### CI gates (`npm run <script>`)
+
+| Script | Command | Purpose |
+|--------|---------|---------|
+| `typecheck` | `tsc --noEmit` | Full type-check of `src/client` (the build only transpiles) |
+| `lint` | `eslint .` | Flat config (`eslint.config.mjs`); type-aware on `src/client` |
+| `test` | `node --test test/*.test.ts` | Fixture regression + unit suite (no deps) |
+| `build` | `vite build` | Production Preact bundle |
+
+`.github/workflows/ci.yml` runs typecheck → lint → test → build on every push/PR.
+
+Production Docker image installs dev dependencies, builds the Preact bundle, then prunes to production dependencies on Node 22 Alpine (`Dockerfile`).
 
 ## Browser libraries (`public/`)
 
-Loaded by the main app (`templates/views/index.hbs`):
+Script libraries loaded by the Preact shell after mount
+(`src/client/components/LegacyScripts.tsx`). The only stylesheet is the
+first-party `sarkart-v2.css` — no CSS framework.
 
 | Library | File | Version | Notes |
 |---------|------|---------|-------|
-| jQuery | `jquery-4.0.0.min.js` | 4.0.0 | Required by legacy engine + export helpers |
-| Bootstrap | `bootstrap.min.css`, `bootstrap.bundle.min.js` | 5.3.6 | Collapse/sidebar only; layout is `sarkart-v2.css` |
-| Plotly.js (cartesian) | `plotly-cartesian-3.5.1.min.js` | 3.5.1 | All line/pie/heatmap charts |
+| Plotly.js (cartesian) | `plotly-cartesian-3.7.0.min.js` | 3.7.0 | All line/pie/heatmap charts |
 | html2canvas | `html2canvas.min.js` | 1.4.1 | PDF export screenshots |
 | jsPDF | `jspdf.umd.min.js` | 2.5.2 | PDF export |
 
@@ -33,16 +50,18 @@ Loaded by the main app (`templates/views/index.hbs`):
 
 | Module | Purpose |
 |--------|---------|
-| `sarkart-v1.0.0.min.js` | Core SAR parser + navigation engine (minified upstream) |
-| `sar-chunked-parser.js` | Chunked upload parser for large files |
-| `highcharts-shim.js` | Load-order stub before Plotly overrides |
+| Preact `CoreEngineBridge` + `sarEngine` | Core navigation/engine primitives (showBlock, chartPage, homePage, server info) — replaces `sarkart-v1.0.0.min.js` |
+| Preact `SarDataBridge` + `sarParser` / `sarStore` | Chunked parser, typed SAR data store, legacy global mirror, dashboard bootstrap |
+| Preact `ChartRouterBridge` + `sarData` | Chart category routing + typed chart data helpers — replaces the legacy engine's chart plumbing |
+| Preact `FileUploadBridge` | Drag-and-drop + browse upload pipeline — replaces the legacy `makeDroppable` / `getAsText` |
+| Preact `SidebarCollapse` | Sidebar submenu accordion (toggle `.show` + `aria-expanded`) — replaces `bootstrap.bundle.min.js` |
 | `plotly-charts.js` | Plotly replacements for `printChart` / `printMultiChart` / `printPieChart` |
-| `network-units.js` | Interface traffic unit selector (KB/s, Mbps, Gbps, % of link speed) |
-| `sarkart-ui.js` | v2 UI: themes, command palette, CPU chips, sidebar, progress |
-| `landing.js` | Upload flow, sample data, title helpers |
-| `heatmap.js` | Heatmap dashboard (7 panels) |
-| `export-pdf.js` | Multi-page PDF report |
-| `ai-summary.js` | Performance summary (Gemini Nano or template fallback) |
+| Preact `NetworkUnitBridge` | Interface traffic unit selector (KB/s, Mbps, Gbps, % of link speed) |
+| Preact `UiBridge` + `legacyUi` | Progress stage/rate, `chartPage` fast path, keyboard shortcuts, sidebar collapse toggle, empty-section-label hiding, CPU chip bar, `is-dashboard` state — replaces `sarkart-ui.js` |
+| Preact `LandingBridge` | Upload lifecycle, sample data, loaded state, file info, title helpers |
+| Preact `HeatmapDashboard` | Heatmap dashboard (7 panels) |
+| Preact `PdfExportBridge` | Multi-page PDF report |
+| Preact `AiSummary` | Performance summary (Gemini Nano or template fallback) |
 
 ## Fonts & icons
 
@@ -50,19 +69,42 @@ Loaded by the main app (`templates/views/index.hbs`):
 |-------|----------|-------|
 | Inter (variable) | `public/fonts/inter/` | UI text |
 | JetBrains Mono | `public/fonts/jetbrains-mono/` | Numbers, code |
-| SVG icon sprite | `templates/partials/icons.hbs` | Replaces Font Awesome in v2 UI |
+| SVG icon sprite | Preact `IconSprite` (`src/client/components/IconSprite.tsx`) | Replaces Font Awesome in v2 UI |
 
 ## Legacy static files (not used by main app)
 
-These remain on disk but are **not linked** from `index.hbs` after the v2 overhaul:
+These remain on disk but are **not linked** from the Preact app shell:
 
 | File | Notes |
 |------|-------|
-| `public/css/all.min.css` | Font Awesome 5 — still referenced by `404.hbs` only |
-| `public/css/animate.min.css` | Unused; safe to delete |
 | `public/css/sarkart-v1.0.0.min.css` | Removed in v2 |
 | `public/css/theme-override.css` | Removed in v2 |
 | `public/js/faq.js` | Removed in v2 |
+| `public/js/sarkart-v1.0.0.min.js` | **Deleted** — legacy engine fully ported to Preact bridges |
+| `public/js/highcharts-shim.js` | **Deleted** — Plotly load-order stub no longer needed |
+| `public/js/bootstrap.bundle.min.js` | **Deleted** — sidebar collapse ported to the Preact `SidebarCollapse` component (`bootstrap.min.css` retained) |
+| `public/js/sarkart-ui.js` | **Deleted** — remaining UI behaviors ported to the Preact `UiBridge` / `legacyUi` |
+| `public/js/jquery-4.0.0.min.js` | **Deleted** — the Handlebars `index.hbs` fallback that referenced it was retired |
+| `templates/views/index.hbs` + `partials/{icons,sidebar,content,footer}.hbs` | **Deleted** — Handlebars app shell retired; `dist/index.html` (Preact) is the only entry point |
+| `public/js/{network-units,sar-chunked-parser,export-pdf,landing,ai-summary,heatmap}.js` | **Deleted** — orphaned once `index.hbs` was retired; superseded by the Preact `NetworkUnitBridge` / `sarParser` / `PdfExportBridge` / `LandingBridge` / `AiSummary` / `HeatmapDashboard` |
+| `public/css/bootstrap.min.css` | **Deleted** — the used rules (border-box reset, `.collapse`/`.list-unstyled`/`.d-none`/`.d-block`, Reboot typography) are ported into `sarkart-v2.css` |
+| `public/css/all.min.css` (Font Awesome) + `public/css/animate.min.css` | **Deleted** — only the retired `404.hbs` referenced them; `404.html` is self-contained |
+| `templates/views/404.hbs` | **Deleted** — replaced by static `public/404.html` served via `sendFile`; the `hbs` view engine and `hbs`/`handlebars` deps are removed |
+| `templates/` (empty `views/` + `partials/` dirs) | **Deleted** — no Handlebars views remain; `Dockerfile` no longer `COPY`s `templates/` |
+| `public/webfonts/` (Font Awesome ttf/woff2) | **Deleted** — orphaned once `all.min.css` was removed; no glyph font is loaded |
+
+## Testing
+
+Fixture-based regression tests live in `test/` and run on Node's built-in test
+runner with native TypeScript type-stripping — **no test dependencies** (`npm test`,
+which runs `node --test test/*.test.ts`). `test/regression.test.ts` parses the
+bundled `public/sample/sample-sar.txt` through the real `parseSarTextChunked`
+and locks in the data-layer output the dashboard renders: server metadata, the
+18 parsed section keys, peak CPU/load/memory (15/44/5), CPU/device/interface
+counts (65/11/11), representative series shape, and `sarStore` date filtering.
+
+The suite lives outside `src/client`, so it is excluded from the Vite build and
+the app's `tsc` typecheck and needs no `@types/node`.
 
 ## Security audit
 
@@ -70,11 +112,23 @@ As of July 2026 (`npm audit`):
 
 - **1 moderate** — transitive `qs` DoS advisory ([GHSA-q8mj-m7cp-5q26](https://github.com/advisories/GHSA-q8mj-m7cp-5q26)); fix with `npm audit fix` when convenient.
 
-Browser-side libraries are vendored minified files — audit separately when upgrading.
+Browser-side libraries are vendored minified files, pinned with `sha384`
+Subresource Integrity hashes in `LegacyScripts.tsx` (regenerate on upgrade with
+`openssl dgst -sha384 -binary <file> | openssl base64 -A`).
+
+### Runtime headers (helmet)
+
+`app.js` sends a strict Content-Security-Policy (all resources `'self'`;
+`connect-src 'self'` enforces the no-upload privacy claim; `style-src` allows
+inline styles for Plotly + the static 404) plus `nosniff`, `Referrer-Policy:
+no-referrer`, `X-Frame-Options`, HSTS, COOP/CORP, and `Origin-Agent-Cluster`.
+No inline `<script>` is used (theme setter is `public/js/theme-init.js`), so
+`script-src` stays `'self'` with no hash/nonce/`unsafe-inline`.
 
 ## Upgrade notes
 
-- **Bootstrap 5**: Already on 5.3.x; sidebar uses `data-bs-toggle` collapse.
-- **jQuery 4**: Major bump from 3.x; keep when testing legacy engine paths after upgrades.
-- **Plotly**: Pin filename includes version; update both file and `index.hbs` cache-bust if upgrading.
-- **Font Awesome / animate.css**: Remove from `404.hbs` and delete files when the 404 page is restyled.
+- **Bootstrap**: Fully removed (JS bundle and `bootstrap.min.css`). The handful of rules the app used — the global `box-sizing:border-box`, `.collapse`/`.list-unstyled`/`.d-none`/`.d-block`, and Reboot's typography baseline — are ported into `sarkart-v2.css`'s base section. `data-bs-toggle="collapse"` markup is kept purely as the hook the Preact `SidebarCollapse` listens on.
+- **jQuery**: Fully removed — no longer loaded and `jquery-4.0.0.min.js` is deleted.
+- **Handlebars**: Fully retired — `hbs`/`handlebars` deps removed and no view engine is configured. Express serves `dist/index.html` (the Vite/Preact build), returns a 503 if `dist/` is missing, and serves the static `public/404.html` for unmatched routes.
+- **Font Awesome / animate.css**: Fully removed — `all.min.css`, `animate.min.css`, and the `public/webfonts/` FA font files are all deleted. Icons are an inline SVG sprite; the sidebar submenu `i.fa` markers are styled as plain CSS dots (no glyph font).
+- **Plotly**: Pin filename includes version; the Vite build hashes `dist/assets`, so update the vendored `public/js/plotly-cartesian-*.js` filename (and the `LegacyScripts.tsx` reference) when upgrading.

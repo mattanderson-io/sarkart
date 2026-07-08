@@ -265,6 +265,10 @@
   var BASE_CONFIG = {
     displaylogo: false,
     modeBarButtonsToRemove: [
+      // 'sendDataToCloud' uploads chart data+layout to a Plotly-hosted
+      // server. sarkart keeps all SAR data on the user's machine, so we
+      // remove it explicitly to guarantee it never appears.
+      'sendDataToCloud',
       'lasso2d', 'select2d', 'autoScale2d',
       'hoverCompareCartesian', 'hoverClosestCartesian',
       'toggleSpikelines'

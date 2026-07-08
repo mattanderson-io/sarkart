@@ -4,3 +4,4 @@ test_data/
 *.bak
 .DS_Store
 bench/browser-bench-results.json
+.codex-notes/

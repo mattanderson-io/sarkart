@@ -197,6 +197,29 @@
 .contABlock, .contBBlock, .contCBlock, .contDBlock, .contMBlock { display: none; }
 
 /* --- 4. Base ---------------------------------------------------------------- */
+/* Bootstrap-compat: previously supplied by bootstrap.min.css (Reboot's global
+   border-box plus a few utility classes), reproduced here so the framework can
+   be dropped entirely. box-sizing is the important one — the whole layout
+   assumes border-box. The utility classes are used by the sidebar submenu
+   collapse (.collapse/.show), the upload spinner (.d-none/.d-block) and the
+   sidebar lists (.list-unstyled). */
+*,
+*::before,
+*::after { box-sizing: border-box; }
+
+.list-unstyled { padding-left: 0; list-style: none; }
+.collapse:not(.show) { display: none; }
+.d-none { display: none !important; }
+.d-block { display: block !important; }
+
+/* Reboot typography baseline (ported from bootstrap.min.css): the app's
+   class-styled headings/paragraphs override these, but a few bare elements
+   (the landing brand h1, inline <code>) relied on Reboot's margins/sizing.
+   Colors are intentionally left to the theme tokens. */
+h1, h2, h3, h4, h5, h6 { margin-top: 0; margin-bottom: 0.5rem; font-weight: 500; line-height: 1.2; }
+p { margin-top: 0; margin-bottom: 1rem; }
+code { font-size: 0.875em; }
+
 html { height: 100%; }
 
 body {
@@ -494,10 +517,9 @@ svg.icon :is(path, line, rect, circle, polyline, ellipse) {
   color: var(--text-1);
 }
 
-/* The engine injects <i class="fa ..."> into submenu items. Font Awesome is
-   gone — render them as small monochrome dots instead. */
-#sidebar ul.sidebar-nav ul i.fa,
-#sidebar ul.sidebar-nav ul i.fas {
+/* Device/interface/NFS submenu items get a small section-colored dot marker
+   (SarDataBridge / ChartRouterBridge inject `<i class="submenu-dot">`). */
+#sidebar ul.sidebar-nav ul .submenu-dot {
   display: inline-block;
   flex: none;
   width: 5px;
@@ -505,9 +527,7 @@ svg.icon :is(path, line, rect, circle, polyline, ellipse) {
   border-radius: var(--r-full);
   background: color-mix(in srgb, var(--sec-color, var(--text-3)) 70%, var(--text-3));
 }
-#sidebar ul.sidebar-nav ul a:hover i.fa,
-#sidebar ul.sidebar-nav ul a:hover i.fas { background: var(--sec-color, var(--accent)); }
-#sidebar .icon-bg { display: none; }
+#sidebar ul.sidebar-nav ul a:hover .submenu-dot { background: var(--sec-color, var(--accent)); }
 
 /* Collapsed sidebar */
 #sidebar.active {
@@ -672,14 +692,14 @@ body:not(.is-dashboard) #aiSummaryPanel { display: none !important; }
 .sidebar-edge-toggle {
   position: absolute;
   top: 50%;
-  left: calc(var(--sidebar-w) - 12px);
+  left: calc(var(--sidebar-w) - 8px);
   transform: translateY(-50%);
   z-index: 30;
   display: flex !important;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 32px;
+  width: 16px;
+  height: 48px;
   padding: 0;
   border: 1px solid var(--border-strong);
   border-radius: var(--r-sm);
@@ -701,7 +721,7 @@ body:not(.data-loaded) .sidebar-edge-toggle { display: none !important; }
   height: 12px;
   transition: transform var(--t-med);
 }
-body.sidebar-collapsed .sidebar-edge-toggle { left: calc(var(--sidebar-w-collapsed) - 12px); }
+body.sidebar-collapsed .sidebar-edge-toggle { left: calc(var(--sidebar-w-collapsed) - 8px); }
 body.sidebar-collapsed .sidebar-edge-toggle svg.icon { transform: rotate(180deg); }
 
 .top-bar-info {
@@ -1376,12 +1396,14 @@ body.data-loaded .landing-grid { display: none !important; }
   box-sizing: border-box;
 }
 
-/* Heatmap dashboard needs the full grid height; line charts pin containerA to 400px. */
-#containerA.is-heatmap-host {
+/* The heatmap dashboard renders into its own #heatmapBlock (see Content.tsx)
+   via a `.is-heatmap-host` wrapper; it needs the full grid height and visible
+   overflow rather than the fixed-height chart-body used by line charts. */
+.is-heatmap-host {
   height: auto !important;
   min-height: 0;
 }
-.chart-card:has(#containerA.is-heatmap-host) {
+.chart-card:has(.is-heatmap-host) {
   overflow: visible;
 }
 
@@ -1414,7 +1436,7 @@ body.data-loaded .landing-grid { display: none !important; }
 .js-plotly-plot .plotly .cursor-crosshair,
 .js-plotly-plot .plotly .cursor-pointer { cursor: crosshair; }
 
-/* Network units toolbar (injected by network-units.js) */
+/* Network units toolbar (injected by the Preact NetworkUnitBridge) */
 .netUnitsToolbar {
   display: flex;
   align-items: center;

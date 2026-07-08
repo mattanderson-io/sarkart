@@ -33,7 +33,7 @@ SARkart is a fast, browser-based viewer for Linux and Unix SAR (sysstat) files. 
 - **Client-side only** — all parsing happens in your browser. Files never leave your machine.
 - **PDF export** — generate a multi-page report locally
 - **Date range filtering** — view a single day or custom range from multi-day SAR files
-- **Supports** Linux (RHEL, SuSE, Ubuntu), AIX, and Solaris
+- **Supports** Linux (RHEL, SuSE, Ubuntu)
 
 ## Quick Start
 
@@ -76,10 +76,18 @@ Upload the resulting `.txt` file to SARkart.
 ## Development
 
 ```bash
-npm run dev    # nodemon — auto-restart on .js / .hbs changes
+npm run dev        # Vite dev server for the Preact app
+npm run build      # production Preact bundle in ./dist
+npm run dev:server # Express server (serves ./dist; static public/404.html for misses)
+npm test           # fixture-based regression tests (Node's built-in runner)
 ```
 
-Handlebars partials hot-reload on localhost without restarting the server (`src/app.js`).
+The app is Preact/Vite/TypeScript end to end. Express serves the built
+`dist/index.html`; only vendored libraries load at runtime (Plotly, html2canvas,
+jsPDF) and the sole stylesheet is the first-party `sarkart-v2.css` — no CSS
+framework. `npm test` runs the data-layer regression suite in `test/` (parses
+the bundled sample SAR file and asserts the parsed metrics) — no test
+dependencies required.
 
 ### Benchmarks & smoke tests
 
@@ -101,13 +109,14 @@ node bench/ui-shot.js docs
 | Layer | Technology | Version |
 |-------|-----------|---------|
 | Server | Express | 5.2.1 |
-| Templates | Handlebars (hbs) | 4.2.1 |
-| Charts | Plotly.js (cartesian) | 3.5.1 |
+| App shell | Preact | 10.29.6 |
+| Build tool | Vite | 8.1.3 |
+| Language | TypeScript / TSX | 6.0.3 |
+| Charts | Plotly.js (cartesian) | 3.7.0 |
 | UI | Custom design system (`sarkart-v2.css`) | v2.0.0 |
 | Icons | Inline SVG sprite | — |
 | Fonts | Inter, JetBrains Mono | — |
-| DOM helpers | jQuery | 4.0.0 |
-| Layout primitives | Bootstrap | 5.3.6 |
+| 404 page | Static `public/404.html` | — |
 
 ## Credits
 
