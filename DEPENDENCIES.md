@@ -75,6 +75,8 @@ These remain on disk but are **not linked** from the Preact app shell:
 | `public/css/bootstrap.min.css` | **Deleted** — the used rules (border-box reset, `.collapse`/`.list-unstyled`/`.d-none`/`.d-block`, Reboot typography) are ported into `sarkart-v2.css` |
 | `public/css/all.min.css` (Font Awesome) + `public/css/animate.min.css` | **Deleted** — only the retired `404.hbs` referenced them; `404.html` is self-contained |
 | `templates/views/404.hbs` | **Deleted** — replaced by static `public/404.html` served via `sendFile`; the `hbs` view engine and `hbs`/`handlebars` deps are removed |
+| `templates/` (empty `views/` + `partials/` dirs) | **Deleted** — no Handlebars views remain; `Dockerfile` no longer `COPY`s `templates/` |
+| `public/webfonts/` (Font Awesome ttf/woff2) | **Deleted** — orphaned once `all.min.css` was removed; no glyph font is loaded |
 
 ## Testing
 
@@ -102,5 +104,5 @@ Browser-side libraries are vendored minified files — audit separately when upg
 - **Bootstrap**: Fully removed (JS bundle and `bootstrap.min.css`). The handful of rules the app used — the global `box-sizing:border-box`, `.collapse`/`.list-unstyled`/`.d-none`/`.d-block`, and Reboot's typography baseline — are ported into `sarkart-v2.css`'s base section. `data-bs-toggle="collapse"` markup is kept purely as the hook the Preact `SidebarCollapse` listens on.
 - **jQuery**: Fully removed — no longer loaded and `jquery-4.0.0.min.js` is deleted.
 - **Handlebars**: Fully retired — `hbs`/`handlebars` deps removed and no view engine is configured. Express serves `dist/index.html` (the Vite/Preact build), returns a 503 if `dist/` is missing, and serves the static `public/404.html` for unmatched routes.
-- **Font Awesome / animate.css**: Removed — `all.min.css`/`animate.min.css` deleted (only the retired 404 view referenced them). The `public/webfonts/` FA font files are now unused and can be deleted too.
+- **Font Awesome / animate.css**: Fully removed — `all.min.css`, `animate.min.css`, and the `public/webfonts/` FA font files are all deleted. Icons are an inline SVG sprite; the sidebar submenu `i.fa` markers are styled as plain CSS dots (no glyph font).
 - **Plotly**: Pin filename includes version; the Vite build hashes `dist/assets`, so update the vendored `public/js/plotly-cartesian-*.js` filename (and the `LegacyScripts.tsx` reference) when upgrading.

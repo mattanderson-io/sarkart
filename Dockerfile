@@ -10,7 +10,6 @@ RUN npm ci
 
 COPY src/ ./src/
 COPY public/ ./public/
-COPY templates/ ./templates/
 COPY index.html vite.config.ts tsconfig.json ./
 
 RUN npm run build && npm prune --omit=dev
