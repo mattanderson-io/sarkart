@@ -295,15 +295,16 @@ test('buildTicketSummary: empty findings → exoneration with checked/missing su
   assert.ok(text.includes('do not appear to explain'));
 });
 
-test('buildTicketSummary: findings → most-likely-first prose naming the top finding', () => {
+test('buildTicketSummary: findings → primary finding plus grouped supporting signals', () => {
   const text = buildTicketSummary(
     [sampleFinding(), sampleFinding({ id: 'y', tier: 'moderate', subsystem: 'memory', title: 'Memory pressure — system is swapping' })],
     { present: ['cpu', 'disk', 'memory'], missing: [], sampleCount: 100 },
     { hostname: 'db01', os: 'LINUX' }
   );
   assert.ok(text.includes('2 signals'));
-  assert.ok(text.includes('The most likely contributor is disk i/o saturation on sdb (most likely)'));
-  assert.ok(text.includes('Also observed'));
+  assert.ok(text.includes('The strongest evidence points to disk I/O saturation on sdb'));
+  assert.ok(text.includes('Supporting signals:'));
+  assert.ok(!text.includes('Also observed'));
 });
 
 // -- deep-dive day matching -------------------------------------------------

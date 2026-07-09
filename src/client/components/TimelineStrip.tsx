@@ -18,9 +18,9 @@ const SUBSYSTEM_COLOR: Record<Subsystem, string> = {
   cpu: '#00ADEF', load: '#119944', memory: '#F1912E', swap: '#F1912E', disk: '#cc6699', network: '#8085e9'
 };
 
-const ROW_HEIGHT = 46;
+const ROW_HEIGHT = 50;
 const ROW_GAP = 0.04;
-const ROW_LABEL_BAND = 0.24;
+const ROW_LABEL_BAND = 0.32;
 
 function findingShapes(findings: Finding[], rowIndex: Record<Subsystem, number>): Record<string, unknown>[] {
   const shapes: Record<string, unknown>[] = [];
