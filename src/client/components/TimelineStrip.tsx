@@ -8,7 +8,7 @@
  * Rendered imperatively with the global Plotly (same engine as every other
  * chart). If Plotly or data is missing it renders nothing.
  */
-import { useEffect, useRef } from 'preact/hooks';
+import { useEffect, useRef, useState } from 'preact/hooks';
 import { buildTimelineRows, type TimelineRow } from '../lib/findings/timeline';
 import { chartTheme } from '../lib/chartTheme';
 import { setWindow, useIncidentWindow } from '../lib/incidentWindow';
@@ -49,6 +49,16 @@ function windowShape(window: IncidentWindow): Record<string, unknown> {
 export function TimelineStrip({ findings }: { findings: Finding[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const incident = useIncidentWindow();
+  // Axis/grid/font colors come from CSS vars read at draw time (chartTheme), so
+  // a light/dark toggle must trigger a redraw — same signal the other Plotly
+  // charts re-theme on. Bumping this re-runs the draw effect below.
+  const [themeTick, setThemeTick] = useState(0);
+
+  useEffect(() => {
+    const onTheme = () => setThemeTick((n) => n + 1);
+    window.addEventListener('sarkart-theme-change', onTheme);
+    return () => window.removeEventListener('sarkart-theme-change', onTheme);
+  }, []);
 
   useEffect(() => {
     const el = ref.current;
@@ -120,8 +130,9 @@ export function TimelineStrip({ findings }: { findings: Finding[] }) {
     (el as unknown as { on: (ev: string, cb: unknown) => void }).on('plotly_selected', onSelected);
 
     return () => { Plotly.purge?.(el); };
-    // Re-render when findings or the window change so highlights stay in sync.
-  }, [findings, incident.window]);
+    // Re-render when findings, the window, or the theme change so highlights and
+    // axis/grid colors stay in sync.
+  }, [findings, incident.window, themeTick]);
 
   return (
     <section className="timeline-strip homeContBlock" aria-label="Subsystem timeline">
