@@ -338,13 +338,13 @@ svg.icon :is(path, line, rect, circle, polyline, ellipse) {
   align-items: center;
   gap: 6px;
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.265rem;
   font-weight: 700;
   letter-spacing: -0.02em;
   white-space: nowrap;
 }
 
-.sidebar-header .sar-logo { width: 32px; height: 32px; border-radius: var(--r-sm); }
+.sidebar-header .sar-logo { width: 35px; height: 35px; border-radius: var(--r-sm); }
 .sidebar-header .brand-sar { color: var(--accent); }
 .sidebar-header .brand-text { color: var(--text-1); }
 .sidebar-header .logo-mini { display: none; }

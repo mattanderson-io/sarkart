@@ -21,6 +21,15 @@ function yieldToBrowser() {
   return new Promise<void>((resolve) => window.setTimeout(resolve, 0));
 }
 
+type DateFilterSnapshot = {
+  mode: string;
+  start: string;
+  end: string;
+  info: string;
+};
+
+let pendingDeepLinkRestore: DateFilterSnapshot | null = null;
+
 function setHtml(id: string, html: string) {
   const el = document.getElementById(id);
   if (el) el.innerHTML = html;
@@ -197,6 +206,15 @@ async function applyDayFilter(day: string) {
   if (!mode || !start) return;
   if (mode.value === 'single' && start.value === day) return; // already scoped there
 
+  if (!pendingDeepLinkRestore) {
+    pendingDeepLinkRestore = {
+      mode: mode.value,
+      start: start.value,
+      end: end?.value || start.value,
+      info: document.getElementById('dateFilterInfo')?.textContent || ''
+    };
+  }
+
   mode.value = 'single';
   start.hidden = false;
   if (end) end.hidden = true;
@@ -204,6 +222,47 @@ async function applyDayFilter(day: string) {
   if (apply) apply.hidden = false;
   start.value = day;
   await dateFilterRefresh([day], `Showing: ${day}`);
+}
+
+async function restoreDeepLinkDateFilter() {
+  const snapshot = pendingDeepLinkRestore;
+  if (!snapshot) return;
+  pendingDeepLinkRestore = null;
+
+  const mode = document.getElementById('dateFilterMode') as HTMLSelectElement | null;
+  const start = document.getElementById('dateFilterStart') as HTMLSelectElement | null;
+  const end = document.getElementById('dateFilterEnd') as HTMLSelectElement | null;
+  const sep = document.getElementById('dateFilterRangeSep');
+  const apply = document.getElementById('dateFilterApply') as HTMLButtonElement | null;
+  if (!mode || !start || !end) return;
+
+  mode.value = snapshot.mode;
+  start.value = snapshot.start;
+  end.value = snapshot.end;
+  start.hidden = snapshot.mode === 'all';
+  end.hidden = snapshot.mode !== 'range';
+  if (sep) sep.hidden = snapshot.mode !== 'range';
+  if (apply) apply.hidden = snapshot.mode === 'all';
+
+  if (snapshot.mode === 'all') {
+    await dateFilterRefresh(null, snapshot.info || `${getDates().length} days shown`);
+    return;
+  }
+
+  if (snapshot.mode === 'single') {
+    await dateFilterRefresh([snapshot.start], snapshot.info || `Showing: ${snapshot.start}`);
+    return;
+  }
+
+  const allDates = getDates();
+  const startIndex = allDates.indexOf(snapshot.start);
+  const endIndex = allDates.indexOf(snapshot.end);
+  const first = Math.min(startIndex, endIndex);
+  const last = Math.max(startIndex, endIndex);
+  const dates = first >= 0 && last >= 0 ? allDates.slice(first, last + 1) : null;
+  await dateFilterRefresh(dates, snapshot.info || (
+    dates ? `Showing: ${dates.length} days (${dates[0]} to ${dates[dates.length - 1]})` : `${allDates.length} days shown`
+  ));
 }
 
 /**
@@ -425,6 +484,9 @@ export function SarDataBridge() {
 
     const onClick = (event: MouseEvent) => {
       const target = event.target as Element | null;
+      if (target?.closest?.('#btnSAR')) {
+        void restoreDeepLinkDateFilter();
+      }
       if (!target?.closest?.('#btnProcessData')) return;
       event.preventDefault();
       processPendingResult().catch((error) => {
