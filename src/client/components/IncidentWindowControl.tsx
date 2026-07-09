@@ -33,6 +33,7 @@ function offsetLabel(offsetMin: number): string {
 
 export function IncidentWindowControl() {
   const incident = useIncidentWindow();
+  const [expanded, setExpanded] = useState(false);
   const [localValue, setLocalValue] = useState('');
   const [paddingMs, setPaddingMs] = useState(PADDING_OPTIONS[1].ms); // ± 1 hour
 
@@ -78,49 +79,72 @@ export function IncidentWindowControl() {
 
   return (
     <section className="incident-control homeContBlock" aria-label="Incident window">
-      <div className="incident-row">
-        <label className="incident-field">
-          <span className="incident-label">Incident time <span className="incident-optional">(optional)</span></span>
-          <input type="datetime-local" className="incident-input num" value={localValue} onInput={onTimeInput} />
-        </label>
+      <button
+        type="button"
+        className="incident-toggle"
+        aria-expanded={expanded}
+        aria-controls="incidentWindowFields"
+        onClick={() => setExpanded((value) => !value)}
+      >
+        <span>
+          <span className="incident-toggle-title">Incident time</span>
+          <span className="incident-optional">(optional)</span>
+        </span>
+        <span className="incident-toggle-summary">
+          {incident.window
+            ? `${formatClock(incident.window.start)} - ${formatClock(incident.window.end)}`
+            : 'Add reported time'}
+        </span>
+        <span className="incident-caret" aria-hidden="true" />
+      </button>
 
-        <label className="incident-field">
-          <span className="incident-label">Customer timezone</span>
-          <select className="select-control" value={incident.customerOffsetMin} onChange={onCustomerTz}>
-            {TIMEZONE_OPTIONS.map((o) => <option value={o.offsetMin}>{o.label}</option>)}
-          </select>
-        </label>
+      {expanded ? (
+        <div id="incidentWindowFields">
+          <div className="incident-row">
+            <label className="incident-field">
+              <span className="incident-label">Reported time</span>
+              <input type="datetime-local" className="incident-input num" value={localValue} onInput={onTimeInput} />
+            </label>
 
-        <label className="incident-field">
-          <span className="incident-label">Capture timezone</span>
-          <select className="select-control" value={incident.captureOffsetMin} onChange={onCaptureTz}>
-            {TIMEZONE_OPTIONS.map((o) => <option value={o.offsetMin}>{o.label}</option>)}
-          </select>
-        </label>
+            <label className="incident-field">
+              <span className="incident-label">Customer timezone</span>
+              <select className="select-control" value={incident.customerOffsetMin} onChange={onCustomerTz}>
+                {TIMEZONE_OPTIONS.map((o) => <option value={o.offsetMin}>{o.label}</option>)}
+              </select>
+            </label>
 
-        <label className="incident-field">
-          <span className="incident-label">Window</span>
-          <select className="select-control" value={paddingMs} onChange={onPadding}>
-            {PADDING_OPTIONS.map((o) => <option value={o.ms}>{o.label}</option>)}
-          </select>
-        </label>
+            <label className="incident-field">
+              <span className="incident-label">Capture timezone</span>
+              <select className="select-control" value={incident.captureOffsetMin} onChange={onCaptureTz}>
+                {TIMEZONE_OPTIONS.map((o) => <option value={o.offsetMin}>{o.label}</option>)}
+              </select>
+            </label>
 
-        {incident.window ? (
-          <button type="button" className="incident-clear" onClick={clear} title="Clear incident window">Clear</button>
-        ) : null}
-      </div>
+            <label className="incident-field">
+              <span className="incident-label">Window</span>
+              <select className="select-control" value={paddingMs} onChange={onPadding}>
+                {PADDING_OPTIONS.map((o) => <option value={o.ms}>{o.label}</option>)}
+              </select>
+            </label>
 
-      {incident.window ? (
-        <p className="incident-echo num">
-          {converted
-            ? <>Ranking around {converted.hour.toString().padStart(2, '0')}:{converted.minute.toString().padStart(2, '0')} {offsetLabel(incident.customerOffsetMin)} → </>
-            : <>Active window (capture time): </>}
-          <strong>{formatClock(incident.window.start)} – {formatClock(incident.window.end)}</strong>
-          {incident.captureOffsetMin === 0 ? ' UTC' : ` ${offsetLabel(incident.captureOffsetMin)}`} (capture time)
-        </p>
-      ) : (
-        <p className="incident-hint">Set the reported incident time to rank findings by proximity — out-of-window findings stay listed, just lower.</p>
-      )}
+            {incident.window ? (
+              <button type="button" className="incident-clear" onClick={clear} title="Clear incident window">Clear</button>
+            ) : null}
+          </div>
+
+          {incident.window ? (
+            <p className="incident-echo num">
+              {converted
+                ? <>Ranking around {converted.hour.toString().padStart(2, '0')}:{converted.minute.toString().padStart(2, '0')} {offsetLabel(incident.customerOffsetMin)} - </>
+                : <>Active window (capture time): </>}
+              <strong>{formatClock(incident.window.start)} - {formatClock(incident.window.end)}</strong>
+              {incident.captureOffsetMin === 0 ? ' UTC' : ` ${offsetLabel(incident.captureOffsetMin)}`} (capture time)
+            </p>
+          ) : (
+            <p className="incident-hint">Set the reported incident time to rank findings by proximity; out-of-window findings stay listed, just lower.</p>
+          )}
+        </div>
+      ) : null}
     </section>
   );
 }

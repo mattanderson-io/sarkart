@@ -1852,7 +1852,24 @@ body.data-loaded .landing-hero {
   background: var(--surface-2); border: 1px solid var(--border);
   border-radius: var(--r-md); padding: var(--sp-4) var(--sp-5);
 }
+.incident-toggle {
+  width: 100%; display: flex; align-items: center; gap: var(--sp-3);
+  background: transparent; border: 0; color: var(--text-1); padding: 0;
+  font: inherit; text-align: left; cursor: pointer;
+}
+.incident-toggle-title { font-size: var(--fs-md); font-weight: 650; margin-right: var(--sp-2); }
+.incident-toggle-summary {
+  margin-left: auto; color: var(--text-2); font-size: var(--fs-sm); font-family: var(--font-mono);
+}
+.incident-caret {
+  width: 8px; height: 8px; border-right: 1.6px solid currentColor; border-bottom: 1.6px solid currentColor;
+  transform: rotate(45deg); transition: transform var(--t-fast); color: var(--text-2); flex: none;
+}
+.incident-toggle[aria-expanded="true"] .incident-caret { transform: rotate(225deg); }
+.incident-toggle:hover .incident-toggle-summary,
+.incident-toggle:hover .incident-caret { color: var(--text-1); }
 .incident-row { display: flex; flex-wrap: wrap; gap: var(--sp-4); align-items: flex-end; }
+.incident-toggle + #incidentWindowFields { margin-top: var(--sp-4); }
 .incident-field { display: flex; flex-direction: column; gap: var(--sp-1); }
 .incident-label { font-size: var(--fs-xs); color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; }
 .incident-optional { text-transform: none; letter-spacing: 0; color: var(--text-3); font-weight: 400; }
@@ -1937,10 +1954,10 @@ body.data-loaded .landing-hero {
   background: var(--surface-2); border: 1px solid var(--border);
   border-radius: var(--r-md); padding: var(--sp-3) var(--sp-4) var(--sp-4);
 }
-.timeline-head { display: flex; align-items: baseline; gap: var(--sp-3); margin-bottom: var(--sp-1); }
-.timeline-heading { margin: 0; font-size: var(--fs-md); color: var(--text-1); font-weight: 600; }
-.timeline-hint { font-size: var(--fs-xs); color: var(--text-3); }
-.timeline-plot { width: 100%; }
+.timeline-head { display: flex; align-items: baseline; gap: var(--sp-3); margin-bottom: var(--sp-2); }
+.timeline-heading { margin: 0; font-size: var(--fs-md); color: var(--text-1); font-weight: 700; }
+.timeline-hint { font-size: var(--fs-xs); color: var(--text-2); font-weight: 500; }
+.timeline-plot { width: 100%; overflow: hidden; }
 
 /* Ticket summary */
 .ticket-summary {

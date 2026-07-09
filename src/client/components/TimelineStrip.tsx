@@ -20,6 +20,7 @@ const SUBSYSTEM_COLOR: Record<Subsystem, string> = {
 
 const ROW_HEIGHT = 46;
 const ROW_GAP = 0.04;
+const ROW_LABEL_BAND = 0.24;
 
 function findingShapes(findings: Finding[], rowIndex: Record<Subsystem, number>): Record<string, unknown>[] {
   const shapes: Record<string, unknown>[] = [];
@@ -69,6 +70,9 @@ export function TimelineStrip({ findings }: { findings: Finding[] }) {
     if (!rows.length) { el.innerHTML = ''; return undefined; }
 
     const theme = chartTheme();
+    const styles = getComputedStyle(document.documentElement);
+    const labelColor = styles.getPropertyValue('--text-1').trim() || theme.text;
+    const axisColor = styles.getPropertyValue('--text-2').trim() || theme.text;
     const rowIndex = {} as Record<Subsystem, number>;
     rows.forEach((row, i) => { rowIndex[row.subsystem] = i; });
 
@@ -87,31 +91,33 @@ export function TimelineStrip({ findings }: { findings: Finding[] }) {
     }));
 
     const layout: Record<string, unknown> = {
-      height: n * ROW_HEIGHT + 40,
-      margin: { l: 8, r: 8, t: 6, b: 22 },
+      height: n * ROW_HEIGHT + 64,
+      margin: { l: 8, r: 10, t: 18, b: 34 },
       paper_bgcolor: 'rgba(0,0,0,0)', plot_bgcolor: 'rgba(0,0,0,0)',
-      font: { color: theme.text, family: theme.font, size: 10 },
+      font: { color: axisColor, family: theme.font, size: 11 },
       showlegend: false, dragmode: 'select', selectdirection: 'h',
       xaxis: {
         type: 'date', anchor: n === 1 ? 'y' : `y${n}`,
-        gridcolor: theme.grid, zeroline: false, showspikes: true, spikemode: 'across', spikethickness: 1
+        gridcolor: theme.grid, zeroline: false, showspikes: true, spikemode: 'across', spikethickness: 1,
+        tickfont: { color: axisColor, size: 11 }
       },
       shapes: [
         ...findingShapes(findings, rowIndex),
         ...(incident.window ? [windowShape(incident.window)] : [])
       ],
       annotations: rows.map((row, i) => ({
-        text: row.label, xref: 'paper', yref: i === 0 ? 'y domain' : `y${i + 1} domain`,
-        x: 0, y: 1, xanchor: 'left', yanchor: 'top', showarrow: false,
-        font: { size: 9, color: theme.text }, bgcolor: 'rgba(0,0,0,0)'
+        text: row.label, xref: 'paper', yref: 'paper',
+        x: 0, y: 1 - i * (rowH + usableGap), xanchor: 'left', yanchor: 'top',
+        showarrow: false, font: { size: 11, color: labelColor }
       }))
     };
 
     rows.forEach((_row, i) => {
       const top = 1 - i * (rowH + usableGap);
       const bottom = top - rowH;
+      const graphTop = top - rowH * ROW_LABEL_BAND;
       layout[i === 0 ? 'yaxis' : `yaxis${i + 1}`] = {
-        domain: [Math.max(0, bottom), top],
+        domain: [Math.max(0, bottom), graphTop],
         showticklabels: false, gridcolor: theme.grid, zeroline: false, fixedrange: true
       };
     });

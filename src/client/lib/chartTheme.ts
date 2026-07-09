@@ -5,7 +5,7 @@ function cssVar(name: string, fallback: string) {
 
 export function chartTheme() {
   return {
-    text: cssVar('--chart-axis', '#67728a'),
+    text: cssVar('--chart-axis', '#a7b1c2'),
     plot: cssVar('--chart-plot-bg', '#10151d'),
     grid: cssVar('--chart-grid', '#1d2532'),
     font: cssVar('--font-ui', 'Inter var, sans-serif')
