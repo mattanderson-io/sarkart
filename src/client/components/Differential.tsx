@@ -7,12 +7,16 @@
  * over how many samples, and which subsystems the file had no data for (missing
  * data exonerates nothing).
  */
+import { useState } from 'preact/hooks';
 import { navigateToFinding } from '../lib/findings/findingNav';
 import { formatClock, formatDuration } from '../lib/findings/access';
 import { overlapsWindow } from '../lib/findings/rank';
 import type { Coverage, Finding, IncidentWindow, Subsystem } from '../lib/findings/types';
 
-const TIER_LABEL = { strong: 'Strong signal', moderate: 'Moderate', weak: 'Weak signal' } as const;
+/** How many findings show before the list is collapsed behind "Show all". */
+const COLLAPSED_COUNT = 3;
+
+const TIER_LABEL = { strong: 'Strong signal', moderate: 'Moderate signal', weak: 'Weak signal' } as const;
 const SUBSYSTEM_LABEL: Record<Subsystem, string> = {
   cpu: 'CPU', load: 'Load', memory: 'Memory', swap: 'Swap', disk: 'Disk', network: 'Network'
 };
@@ -75,6 +79,10 @@ export function Differential({ findings, coverage, window: incidentWindow }: {
   coverage: Coverage;
   window: IncidentWindow | null;
 }) {
+  const [expanded, setExpanded] = useState(false);
+  const collapsible = findings.length > COLLAPSED_COUNT;
+  const visible = expanded || !collapsible ? findings : findings.slice(0, COLLAPSED_COUNT);
+
   return (
     <section className="differential homeContBlock" aria-label="Differential diagnosis">
       <header className="differential-head">
@@ -88,15 +96,23 @@ export function Differential({ findings, coverage, window: incidentWindow }: {
       {findings.length === 0 ? (
         <EmptyState coverage={coverage} />
       ) : (
-        <div className="finding-list">
-          {findings.map((finding) => (
-            <FindingCard
-              key={finding.id}
-              finding={finding}
-              inWindow={!!incidentWindow && overlapsWindow(finding, incidentWindow)}
-            />
-          ))}
-        </div>
+        <>
+          <div className="finding-list">
+            {visible.map((finding) => (
+              <FindingCard
+                key={finding.id}
+                finding={finding}
+                inWindow={!!incidentWindow && overlapsWindow(finding, incidentWindow)}
+              />
+            ))}
+          </div>
+          {collapsible ? (
+            <button type="button" className="differential-toggle" aria-expanded={expanded} onClick={() => setExpanded((v) => !v)}>
+              {expanded ? 'Show fewer' : `Show all ${findings.length} findings`}
+              <svg className={`icon${expanded ? ' is-open' : ''}`} viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" /></svg>
+            </button>
+          ) : null}
+        </>
       )}
     </section>
   );

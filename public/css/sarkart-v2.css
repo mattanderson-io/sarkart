@@ -1913,6 +1913,15 @@ body.data-loaded .landing-hero {
 .finding-link:hover { border-color: var(--accent); color: var(--accent-strong); }
 .finding-link .icon { width: 14px; height: 14px; }
 
+.differential-toggle {
+  display: inline-flex; align-items: center; gap: 6px; align-self: flex-start;
+  margin-top: var(--sp-3); background: transparent; border: none; cursor: pointer;
+  color: var(--text-2); font-size: var(--fs-sm); font-weight: 500; padding: 4px 2px;
+}
+.differential-toggle:hover { color: var(--accent-strong); }
+.differential-toggle .icon { width: 15px; height: 15px; transition: transform var(--t-fast, 0.15s ease); }
+.differential-toggle .icon.is-open { transform: rotate(180deg); }
+
 .differential-empty { display: flex; gap: var(--sp-4); align-items: flex-start; padding: var(--sp-3) 0; }
 .differential-empty-icon {
   flex: none; display: inline-flex; align-items: center; justify-content: center;
