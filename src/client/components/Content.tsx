@@ -1,5 +1,5 @@
 import { useEffect } from 'preact/hooks';
-import { AiSummary } from './AiSummary';
+import { DiagnosticDashboard } from './DiagnosticDashboard';
 import { Footer } from './Footer';
 import { HeatmapDashboard } from './HeatmapDashboard';
 import { initTheme, toggleTheme } from '../lib/theme';
@@ -290,13 +290,18 @@ export function Content({ heatmapVisible }: { heatmapVisible: boolean }) {
 
           <DateFilter />
 
-          <div className="remove" id="peakBlock">
+          {/* Legacy peak KPI block — kept in the DOM (hidden via CSS) as a
+              transitional compatibility shim: SarDataBridge still writes these
+              value spans, LandingBridge's waitForPeakData gates "app loaded" on
+              #peakCPU, and the PDF export reads them. Removed once PDF is
+              repointed at the findings data layer (Phase 4 of the redesign). */}
+          <div className="remove" id="peakBlock" aria-hidden="true">
             <KpiCard metric="cpu" label="Peak CPU" valueId="peakCPU" chartId="peakCPUChart" arrowId="btnCPUArrow" timeId="peakCPUTime" iconId="i-cpu" unit="%" />
             <KpiCard metric="load" label="Peak Load" valueId="peakLoad" chartId="peakLoadChart" arrowId="btnLoadArrow" timeId="peakLoadTime" iconId="i-gauge" />
             <KpiCard metric="memory" label="Peak Memory" valueId="peakMemory" chartId="peakMemoryChart" arrowId="btnMemoryArrow" timeId="peakMemoryTime" iconId="i-memory" unit="%" />
           </div>
 
-          <AiSummary />
+          <DiagnosticDashboard />
 
           <LandingUpload />
 

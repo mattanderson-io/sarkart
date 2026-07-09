@@ -224,9 +224,10 @@ async function dateFilterRefresh(dates: string[] | null, info: string) {
     const memoryIndex = cols.indexOf('%memused') + 1;
     writePeak('#peakMemory', key, memoryIndex);
   }
-  window.printPieChart?.('peakCPUChart', parseInt(document.getElementById('peakCPU')?.textContent || '0', 10), '#00ADEF');
-  window.printPieChart?.('peakLoadChart', parseInt(document.getElementById('peakLoad')?.textContent || '0', 10), '#119944');
-  window.printPieChart?.('peakMemoryChart', parseInt(document.getElementById('peakMemory')?.textContent || '0', 10), '#F1912E');
+  // The diagnostic dashboard recomputes its differential from the refreshed
+  // (date-filtered) data. Peaks above are still written for the compat shim
+  // (LandingBridge/PDF); the old donut pies are gone with the KPI cards.
+  window.dispatchEvent(new Event('sarkart:data-ready'));
 
   // Let the KPI updates paint before the heavier re-index / per-category renders.
   await yieldToBrowser();
@@ -329,9 +330,9 @@ async function initializeDashboard() {
   window.getInterfaceTraffic?.('IFACE-rxpck/s', 'no', null);
   window.getInterfaceErrors?.('IFACE-rxerr/s', 'no', null);
 
-  window.printPieChart?.('peakCPUChart', parseInt(document.getElementById('peakCPU')?.textContent || '0', 10), '#00ADEF');
-  window.printPieChart?.('peakLoadChart', parseInt(document.getElementById('peakLoad')?.textContent || '0', 10), '#119944');
-  window.printPieChart?.('peakMemoryChart', parseInt(document.getElementById('peakMemory')?.textContent || '0', 10), '#F1912E');
+  // Signal the diagnostic dashboard to compute its differential from the loaded
+  // data. Peaks above still feed the compat shim (LandingBridge/PDF).
+  window.dispatchEvent(new Event('sarkart:data-ready'));
   void buildCpuList();
   configureDateFilter();
 

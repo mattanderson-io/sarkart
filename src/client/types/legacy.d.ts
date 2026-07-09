@@ -44,15 +44,6 @@ declare global {
     getInterfaceTraffic?: (key: string, table: 'yes' | 'no', target: string | null) => void;
     getInterfaceErrors?: (key: string, table: 'yes' | 'no', target: string | null) => void;
     getCPUchart?: (id: string) => void;
-    ai?: {
-      languageModel?: {
-        availability: () => Promise<string>;
-        create: (options: { systemPrompt: string }) => Promise<{
-          prompt: (prompt: string) => Promise<string>;
-          destroy: () => void;
-        }>;
-      };
-    };
   }
 
   type LegacyPoint = [number, number | null | undefined];

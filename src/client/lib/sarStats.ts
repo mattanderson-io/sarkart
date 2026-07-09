@@ -2,12 +2,11 @@
  * Aggregation layer over the parsed SAR index: summary statistics
  * (`metricStats`), time-of-day × date heatmap grids (`hourGrid` and the
  * per-metric `memoryHeatmap`/`networkHeatmap`/`diskHeatmap`), and small
- * host/CPU-count helpers used by the AI summary.
+ * host/CPU-count helpers.
  *
  * Split out of `sarData.ts` so the per-category chart *series* getters stay
  * separate from this whole-file *aggregation*. Reads the active section index
- * from `sarStore`; consumers are `HeatmapDashboard`, `PlotlyHeatmap`, and
- * `AiSummary`.
+ * from `sarStore`; consumers are `HeatmapDashboard` and `PlotlyHeatmap`.
  */
 import { getHostname, getOS } from './sarEngine.ts';
 import { getActiveIndex, getDates, getHeaders, getRows } from './sarStore.ts';
