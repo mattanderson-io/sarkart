@@ -249,15 +249,15 @@ async function dateFilterRefresh(dates: string[] | null, info: string) {
     const memoryIndex = cols.indexOf('%memused') + 1;
     writePeak('#peakMemory', key, memoryIndex);
   }
-  // The diagnostic dashboard recomputes its differential from the refreshed
-  // (date-filtered) data. Peaks above are still written for the compat shim
-  // (LandingBridge/PDF); the old donut pies are gone with the KPI cards.
-  window.dispatchEvent(new Event('sarkart:data-ready'));
-
   // Let the KPI updates paint before the heavier re-index / per-category renders.
   await yieldToBrowser();
   const cpuIds = await rebuildCpuByCore();
   renderCpuList(cpuIds);
+
+  // Now every dashboard data source is in the same date scope. Dispatching
+  // before the CPU rebuild mixed full-range CPU with filtered load/swap/disk/
+  // network rows, which made the timeline squeeze non-CPU rows to one edge.
+  window.dispatchEvent(new Event('sarkart:data-ready'));
 
   await yieldToBrowser();
   window.getDevices?.('DEV-tps', 'no', null);
