@@ -1,10 +1,10 @@
 # SARkart
 
-SARkart is a fast, browser-based viewer for Linux SAR (sysstat) files. Drop in a SAR text file and get an interactive performance dashboard for CPU, memory, disk, network, load, and process activity — all rendered locally with no server upload.
+SARkart is a fast, browser-based viewer for Linux SAR (sysstat) files. Drop in a SAR text file and get deterministic bottleneck checks, a copy-ready ticket summary, and interactive charts for CPU, memory, disk, network, load, and process activity — all rendered locally with no server upload.
 
 **🚀 Try it live: [sarkart.onrender.com](https://sarkart.onrender.com/)** — no install, no signup. Click "Try with sample data" or upload your own sar file.
 
-![SARkart dashboard with sample SAR data loaded](docs/screenshot-dashboard.png)
+![SARkart diagnostic dashboard with sample SAR data loaded](docs/screenshot-dashboard.png)
 
 <details>
 <summary>Screenshot gallery</summary>
@@ -25,14 +25,16 @@ SARkart is a fast, browser-based viewer for Linux SAR (sysstat) files. Drop in a
 - **Up to 20× faster** than sarchart — a 313 MB RHEL 9 SAR file loads in ~2 seconds
 - **Parallel large-file parser** — files ≥50 MB are split across Web Workers from raw `ArrayBuffer` chunks
 - **Packed in-browser storage** — parsed sections are compacted to reduce retained memory on large SAR files
-- **Interactive charts** powered by Plotly.js — zoom, pan, unified hover tooltips
-- **Diagnostic dashboard** — timeline, bottleneck checks, and copy-ready ticket summary
+- **Interactive charts** powered by Plotly.js — zoom, pan, unified hover tooltips, and chart deep links from findings
+- **Deterministic diagnostic dashboard** — ranked CPU, load, memory, swap, disk, and network findings with rule/evidence context
+- **Incident-window triage** — enter the reported incident time or drag the timeline brush to re-rank nearby findings
+- **Ticket-ready summary** — copy deterministic support prose for customer updates and case notes
+- **Subsystem timeline** — scan CPU, load, swap, disk, and network signals on one shared time axis
 - **Heatmap dashboard** — 7 time-of-day × date heatmaps (CPU, Memory, I/O Wait, Load, Swap, Network, Disk)
 - **Dark / light themes** — persisted via cookie; default dark
 - **Command palette** — jump to any chart or interface with ⌘K
 - **CPU chip bar** — paginated core selector above charts (replaces huge sidebar submenu)
-- **Network unit selector** — display interface traffic as KB/s, Mbps, Gbps, or % of link speed
-- **AI-powered summary** — natural-language performance analysis (Chrome Gemini Nano when available, template fallback elsewhere)
+- **Network unit selector** — display interface traffic as Auto, KB/s, MB/s, Mbps, Gbps, or % of common link speeds
 - **Client-side only** — all parsing happens in your browser. Files never leave your machine.
 - **PDF export** — generate a multi-page report locally
 - **Date range filtering** — view a single day or custom range from multi-day SAR files
@@ -64,6 +66,19 @@ The fastest way to try SARkart is the hosted demo: **[sarkart.onrender.com](http
 
 > Note: the demo runs on Render's free tier and sleeps after ~15 minutes of inactivity. The first request after sleep takes ~30 seconds to wake up.
 
+## What SARkart Checks
+
+The diagnostic dashboard is deterministic: the same SAR file and incident window produce the same findings in every browser, with no AI or external analysis service. Findings are ranked by severity, duration, and proximity to the selected incident time.
+
+Current checks cover:
+
+- CPU wait and steal pressure
+- Load average normalized by detected CPU cores
+- Memory pressure, swap activity, and commit pressure
+- Disk saturation, elevated await, queueing, and service time
+- Network interface drops, errors, and collisions
+- Missing-subsystem evidence, so a clean dashboard can say what was inspected and what data was absent
+
 ## How to Generate a SAR File
 
 ```bash
@@ -88,9 +103,10 @@ npm test           # fixture-based regression tests (Node's built-in runner)
 The app is Preact/Vite/TypeScript end to end. Express serves the built
 `dist/index.html`; only vendored libraries load at runtime (Plotly, html2canvas,
 jsPDF) and the sole stylesheet is the first-party `sarkart-v2.css` — no CSS
-framework. `npm test` runs the data-layer regression suite in `test/` (parses
-the bundled sample SAR file and asserts the parsed metrics) — no test
-dependencies required.
+framework. The diagnostic engine lives in `src/client/lib/findings/` and is
+rule/template based rather than AI based. `npm test` runs the data-layer
+regression suite in `test/` (parses the bundled sample SAR file and asserts the
+parsed metrics) — no test dependencies required.
 
 ### Benchmarks & smoke tests
 
