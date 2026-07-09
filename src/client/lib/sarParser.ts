@@ -69,9 +69,14 @@ export async function parseSarTextChunked(
   const index: Record<string, string[]> = {};
   const datesSet: Record<string, 1> = {};
   const dates: string[] = [];
-  const cachedLines: string[] = [];
   const wsRx = /\s+/g;
   const numRx = /^[\d.+-]+$/;
+
+  // Only the first server-identity line is ever needed downstream (getOS/
+  // getHostname/getKernel read it). The old code pushed every line into a
+  // `cachedLines` array just to read `cachedLines[0]`; capturing it once here
+  // avoids millions of array pushes + reallocations on large files.
+  let firstLine = '';
 
   let sarDate = '';
   let sectionKey = '';
@@ -100,7 +105,7 @@ export async function parseSarTextChunked(
           sarDate = parts[5];
           sectionPrefix = '';
           sectionKey = '';
-          cachedLines.push(line.replace(wsRx, ','));
+          if (!firstLine) firstLine = line.replace(wsRx, ',');
           inSpecialSection = false;
           continue;
         }
@@ -112,7 +117,7 @@ export async function parseSarTextChunked(
         sarDate = parts[3];
         sectionPrefix = '';
         sectionKey = '';
-        cachedLines.push(line.replace(wsRx, ','));
+        if (!firstLine) firstLine = line.replace(wsRx, ',');
         inSpecialSection = false;
         continue;
       }
@@ -123,7 +128,7 @@ export async function parseSarTextChunked(
           sarDate = parts[5];
           sectionPrefix = '';
           sectionKey = '';
-          cachedLines.push(line.replace(wsRx, ','));
+          if (!firstLine) firstLine = line.replace(wsRx, ',');
           inSpecialSection = false;
         }
         continue;
@@ -203,7 +208,6 @@ export async function parseSarTextChunked(
 
       index[sectionKey] ||= [];
       index[sectionKey].push(csvLine);
-      cachedLines.push(csvLine);
 
       const dateStart = sectionKey.length + 1;
       const dateEnd = csvLine.indexOf('|', dateStart);
@@ -227,16 +231,16 @@ export async function parseSarTextChunked(
 
   dates.sort((a, b) => dateKey(a) - dateKey(b));
 
-  const fullIndex: Record<string, string[]> = {};
-  Object.keys(index).forEach((key) => {
-    fullIndex[key] = index[key].slice();
-  });
-
+  // `index` and `fullIndex` share the same object: the section row arrays are
+  // never mutated in place (the date filter in sarStore builds new arrays, and
+  // every consumer in sarData/cpuIndex only reads them), so the old defensive
+  // `.slice()` copy was pure overhead — a duplicate set of pointer arrays plus
+  // an O(rows) copy at the end of every parse.
   return {
-    firstLine: (cachedLines[0] || '').replace(/user/g, 'usr'),
+    firstLine: firstLine.replace(/user/g, 'usr'),
     headers,
     index,
-    fullIndex,
+    fullIndex: index,
     dates
   };
 }
