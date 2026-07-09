@@ -1890,40 +1890,45 @@ body.data-loaded .landing-hero {
 /* Differential */
 .differential {
   background: var(--surface-2); border: 1px solid var(--border);
-  border-radius: var(--r-md); padding: var(--sp-4) var(--sp-5) var(--sp-5);
+  border-radius: var(--r-md); padding: var(--sp-4);
 }
-.differential-head { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-4); }
+.differential-head { display: flex; align-items: center; gap: var(--sp-2); margin-bottom: var(--sp-3); }
 .differential-head-icon { display: inline-flex; color: var(--accent); }
 .differential-heading { margin: 0; font-size: var(--fs-lg); color: var(--text-1); font-weight: 650; }
-.differential-count { margin-left: auto; font-size: var(--fs-sm); color: var(--text-3); }
+.differential-count { margin-left: auto; font-size: var(--fs-sm); color: var(--text-2); }
 
-.finding-list { display: flex; flex-direction: column; gap: var(--sp-3); }
+.finding-list { display: flex; flex-direction: column; gap: var(--sp-2); }
 .finding-card {
-  background: var(--surface-3); border: 1px solid var(--border);
-  border-left-width: 3px; border-radius: var(--r-sm); padding: var(--sp-3) var(--sp-4);
+  display: grid; grid-template-columns: minmax(0, 1fr) max-content; gap: var(--sp-3);
+  background: var(--surface-3); border: 1px solid var(--border-strong);
+  border-left-width: 3px; border-radius: var(--r-sm); padding: var(--sp-3);
 }
 .finding-card.tier-strong { border-left-color: var(--danger); }
 .finding-card.tier-moderate { border-left-color: var(--warn); }
 .finding-card.tier-weak { border-left-color: var(--text-3); }
-.finding-head { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
+.finding-main { min-width: 0; }
+.finding-head { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; }
 .finding-tier {
   font-size: var(--fs-xs); font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em;
   padding: 2px 8px; border-radius: var(--r-full); white-space: nowrap;
 }
 .finding-tier.tier-strong { background: color-mix(in srgb, var(--danger) 20%, transparent); color: var(--danger); }
 .finding-tier.tier-moderate { background: color-mix(in srgb, var(--warn) 20%, transparent); color: var(--warn); }
-.finding-tier.tier-weak { background: var(--surface); color: var(--text-3); }
+.finding-tier.tier-weak { background: var(--surface); color: var(--text-2); }
 .finding-title { margin: 0; font-size: var(--fs-md); color: var(--text-1); font-weight: 600; }
 .finding-inwindow {
-  margin-left: auto; font-size: var(--fs-xs); color: var(--accent-strong);
+  font-size: var(--fs-xs); color: var(--accent-strong);
   border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent); border-radius: var(--r-full); padding: 1px 8px;
 }
-.finding-rule { margin: var(--sp-2) 0 0; font-size: var(--fs-sm); color: var(--text-2); font-weight: 500; }
-.finding-detail { margin: var(--sp-1) 0 0; font-size: var(--fs-sm); color: var(--text-3); line-height: 1.55; }
-.finding-foot { display: flex; align-items: center; gap: var(--sp-3); margin-top: var(--sp-3); }
-.finding-time { font-size: var(--fs-xs); color: var(--text-3); }
+.finding-rule { margin: var(--sp-2) 0 0; font-size: var(--fs-sm); color: var(--text-1); font-weight: 550; }
+.finding-detail { margin: 2px 0 0; font-size: var(--fs-sm); color: var(--text-2); line-height: 1.45; }
+.finding-actions {
+  display: flex; flex-direction: column; align-items: flex-end; justify-content: space-between;
+  gap: var(--sp-2); min-width: 176px;
+}
+.finding-time { font-size: var(--fs-xs); color: var(--text-2); white-space: nowrap; }
 .finding-link {
-  margin-left: auto; display: inline-flex; align-items: center; gap: 4px;
+  display: inline-flex; align-items: center; gap: 4px;
   background: transparent; border: 1px solid var(--border-strong); color: var(--text-2);
   border-radius: var(--r-sm); padding: 5px 12px; font-size: var(--fs-sm); cursor: pointer;
 }
@@ -1948,6 +1953,16 @@ body.data-loaded .landing-hero {
 .differential-empty-lead { margin: 0; font-size: var(--fs-md); color: var(--text-1); font-weight: 600; }
 .differential-empty-sub { margin: var(--sp-1) 0 0; font-size: var(--fs-sm); color: var(--text-2); line-height: 1.6; max-width: 88ch; }
 .differential-empty-sub strong { color: var(--text-1); }
+
+@media (max-width: 760px) {
+  .differential-head { align-items: flex-start; flex-wrap: wrap; }
+  .differential-count { margin-left: 0; width: 100%; }
+  .finding-card { grid-template-columns: 1fr; }
+  .finding-actions {
+    flex-direction: row; align-items: center; justify-content: space-between;
+    min-width: 0; flex-wrap: wrap;
+  }
+}
 
 /* Timeline strip */
 .timeline-strip {

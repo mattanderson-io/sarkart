@@ -30,14 +30,16 @@ function subsystemList(subsystems: Subsystem[]): string {
 function FindingCard({ finding, inWindow }: { finding: Finding; inWindow: boolean }) {
   return (
     <div className={`finding-card tier-${finding.tier}`}>
-      <div className="finding-head">
-        <span className={`finding-tier tier-${finding.tier}`}>{TIER_LABEL[finding.tier]}</span>
-        <h4 className="finding-title">{finding.title}</h4>
-        {inWindow ? <span className="finding-inwindow" title="Overlaps the incident window">in window</span> : null}
+      <div className="finding-main">
+        <div className="finding-head">
+          <span className={`finding-tier tier-${finding.tier}`}>{TIER_LABEL[finding.tier]}</span>
+          <h4 className="finding-title">{finding.title}</h4>
+          {inWindow ? <span className="finding-inwindow" title="Overlaps the incident window">in window</span> : null}
+        </div>
+        <p className="finding-rule">{finding.rule}</p>
+        <p className="finding-detail">{finding.detail}</p>
       </div>
-      <p className="finding-rule">{finding.rule}</p>
-      <p className="finding-detail">{finding.detail}</p>
-      <div className="finding-foot">
+      <div className="finding-actions">
         <span className="finding-time num">{formatClock(finding.start)} – {formatClock(finding.end)} · {formatDuration(finding.end - finding.start)}</span>
         <button
           type="button"
