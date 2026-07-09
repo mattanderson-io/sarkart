@@ -32,7 +32,7 @@ export function TicketSummary({ findings, coverage }: { findings: Finding[]; cov
           )}
         </button>
       </header>
-      <p className="ticket-text">{text}</p>
+      <div className="ticket-text">{text}</div>
     </section>
   );
 }

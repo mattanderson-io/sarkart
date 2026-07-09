@@ -18,9 +18,9 @@ const SUBSYSTEM_LABEL: Record<Subsystem, string> = {
 };
 
 function tierPhrase(finding: Finding): string {
-  if (finding.tier === 'strong') return 'strong';
-  if (finding.tier === 'moderate') return 'moderate';
-  return 'weak';
+  if (finding.tier === 'strong') return 'high confidence';
+  if (finding.tier === 'moderate') return 'possible';
+  return 'low confidence';
 }
 
 function subsystemList(subsystems: Subsystem[]): string {
@@ -45,7 +45,7 @@ function firstSentence(text: string): string {
 }
 
 function findingWindow(finding: Finding): string {
-  return `${formatClock(finding.start)}-${formatClock(finding.end)}`;
+  return `${formatClock(finding.start)} to ${formatClock(finding.end)}`;
 }
 
 function resourceName(finding: Finding): string {
@@ -57,12 +57,12 @@ function resourceName(finding: Finding): string {
 }
 
 function groupedTitle(finding: Finding): string {
-  if (finding.subsystem === 'network') return 'network errors';
-  if (finding.subsystem === 'disk') return 'disk I/O saturation';
-  if (finding.metric === 'swap') return 'swap activity';
-  if (finding.metric === '%iowait') return 'CPU I/O wait';
-  if (finding.metric === '%steal') return 'CPU steal';
-  if (finding.subsystem === 'load') return 'high load';
+  if (finding.subsystem === 'network') return 'network errors or packet drops';
+  if (finding.subsystem === 'disk') return 'storage delays';
+  if (finding.metric === 'swap') return 'memory pressure';
+  if (finding.metric === '%iowait') return 'storage-related CPU wait';
+  if (finding.metric === '%steal') return 'virtualization host contention';
+  if (finding.subsystem === 'load') return 'system load';
   return lowerFirst(finding.title);
 }
 
@@ -76,8 +76,27 @@ function supportingPhrase(group: Finding[]): string {
   const windows = group.slice(0, 3).map(findingWindow);
   const more = group.length > windows.length ? `, plus ${group.length - windows.length} more` : '';
   const where = resources ? ` on ${resources}` : '';
-  const count = group.length > 1 ? `${group.length} ${groupedTitle(first)} windows` : groupedTitle(first);
-  return `${count}${where} (${tierPhrase(first)} evidence; ${windows.join(', ')}${more})`;
+  const count = group.length > 1 ? `${group.length} periods of ${groupedTitle(first)}` : groupedTitle(first);
+  return `${count}${where}, seen ${windows.join(', ')}${more} (${tierPhrase(first)}).`;
+}
+
+function plainEvidence(finding: Finding): string {
+  if (finding.metric === 'swap') {
+    return 'The server was using swap, which usually means the active workload did not fit comfortably in memory.';
+  }
+  if (finding.subsystem === 'network') {
+    return 'The network interface reported errors or dropped packets, which can cause retries, slow responses, or intermittent failures.';
+  }
+  if (finding.subsystem === 'disk' || finding.metric === '%iowait') {
+    return 'Storage was slow enough that work had to wait on disk I/O.';
+  }
+  if (finding.metric === '%steal') {
+    return 'The virtual machine was waiting for CPU time from the underlying host.';
+  }
+  if (finding.subsystem === 'load') {
+    return 'More work was queued than the available CPU capacity could comfortably handle.';
+  }
+  return firstSentence(finding.detail);
 }
 
 /**
@@ -118,26 +137,26 @@ export function buildTicketSummary(
 
   const primaryMore = relatedPrimary.length
     ? ` There ${relatedPrimary.length === 1 ? 'was' : 'were'} ${relatedPrimary.length} additional `
-      + `${groupedTitle(primary)} ${relatedPrimary.length === 1 ? 'window' : 'windows'}: `
+      + `${groupedTitle(primary)} ${relatedPrimary.length === 1 ? 'period' : 'periods'}: `
       + `${relatedPrimary.slice(0, 3).map(findingWindow).join(', ')}`
       + `${relatedPrimary.length > 3 ? `, plus ${relatedPrimary.length - 3} more` : ''}.`
     : '';
 
   const supporting = Array.from(otherGroups.values()).slice(0, 3).map(supportingPhrase);
   const supportingText = supporting.length
-    ? ` Supporting signals: ${supporting.join('; ')}.`
+    ? `\n\nOther items worth checking:\n${supporting.map((s) => `- ${s}`).join('\n')}`
     : '';
 
   const missing = coverage.missing.length
-    ? ` Note: this capture contained no ${subsystemList(coverage.missing)} data.`
+    ? `\n\nNote: this SAR capture did not include ${subsystemList(coverage.missing)} data, so those areas were not assessed.`
     : '';
 
   return `SAR analysis of ${host} found ${findings.length} `
-    + `${findings.length === 1 ? 'signal' : 'signals'}${sampleNote}. `
-    + `The strongest evidence points to ${lowerFirst(primary.title)} from ${findingWindow(primary)} `
-    + `(${primaryDuration}, ${tierPhrase(primary)} evidence). ${firstSentence(primary.detail)}`
+    + `${findings.length === 1 ? 'notable signal' : 'notable signals'}${sampleNote}.`
+    + `\n\nPrimary concern: ${lowerFirst(groupedTitle(primary))} from ${findingWindow(primary)} `
+    + `(${primaryDuration}, ${tierPhrase(primary)}). ${plainEvidence(primary)}`
     + primaryMore
     + supportingText
-    + ' Use the reported incident time to decide which of these windows is most relevant.'
+    + '\n\nRecommendation: compare these time windows with the reported incident time, then review the matching detailed charts before deciding on remediation.'
     + missing;
 }

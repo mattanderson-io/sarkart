@@ -301,9 +301,10 @@ test('buildTicketSummary: findings → primary finding plus grouped supporting s
     { present: ['cpu', 'disk', 'memory'], missing: [], sampleCount: 100 },
     { hostname: 'db01', os: 'LINUX' }
   );
-  assert.ok(text.includes('2 signals'));
-  assert.ok(text.includes('The strongest evidence points to disk I/O saturation on sdb'));
-  assert.ok(text.includes('Supporting signals:'));
+  assert.ok(text.includes('2 notable signals'));
+  assert.ok(text.includes('Primary concern: storage delays'));
+  assert.ok(text.includes('Other items worth checking:'));
+  assert.ok(text.includes('\n- memory pressure'));
   assert.ok(!text.includes('Also observed'));
 });
 

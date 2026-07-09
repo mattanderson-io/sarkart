@@ -1973,4 +1973,7 @@ body.data-loaded .landing-hero {
 }
 .ticket-copy:hover { border-color: var(--accent); color: var(--accent-strong); }
 .ticket-copy .icon { width: 14px; height: 14px; }
-.ticket-text { margin: 0; font-size: var(--fs-sm); color: var(--text-1); line-height: 1.65; max-width: 92ch; }
+.ticket-text {
+  margin: 0; font-size: var(--fs-sm); color: var(--text-1);
+  line-height: 1.65; max-width: 92ch; white-space: pre-line;
+}
