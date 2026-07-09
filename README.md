@@ -1,29 +1,32 @@
 # SARkart
 
-SARkart is a fast, browser-based viewer for Linux and Unix SAR (sysstat) files. Drop in a sar text file and get interactive charts for CPU, memory, disk, network, and load — all rendered locally, no server upload.
+SARkart is a fast, browser-based viewer for Linux SAR (sysstat) files. Drop in a SAR text file and get an interactive performance dashboard for CPU, memory, disk, network, load, and process activity — all rendered locally with no server upload.
 
 **🚀 Try it live: [sarkart.onrender.com](https://sarkart.onrender.com/)** — no install, no signup. Click "Try with sample data" or upload your own sar file.
 
-![SARkart Dashboard](docs/screenshot-dashboard.png)
+![SARkart dashboard with sample SAR data loaded](docs/screenshot-dashboard.png)
 
 <details>
-<summary>More screenshots</summary>
+<summary>Screenshot gallery</summary>
 
-**Landing page**
-![Landing](docs/screenshot-landing.png)
+**Landing and upload flow**
+![SARkart landing page and local SAR upload panel](docs/screenshot-landing.png)
 
-**CPU chart (interactive)**
-![CPU Chart](docs/screenshot-cpu-chart.png)
+**CPU drill-down**
+![Interactive CPU utilization chart](docs/screenshot-cpu-chart.png)
 
-**Heatmap dashboard**
-![Heatmaps](docs/screenshot-heatmaps.png)
+**Time-of-day heatmaps**
+![Heatmap dashboard for CPU, memory, I/O wait, load, swap, and network](docs/screenshot-heatmaps.png)
 
 </details>
 
 ## Features
 
 - **Up to 20× faster** than sarchart — a 313 MB RHEL 9 SAR file loads in ~2 seconds
+- **Parallel large-file parser** — files ≥50 MB are split across Web Workers from raw `ArrayBuffer` chunks
+- **Packed in-browser storage** — parsed sections are compacted to reduce retained memory on large SAR files
 - **Interactive charts** powered by Plotly.js — zoom, pan, unified hover tooltips
+- **Diagnostic dashboard** — timeline, bottleneck checks, and copy-ready ticket summary
 - **Heatmap dashboard** — 7 time-of-day × date heatmaps (CPU, Memory, I/O Wait, Load, Swap, Network, Disk)
 - **Dark / light themes** — persisted via cookie; default dark
 - **Command palette** — jump to any chart or interface with ⌘K
@@ -57,7 +60,7 @@ docker run -p 3000:3000 sarkart
 
 ## Try It
 
-The fastest way to try SARkart is the hosted demo: **[sarkart.onrender.com](https://sarkart.onrender.com/)**. Click "Try with sample data" to load a bundled 1-day SAR file, or upload your own. All parsing happens in your browser — files are never uploaded to the server.
+The fastest way to try SARkart is the hosted demo: **[sarkart.onrender.com](https://sarkart.onrender.com/)**. Click "Try with sample data" to load a bundled 1-day SAR file, or upload your own. All parsing happens in your browser — files are never uploaded to the server. Large local files use Web Workers so parsing stays off the UI thread.
 
 > Note: the demo runs on Render's free tier and sleeps after ~15 minutes of inactivity. The first request after sleep takes ~30 seconds to wake up.
 
@@ -91,11 +94,14 @@ dependencies required.
 
 ### Benchmarks & smoke tests
 
-See [PERFORMANCE.md](PERFORMANCE.md) for parse-only and end-to-end browser benchmarks.
+See [PERFORMANCE.md](PERFORMANCE.md) for parser, parallel-worker, memory, and end-to-end browser benchmarks.
 
 ```bash
 # Parse benchmark (SAR file path optional; defaults to ./test_data/)
 node bench/parse-bench.js
+
+# Parallel parser benchmark (large-file worker path)
+node --no-warnings --max-old-space-size=8192 bench/parallel-bench.mjs [file]
 
 # End-to-end browser benchmark (requires Playwright + Node 18+)
 node bench/browser-bench.js

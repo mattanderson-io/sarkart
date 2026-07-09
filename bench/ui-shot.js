@@ -40,7 +40,8 @@ function shotName(base, docsKey) {
   await sampleLink.click();
   await page.waitForFunction(() => {
     const peak = document.getElementById('peakCPU');
-    return peak && /\d/.test((peak.textContent || '').trim());
+    const dashboard = document.getElementById('diagnosticDashboard');
+    return peak && /\d/.test((peak.textContent || '').trim()) && dashboard && dashboard.offsetHeight > 0;
   }, null, { timeout: 60000 });
   await page.waitForTimeout(1500);
   await page.screenshot({ path: path.join(outDir, shotName('02-dashboard.png', 'screenshot-dashboard.png')) });
@@ -67,10 +68,20 @@ function shotName(base, docsKey) {
     await page.screenshot({ path: path.join(outDir, shotName('03-cpu-chart.png', 'screenshot-cpu-chart.png')) });
   }
 
+  await page.goto('http://localhost:3000', { waitUntil: 'networkidle' });
+  await page.waitForTimeout(800);
+  const freshSampleLink = page.locator('#btnTrySample, a:has-text("sample data")').first();
+  await freshSampleLink.click();
+  await page.waitForFunction(() => {
+    const peak = document.getElementById('peakCPU');
+    const dashboard = document.getElementById('diagnosticDashboard');
+    return peak && /\d/.test((peak.textContent || '').trim()) && dashboard && dashboard.offsetHeight > 0;
+  }, null, { timeout: 60000 });
+
   const btnHeat = page.locator('#btnHeatmap, a:has-text("Heatmaps")').first();
   if (await btnHeat.count()) {
     await btnHeat.click({ force: true });
-    await page.waitForFunction(() => document.querySelector('#containerA .heatmap-grid'), null, { timeout: 15000 });
+    await page.waitForFunction(() => document.querySelector('#heatmapBlock .heatmap-grid, #containerA .heatmap-grid'), null, { timeout: 15000 });
     await page.waitForTimeout(2000);
     await page.screenshot({ path: path.join(outDir, shotName('05-heatmaps.png', 'screenshot-heatmaps.png')) });
   }
