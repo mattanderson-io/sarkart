@@ -27,6 +27,12 @@ type SarDataState = {
   activeIndex: PackedIndex;
   selectedDates: string[] | null;
   cpuByCore: Record<string, string[]>;
+  /**
+   * Bumped whenever the underlying data a chart accessor reads changes
+   * (load, date filter, per-core reindex). `sarData`'s column cache watches
+   * this to know when to discard its parsed columns.
+   */
+  generation: number;
 };
 
 const state: SarDataState = {
@@ -37,7 +43,8 @@ const state: SarDataState = {
   fullIndex: {},
   activeIndex: {},
   selectedDates: null,
-  cpuByCore: {}
+  cpuByCore: {},
+  generation: 0
 };
 
 const EMPTY: string[] = [];
@@ -88,11 +95,13 @@ export function setSarData(parsed: SarParseResult) {
   state.activeIndex = state.fullIndex;
   state.selectedDates = null;
   state.cpuByCore = {};
+  state.generation += 1;
 }
 
 export function filterSarDataByDates(dates: string[] | null) {
   if (!state.loaded) return;
   state.selectedDates = dates ? dates.slice() : null;
+  state.generation += 1;
 
   if (!dates) {
     state.activeIndex = state.fullIndex;
@@ -159,4 +168,13 @@ export function getCpuByCore() {
 /** Publish a rebuilt per-core CPU index (see cpuIndex.buildCpuByCore). */
 export function setCpuByCore(byCore: Record<string, string[]>) {
   state.cpuByCore = byCore;
+  state.generation += 1;
+}
+
+/**
+ * Monotonic data-generation counter. Increments on every load, date-filter
+ * change, and per-core reindex so caches (see `sarData`) can invalidate.
+ */
+export function getGeneration() {
+  return state.generation;
 }
