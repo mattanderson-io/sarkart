@@ -36,6 +36,7 @@ const {
 const { computeCoverage } = await import('../src/client/lib/findings/coverage.ts');
 const { ensureCpuIndex } = await import('../src/client/lib/findings/access.ts');
 const { buildTicketSummary } = await import('../src/client/lib/findings/ticket.ts');
+const { findingDayString } = await import('../src/client/lib/findings/findingNav.ts');
 const { computeFindings } = await import('../src/client/lib/findings/index.ts');
 const { parseSarTextChunked } = await import('../src/client/lib/sarParser.ts');
 const { setSarData } = await import('../src/client/lib/sarStore.ts');
@@ -303,6 +304,20 @@ test('buildTicketSummary: findings → most-likely-first prose naming the top fi
   assert.ok(text.includes('2 signals'));
   assert.ok(text.includes('The most likely contributor is disk i/o saturation on sdb (most likely)'));
   assert.ok(text.includes('Also observed'));
+});
+
+// -- deep-dive day matching -------------------------------------------------
+
+test('findingDayString: matches a finding start to its capture date string', () => {
+  // Seed a multi-day date list; the store's getDates() is what nav matches against.
+  setSarData({ firstLine: 'Linux,(4 CPU)', headers: [], index: {}, fullIndex: {}, dates: ['04/01/26', '04/02/26', '04/03/26'] });
+
+  // 04/02/26 13:00 UTC.
+  const ts = Date.UTC(2026, 3, 2, 13, 0, 0);
+  assert.equal(findingDayString(ts), '04/02/26');
+
+  // A day not present in the capture returns null.
+  assert.equal(findingDayString(Date.UTC(2025, 0, 1, 0, 0, 0)), null);
 });
 
 test('healthy sample SAR file produces no Strong or Moderate findings', async () => {

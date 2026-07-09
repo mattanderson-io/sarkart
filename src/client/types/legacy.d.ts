@@ -40,6 +40,8 @@ declare global {
     };
     sarkartGeneratePDFReport?: () => Promise<void>;
     sarkartProcessPendingData?: () => Promise<void>;
+    /** Scope the multi-day date filter to a single day (finding deep-dive). */
+    sarkartApplyDay?: (day: string) => Promise<void>;
     getDevices?: (key: string, table: 'yes' | 'no', target: string | null) => void;
     getInterfaceTraffic?: (key: string, table: 'yes' | 'no', target: string | null) => void;
     getInterfaceErrors?: (key: string, table: 'yes' | 'no', target: string | null) => void;

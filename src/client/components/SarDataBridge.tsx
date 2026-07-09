@@ -182,6 +182,31 @@ function wireDateFilter() {
 }
 
 /**
+ * Programmatically scope the (multi-day) date filter to a single day and apply
+ * it — used by a finding's deep-dive so the chart it opens shows the day the
+ * finding occurred. Reflects the selection in the filter UI (matching
+ * syncMode('single')) so the user sees which day is active, then awaits the
+ * same `dateFilterRefresh` a manual apply runs. No-op if already on that day.
+ */
+async function applyDayFilter(day: string) {
+  const mode = document.getElementById('dateFilterMode') as HTMLSelectElement | null;
+  const start = document.getElementById('dateFilterStart') as HTMLSelectElement | null;
+  const end = document.getElementById('dateFilterEnd') as HTMLSelectElement | null;
+  const sep = document.getElementById('dateFilterRangeSep');
+  const apply = document.getElementById('dateFilterApply') as HTMLButtonElement | null;
+  if (!mode || !start) return;
+  if (mode.value === 'single' && start.value === day) return; // already scoped there
+
+  mode.value = 'single';
+  start.hidden = false;
+  if (end) end.hidden = true;
+  if (sep) sep.hidden = true;
+  if (apply) apply.hidden = false;
+  start.value = day;
+  await dateFilterRefresh([day], `Showing: ${day}`);
+}
+
+/**
 /**
  * Re-slices the active data index to the selected dates and redoes everything
  * that depends on it: peak KPI cards + their pie charts, the per-core CPU
@@ -396,6 +421,7 @@ export function SarDataBridge() {
     // #dateFilterApply handlers has been removed, so wire directly on
     // mount — no late-loading script to race against anymore.
     wireDateFilter();
+    window.sarkartApplyDay = applyDayFilter;
 
     const onClick = (event: MouseEvent) => {
       const target = event.target as Element | null;
@@ -423,6 +449,7 @@ export function SarDataBridge() {
       document.removeEventListener('click', onClick);
       processObserver?.disconnect();
       if (window.sarkartProcessPendingData === processPendingResult) delete window.sarkartProcessPendingData;
+      if (window.sarkartApplyDay === applyDayFilter) delete window.sarkartApplyDay;
     };
   }, []);
 

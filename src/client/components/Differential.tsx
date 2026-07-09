@@ -39,7 +39,7 @@ function FindingCard({ finding, inWindow }: { finding: Finding; inWindow: boolea
           type="button"
           className="finding-link"
           title="Open the chart for this finding"
-          onClick={() => navigateToFinding(finding.chartTarget)}
+          onClick={() => { void navigateToFinding(finding); }}
         >
           View chart
           <svg className="icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6" /></svg>
