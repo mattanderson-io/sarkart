@@ -2,8 +2,9 @@ import { useEffect } from 'preact/hooks';
 import { buildCpuByCore } from '../lib/cpuIndex';
 import { getSeriesWithPeak } from '../lib/sarData';
 import { getOS, getServerInfo, grepHeaders, progressBarReset, show, showBlock } from '../lib/sarEngine';
+import { parseArrayBufferParallel } from '../lib/parallelParse';
 import { parseSarTextChunked } from '../lib/sarParser';
-import { filterSarDataByDates, getDates, getRows, hasData, setCpuByCore, setSarData } from '../lib/sarStore';
+import { filterSarDataByDates, getDates, getRows, hasData, setCpuByCore, setSarData, setSarDataFromJoined } from '../lib/sarStore';
 
 function delay(ms: number) {
   return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
@@ -346,8 +347,9 @@ async function initializeDashboard() {
 
 async function processPendingResult() {
   const pending = window._pendingResult;
+  const buffer = pending?.target?.buffer;
   const text = pending?.target?.result;
-  if (!text) return;
+  if (!buffer && !text) return;
 
   const processButton = document.getElementById('btnProcessData') as HTMLButtonElement | null;
   if (processButton) {
@@ -358,7 +360,22 @@ async function processPendingResult() {
   window.updateProgress?.(25, 'Parsing SAR data... (0%)');
   await delay(50);
 
-  const parsed = await parseSarTextChunked(text, {
+  if (buffer) {
+    // Large-file path: parse the raw bytes across Web Workers (lifts the
+    // ~512 MB single-string ceiling that readAsText hits) and ingest the
+    // JOINED result directly into the packed store — no millions of transient
+    // row strings on the main thread.
+    const joined = await parseArrayBufferParallel(buffer, (percent) => {
+      window.updateProgress?.(25 + Math.round(percent * 0.55), `Parsing SAR data... (${percent}%)`);
+    });
+    window._pendingResult = undefined;
+    window.updateProgress?.(82, 'Building data index...');
+    setSarDataFromJoined(joined);
+    await initializeDashboard();
+    return;
+  }
+
+  const parsed = await parseSarTextChunked(text as string, {
     onProgress: ({ percent }) => {
       window.updateProgress?.(25 + Math.round(percent * 0.55), `Parsing SAR data... (${percent}%)`);
     }

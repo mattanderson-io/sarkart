@@ -31,7 +31,9 @@ declare global {
     updateProgress?: (percent: number, message?: string) => void;
     displayTitle?: (title: string) => unknown;
     file?: unknown;
-    _pendingResult?: { target: { result: string } };
+    // `result` (string) is the small-file text path; `buffer` (ArrayBuffer) is
+    // the large-file worker-parallel path (see FileUploadBridge/SarDataBridge).
+    _pendingResult?: { target: { result?: string; buffer?: ArrayBuffer } };
     html2canvas?: (element: HTMLElement, options?: Record<string, unknown>) => Promise<HTMLCanvasElement>;
     jspdf?: {
       jsPDF: new (orientation: string, unit: string, format: string) => unknown;

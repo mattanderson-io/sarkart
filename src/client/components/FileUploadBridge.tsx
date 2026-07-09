@@ -18,11 +18,34 @@ import { useEffect } from 'preact/hooks';
  *   (mirroring makeDroppable's approach) instead.
  */
 
+// Files at/above this size are parsed off the main thread via Web Workers on
+// the raw bytes (see parallelParse). This both avoids the ~512 MB
+// single-JS-string ceiling that FileReader.readAsText hits AND keeps the UI
+// responsive on large files. Smaller files stay on the simple, battle-tested
+// readAsText path (worker spawn overhead isn't worth it there).
+const PARALLEL_THRESHOLD_BYTES = 50 * 1024 * 1024; // 50 MB
+
 function showSpinner() {
   const spinner = document.getElementById('spinner');
   if (!spinner) return;
   spinner.classList.remove('d-none', 'hide');
   spinner.classList.add('d-block', 'show');
+}
+
+/** Reveal #btnProcessData and auto-advance into parsing (shared by both read paths). */
+function armProcessButtonAndAdvance() {
+  const processButton = document.getElementById('btnProcessData') as HTMLButtonElement | null;
+  if (processButton) {
+    processButton.hidden = false;
+    processButton.style.display = '';
+  }
+  window.setTimeout(() => {
+    if (window.sarkartProcessPendingData) {
+      void window.sarkartProcessPendingData();
+    } else if (processButton) {
+      processButton.click();
+    }
+  }, 300);
 }
 
 /**
@@ -56,23 +79,10 @@ function readFileAsText(file: File) {
     // End of the read segment (~22%), just below where parsing takes over at
     // 25% — keeps the bar monotonic into processPendingResult.
     window.updateProgress?.(22, 'File loaded — ready to process');
-    if (processButton) {
-      processButton.hidden = false;
-      processButton.style.display = '';
-    }
     // Auto-advance into parsing/render, mirroring the "Try with sample data"
-    // path in LandingBridge. Without this the upload path stalls at
-    // "File loaded — ready to process" (progress pinned at 100%, the stepper
-    // showing RENDERING) and only moves on if the user manually clicks
-    // "Process data" — which reads as "stuck on render". The button stays
-    // revealed as a fallback in case the processor hasn't mounted yet.
-    window.setTimeout(() => {
-      if (window.sarkartProcessPendingData) {
-        void window.sarkartProcessPendingData();
-      } else if (processButton) {
-        processButton.click();
-      }
-    }, 300);
+    // path in LandingBridge. The button stays revealed as a fallback in case
+    // the processor hasn't mounted yet.
+    armProcessButtonAndAdvance();
   };
   reader.onerror = () => {
     console.error('[SARkart] Failed to read file');
@@ -81,10 +91,56 @@ function readFileAsText(file: File) {
   reader.readAsText(file, 'UTF-8');
 }
 
+/**
+ * Large-file path: read the raw bytes (not text) so the parser can run on an
+ * ArrayBuffer across Web Workers. This is what lifts the ~512 MB
+ * single-JS-string ceiling — readAsText simply cannot produce a string that
+ * big. Populates `window._pendingResult` with a `buffer` (instead of
+ * `result`), which SarDataBridge.processPendingResult routes to the parallel
+ * parse + JOINED store ingest.
+ */
+function readFileAsArrayBuffer(file: File) {
+  showSpinner();
+  window.updateProgress?.(0, 'Uploading file...');
+  const processButton = document.getElementById('btnProcessData') as HTMLButtonElement | null;
+  if (processButton) {
+    processButton.hidden = true;
+    processButton.style.display = 'none';
+  }
+
+  const reader = new FileReader();
+  reader.onprogress = (event) => {
+    if (!event.lengthComputable) return;
+    const percent = Math.round((event.loaded / event.total) * 100);
+    window.updateProgress?.(Math.round(percent * 0.2), 'Reading file...');
+  };
+  reader.onload = (event) => {
+    const result = event.target?.result;
+    if (!(result instanceof ArrayBuffer)) {
+      console.error('[SARkart] Expected ArrayBuffer from readAsArrayBuffer');
+      window.updateProgress?.(0, 'Error reading file...');
+      return;
+    }
+    window.file = true;
+    window._pendingResult = { target: { buffer: result } };
+    window.updateProgress?.(22, 'File loaded — ready to process');
+    armProcessButtonAndAdvance();
+  };
+  reader.onerror = () => {
+    console.error('[SARkart] Failed to read file');
+    window.updateProgress?.(0, 'Error reading file...');
+  };
+  reader.readAsArrayBuffer(file);
+}
+
 function handleFileSelected(file: File) {
   const fileName = document.querySelector('.fileinput-filename');
   if (fileName) fileName.textContent = file.name;
-  readFileAsText(file);
+  if (file.size >= PARALLEL_THRESHOLD_BYTES) {
+    readFileAsArrayBuffer(file);
+  } else {
+    readFileAsText(file);
+  }
 }
 
 /**
