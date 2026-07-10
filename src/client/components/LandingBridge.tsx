@@ -1,4 +1,5 @@
 import { useEffect } from 'preact/hooks';
+import { assetPath } from '../asset-path';
 import { waitForPeakData } from '../lib/dom';
 import { getDates } from '../lib/sarStore';
 import { getHostname, getOS, homePage } from '../lib/sarEngine';
@@ -153,7 +154,7 @@ export function LandingBridge() {
         event.preventDefault();
         showSpinner();
         window.updateProgress?.(5, 'Downloading sample data...');
-        fetch('/sample/sample-sar.txt')
+        fetch(assetPath('sample/sample-sar.txt'))
           .then((res) => {
             if (!res.ok) throw new Error('Sample file not found');
             return res.text();

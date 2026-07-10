@@ -1,0 +1,43 @@
+name: Deploy SARkart
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+        env:
+          SARKART_BASE: /tools/sarkart/app/
+
+      - name: Install deploy key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SARKART_DEPLOY_KEY }}" > ~/.ssh/sarkart_deploy_key
+          chmod 600 ~/.ssh/sarkart_deploy_key
+          ssh-keyscan -H ec2-35-80-5-57.us-west-2.compute.amazonaws.com >> ~/.ssh/known_hosts
+
+      - name: Deploy
+        run: |
+          rsync -az --delete --exclude '.DS_Store' \
+            -e "ssh -i ~/.ssh/sarkart_deploy_key" \
+            dist/ \
+            deploy-sarkart@ec2-35-80-5-57.us-west-2.compute.amazonaws.com:/var/www/sarkart/current/

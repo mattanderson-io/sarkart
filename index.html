@@ -8,13 +8,17 @@
     <meta property="og:type" content="website">
     <meta property="og:title" content="SARkart">
     <meta property="og:description" content="Fast, local tool for viewing Unix SAR data as interactive charts">
-    <meta property="og:image" content="/images/racing-penguin-favicon.webp">
+    <meta property="og:image" content="%BASE_URL%images/racing-penguin-favicon.webp">
     <title>SARkart</title>
-    <link rel="icon" href="/images/racing-penguin-favicon.webp" sizes="any" type="image/webp">
+    <link rel="icon" href="%BASE_URL%images/racing-penguin-favicon.webp" sizes="any" type="image/webp">
 
-    <script src="/js/theme-init.js"></script>
+    <script src="%BASE_URL%js/theme-init.js"></script>
 
-    <link rel="stylesheet" type="text/css" href="/css/sarkart-v2.css?v=33">
+    <script>
+      window.__SARKART_BASE_URL__ = '%BASE_URL%';
+    </script>
+
+    <link rel="stylesheet" type="text/css" href="%BASE_URL%css/sarkart-v2.css?v=33">
   </head>
   <body>
     <div id="app"></div>
