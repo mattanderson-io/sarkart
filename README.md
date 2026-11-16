@@ -2,7 +2,7 @@
 
 SARkart is a fast, browser-based viewer for Linux SAR (sysstat) files. Drop in a SAR text file and get deterministic bottleneck checks, a copy-ready ticket summary, and interactive charts for CPU, memory, disk, network, load, and process activity — all rendered locally with no server upload.
 
-**🚀 Try it live: [sarkart.onrender.com](https://sarkart.onrender.com/)** — no install, no signup. Click "Try with sample data" or upload your own sar file.
+**🚀 Try it live: [osirisnetworking.com/tools/sarkart](https://osirisnetworking.com/tools/sarkart/)** — no install, no signup. Click "Try with sample data" or upload your own sar file.
 
 ![SARkart diagnostic dashboard with sample SAR data loaded](docs/screenshot-dashboard.png)
 
@@ -62,9 +62,7 @@ docker run -p 3000:3000 sarkart
 
 ## Try It
 
-The fastest way to try SARkart is the hosted demo: **[sarkart.onrender.com](https://sarkart.onrender.com/)**. Click "Try with sample data" to load a bundled 1-day SAR file, or upload your own. All parsing happens in your browser — files are never uploaded to the server. Large local files use Web Workers so parsing stays off the UI thread.
-
-> Note: the demo runs on Render's free tier and sleeps after ~15 minutes of inactivity. The first request after sleep takes ~30 seconds to wake up.
+The fastest way to try SARkart is the hosted demo: **[osirisnetworking.com/tools/sarkart](https://osirisnetworking.com/tools/sarkart/app/)**. Click "Try with sample data" to load a bundled 1-day SAR file, or upload your own. All parsing happens in your browser — files are never uploaded to the server. Large local files use Web Workers so parsing stays off the UI thread.
 
 ## What SARkart Checks
 

@@ -4,20 +4,77 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta property="og:url" content="https://github.com/mattanderson-io/sarkart">
+
+    <!-- SEO: absolute URLs point at the primary deployment on
+         osirisnetworking.com. Other deployments canonicalize to it. -->
+    <title>SARkart — Free Online Linux SAR File Viewer &amp; sysstat Analyzer</title>
+    <meta name="description" content="Graph Linux sar (sysstat) output in your browser. Upload a sar -A text file to get interactive CPU, memory, disk, network and load charts plus automatic bottleneck findings. Free, no signup, files never leave your machine.">
+    <link rel="canonical" href="https://osirisnetworking.com/tools/sarkart/app/">
+    <meta name="robots" content="index, follow">
+    <meta name="theme-color" content="#12161c">
+
+    <meta property="og:url" content="https://osirisnetworking.com/tools/sarkart/app/">
     <meta property="og:type" content="website">
-    <meta property="og:title" content="SARkart">
-    <meta property="og:description" content="Fast, local tool for viewing Unix SAR data as interactive charts">
-    <meta property="og:image" content="/images/racing-penguin-favicon.webp">
-    <title>SARkart</title>
+    <meta property="og:site_name" content="SARkart">
+    <meta property="og:title" content="SARkart — Linux SAR / sysstat file viewer">
+    <meta property="og:description" content="Turn sar -A output into interactive CPU, memory, disk and network charts with automatic bottleneck checks. Runs entirely in your browser.">
+    <meta property="og:image" content="https://osirisnetworking.com/tools/sarkart/app/images/og-image.jpg">
+    <meta property="og:image:width" content="1200">
+    <meta property="og:image:height" content="630">
+    <meta property="og:image:alt" content="SARkart dashboard showing a timeline of CPU, load, swap, disk and network from a sar file">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="SARkart — Linux SAR / sysstat file viewer">
+    <meta name="twitter:description" content="Interactive charts and bottleneck findings for sar -A output. Free, client-side, no upload.">
+    <meta name="twitter:image" content="https://osirisnetworking.com/tools/sarkart/app/images/og-image.jpg">
+
     <link rel="icon" href="/images/racing-penguin-favicon.webp" sizes="any" type="image/webp">
+
+    <!-- Structured data (a non-executed data block, so the CSP's script-src does not apply). -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "SARkart",
+      "url": "https://osirisnetworking.com/tools/sarkart/app/",
+      "description": "Browser-based viewer for Linux SAR (sysstat) files: interactive CPU, memory, disk, network and load charts with deterministic bottleneck findings. All parsing happens locally.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Any (web browser)",
+      "browserRequirements": "Requires JavaScript",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "author": { "@type": "Person", "name": "Matt Anderson" },
+      "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+      "sameAs": ["https://github.com/mattanderson-io/sarkart", "https://osirisnetworking.com/tools/sarkart/"],
+      "screenshot": "https://osirisnetworking.com/tools/sarkart/app/images/og-image.jpg"
+    }
+    </script>
 
     <script src="/js/theme-init.js"></script>
 
     <link rel="stylesheet" type="text/css" href="/css/sarkart-v2.css?v=33">
   </head>
   <body>
-    <div id="app"></div>
+    <!-- Pre-rendered fallback. Preact's render() replaces everything inside
+         #app on boot, so users with JS never see this; crawlers and link
+         previews that don't run JavaScript get real, matching content. -->
+    <div id="app">
+      <main style="max-width:760px;margin:48px auto;padding:0 20px;line-height:1.6">
+        <h1>SARkart: Linux SAR file viewer and sysstat analyzer</h1>
+        <p>SARkart turns the text output of <code>sar -A</code> into interactive charts for CPU, memory, swap, disk I/O, network and load average, and runs deterministic bottleneck checks so you can see what went wrong and when. Everything is parsed in your browser — your SAR files are never uploaded.</p>
+        <h2>Features</h2>
+        <ul>
+          <li>Up to 20× faster than sarchart: a 313 MB RHEL 9 SAR file loads in about 2 seconds</li>
+          <li>Diagnostic dashboard ranking CPU wait and steal, load, memory, swap, disk saturation and network errors</li>
+          <li>Incident-window triage and a copy-ready ticket summary for support cases</li>
+          <li>Time-of-day heatmaps, per-core CPU, per-device disk and per-interface network charts</li>
+          <li>PDF export, date-range filtering, dark and light themes</li>
+          <li>Works with sysstat output from RHEL, SUSE and Ubuntu</li>
+        </ul>
+        <h2>How to generate a SAR file</h2>
+        <pre><code>sar -A -f /var/log/sa/sa$(date +%d) &gt; /tmp/sar_$(uname -n).txt</code></pre>
+        <p>Then open SARkart and drop the <code>.txt</code> file onto the page. SARkart requires JavaScript.</p>
+        <p>Free and open source (GPLv3) — <a href="https://github.com/mattanderson-io/sarkart">source on GitHub</a>.</p>
+      </main>
+    </div>
 
     <script type="module" src="/src/client/main.tsx"></script>
   </body>
