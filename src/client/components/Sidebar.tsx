@@ -1,4 +1,5 @@
 import type { ComponentChildren } from 'preact';
+import { assetPath } from '../asset-path';
 
 type NavIconProps = {
   id: string;
@@ -53,10 +54,10 @@ export function Sidebar() {
     <nav id="sidebar" className="collapse scrolling">
       <div className="sidebar-header">
         <h3>
-          <img className="sar-logo" src="/images/racing-penguin.webp" alt="SARkart logo" />
+          <img className="sar-logo" src={assetPath('images/racing-penguin.webp')} alt="SARkart logo" />
           <span className="brand-text"><span className="brand-sar">SAR</span>kart</span>
         </h3>
-        <strong><span className="logo-mini"><img className="sar-logo" src="/images/racing-penguin.webp" alt="SARkart logo" /></span></strong>
+        <strong><span className="logo-mini"><img className="sar-logo" src={assetPath('images/racing-penguin.webp')} alt="SARkart logo" /></span></strong>
       </div>
 
       <ul className="list-unstyled components hide sidebar-nav">

@@ -2,6 +2,7 @@ import { useEffect } from 'preact/hooks';
 import { DiagnosticDashboard } from './DiagnosticDashboard';
 import { Footer } from './Footer';
 import { HeatmapDashboard } from './HeatmapDashboard';
+import { assetPath } from '../asset-path';
 import { initTheme, toggleTheme } from '../lib/theme';
 
 function IconUse({ id }: { id: string }) {
@@ -281,7 +282,7 @@ export function Content({ heatmapVisible }: { heatmapVisible: boolean }) {
           <div className="landing-hero-row">
             <h1 id="logo-header" className="landing-brand">
               <span className="landing-brand-lockup">
-                <img className="landing-brand-logo" src="/images/racing-penguin.webp" alt="SARkart logo" />
+                <img className="landing-brand-logo" src={assetPath('images/racing-penguin.webp')} alt="SARkart logo" />
                 <span className="landing-brand-text"><b>SAR</b><span>kart</span></span>
               </span>
               <span className="landing-brand-tagline">Unix SAR data, as charts</span>

@@ -1,0 +1,110 @@
+name: Deploy SARkart
+
+# Builds SARkart for https://osirisnetworking.com/tools/sarkart/app/ and ships
+# it to the EC2 host as an immutable release:
+#
+#   /var/www/sarkart/releases/<timestamp>-<sha>/   one directory per deploy
+#   /var/www/sarkart/current -> releases/...        what Apache serves
+#
+# The symlink is swapped atomically, so visitors never see a half-copied
+# tree. Roll back by pointing `current` at an older release:
+#   ln -s releases/<old> /var/www/sarkart/current.tmp && mv -T /var/www/sarkart/current.tmp /var/www/sarkart/current
+#
+# Requires the SARKART_DEPLOY_KEY secret (private key for the deploy-sarkart
+# user on the host).
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-sarkart
+  cancel-in-progress: false
+
+env:
+  DEPLOY_HOST: ec2-35-80-5-57.us-west-2.compute.amazonaws.com
+  DEPLOY_USER: deploy-sarkart
+  DEPLOY_ROOT: /var/www/sarkart
+  KEEP_RELEASES: 5
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check deploy key is configured
+        env:
+          SARKART_DEPLOY_KEY: ${{ secrets.SARKART_DEPLOY_KEY }}
+        run: |
+          if [ -z "$SARKART_DEPLOY_KEY" ]; then
+            echo "::error::SARKART_DEPLOY_KEY secret is not set; add it under Settings > Secrets and variables > Actions."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Test
+        run: npm test
+
+      - name: Build
+        run: npm run build
+        env:
+          SARKART_BASE: /tools/sarkart/app/
+
+      - name: Install deploy key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.SARKART_DEPLOY_KEY }}" > ~/.ssh/sarkart_deploy_key
+          chmod 600 ~/.ssh/sarkart_deploy_key
+          ssh-keyscan -H "$DEPLOY_HOST" >> ~/.ssh/known_hosts
+
+      - name: Upload release
+        run: |
+          RELEASE="$(date -u +%Y%m%d-%H%M%S)-${GITHUB_SHA::7}"
+          echo "RELEASE=$RELEASE" >> "$GITHUB_ENV"
+          ssh -i ~/.ssh/sarkart_deploy_key "$DEPLOY_USER@$DEPLOY_HOST" \
+            "mkdir -p '$DEPLOY_ROOT/releases/$RELEASE'"
+          rsync -az --exclude '.DS_Store' \
+            -e "ssh -i ~/.ssh/sarkart_deploy_key" \
+            dist/ \
+            "$DEPLOY_USER@$DEPLOY_HOST:$DEPLOY_ROOT/releases/$RELEASE/"
+
+      - name: Activate release
+        run: |
+          ssh -i ~/.ssh/sarkart_deploy_key "$DEPLOY_USER@$DEPLOY_HOST" bash -s -- \
+            "$DEPLOY_ROOT" "$RELEASE" "$KEEP_RELEASES" <<'EOF'
+          set -euo pipefail
+          root="$1"; release="$2"; keep="$3"
+          test -f "$root/releases/$release/index.html"
+          chmod 755 "$root/releases/$release"
+          ln -sfn "releases/$release" "$root/current.tmp"
+          mv -T "$root/current.tmp" "$root/current"
+          echo "current -> $(readlink "$root/current")"
+          # Prune old releases, never the active one.
+          ls -1 "$root/releases" | sort -r | tail -n +"$((keep + 1))" | while read -r old; do
+            [ "releases/$old" = "$(readlink "$root/current")" ] || rm -rf "$root/releases/$old"
+          done
+          EOF
+
+      - name: Smoke test
+        run: |
+          curl -fsS https://osirisnetworking.com/tools/sarkart/app/ | grep -q '<title>SARkart'
+          curl -fsSI https://osirisnetworking.com/tools/sarkart/app/sample/sample-sar.txt > /dev/null

@@ -1,9 +1,11 @@
+import { assetPath } from '../asset-path';
+
 export function Footer() {
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
         <span className="site-footer-brand">
-          <img className="site-footer-logo" src="/images/racing-penguin.webp" alt="" />
+          <img className="site-footer-logo" src={assetPath('images/racing-penguin.webp')} alt="" />
           SARkart
           <span className="site-footer-version">v2.0.0</span>
         </span>

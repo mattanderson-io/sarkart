@@ -1,4 +1,5 @@
 import { useEffect } from 'preact/hooks';
+import { assetPath } from '../asset-path';
 
 // Vendored browser libraries loaded after mount, each pinned with a
 // Subresource Integrity (SRI) sha384 hash so a tampered/substituted file is
@@ -8,10 +9,10 @@ import { useEffect } from 'preact/hooks';
 type LegacyScript = { src: string; integrity: string };
 
 const legacyScripts: LegacyScript[] = [
-  { src: '/js/plotly-cartesian-3.7.0.min.js', integrity: 'sha384-bZyw96TJNxAYROKQ6Js+sdba9eOCs2wvFMevzzEC0+g30MXHiX/nh7wfW8Kahmcf' },
-  { src: '/js/plotly-charts.js?v=26', integrity: 'sha384-TRJGxNlwOaCKSXpMp4GxiPx1xIpKmQlOlE+O7d04zBlBE16fxe4GqmxOj9RPi4rG' },
-  { src: '/js/html2canvas.min.js', integrity: 'sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H' },
-  { src: '/js/jspdf.umd.min.js', integrity: 'sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/' }
+  { src: 'js/plotly-cartesian-3.7.0.min.js', integrity: 'sha384-bZyw96TJNxAYROKQ6Js+sdba9eOCs2wvFMevzzEC0+g30MXHiX/nh7wfW8Kahmcf' },
+  { src: 'js/plotly-charts.js?v=26', integrity: 'sha384-TRJGxNlwOaCKSXpMp4GxiPx1xIpKmQlOlE+O7d04zBlBE16fxe4GqmxOj9RPi4rG' },
+  { src: 'js/html2canvas.min.js', integrity: 'sha384-ZZ1pncU3bQe8y31yfZdMFdSpttDoPmOZg2wguVK9almUodir1PghgT0eY7Mrty8H' },
+  { src: 'js/jspdf.umd.min.js', integrity: 'sha384-en/ztfPSRkGfME4KIm05joYXynqzUgbsG5nMrj/xEFAHXkeZfO3yMK8QQ+mP7p1/' }
 ];
 
 function loadScript({ src, integrity }: LegacyScript) {
@@ -22,7 +23,7 @@ function loadScript({ src, integrity }: LegacyScript) {
     }
 
     const script = document.createElement('script');
-    script.src = src;
+    script.src = assetPath(src);
     script.integrity = integrity;
     // Required for the integrity check; same-origin so no CORS round-trip.
     script.crossOrigin = 'anonymous';
